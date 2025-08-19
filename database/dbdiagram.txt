@@ -1,0 +1,55 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+// Link: https://dbdiagram.io/d/FreshAirEdu-68a49d81ec93249d1e4d7deb
+
+Table accounts {
+  id uuid [primary key]
+  type text [note: "email / google"]
+  email text
+  created_at timestamp
+}
+
+Table account_roles {
+  id integer [primary key]
+  role_name text [note: "student, mentor, admin"]
+}
+
+Table roles_to_accounts {
+  account_id uuid [ref: > accounts.id]
+  rold_id integer [ref: > account_roles.id]
+}
+
+Table students {
+  id uuid
+  account_id uuid [ref: - accounts.id]
+  person_id uui [ref: - persons.id]
+  address_id uuid [ref: - addresses.id]
+}
+
+Table persons {
+  id uuid
+  first_name varchar
+  last_name varchar
+  cnp varchar
+  ci_serie varchar
+  ci_nr varchar
+  ci_emitent varchar
+  ci_date varchar
+  gen bool
+  is_urban bool
+  
+}
+
+Table addresses {
+  id uuid
+  email varchar
+  phone varchar
+  judet_id varchar(2) [ref: > judete.id]
+  localitate varchar
+  strada varchar
+}
+
+Table judete {
+  id varchar(2)
+  judet varchar
+}
