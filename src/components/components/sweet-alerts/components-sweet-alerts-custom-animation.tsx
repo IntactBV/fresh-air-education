@@ -14,7 +14,7 @@ const ComponentsSweetAlertsCustomAnimation = () => {
                 popup: 'animate__animated animate__fadeOutUp',
             },
             padding: '2em',
-            customClass: 'sweet-alerts',
+            customClass: { popup: 'sweet-alerts' },
         });
     };
     return (

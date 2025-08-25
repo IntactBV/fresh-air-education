@@ -1,7 +1,7 @@
 'use client';
 import Dropdown from '@/components/dropdown';
 import IconHorizontalDots from '@/components/icon/icon-horizontal-dots';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import React from 'react';
 import { useSelector } from 'react-redux';
 

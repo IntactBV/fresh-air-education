@@ -3,7 +3,7 @@ import Dropdown from '@/components/dropdown';
 import IconArrowLeft from '@/components/icon/icon-arrow-left';
 import IconCaretDown from '@/components/icon/icon-caret-down';
 import IconMenu from '@/components/icon/icon-menu';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
@@ -631,7 +631,7 @@ const ComponentsDashboardCrypto = () => {
             },
             y: {
                 title: {
-                    formatter: (val: any) => {
+                    formatter: (_val: any) => {
                         return '';
                     },
                 },
@@ -684,7 +684,7 @@ const ComponentsDashboardCrypto = () => {
             },
             y: {
                 title: {
-                    formatter: (val: any) => {
+                    formatter: (_val: any) => {
                         return '';
                     },
                 },
@@ -797,9 +797,8 @@ const ComponentsDashboardCrypto = () => {
             </ul>
             <div className="relative mt-5 flex flex-col gap-5 xl:flex-row">
                 <div
-                    className={`${
-                        isShowCryptoMenu ? '!block h-full xl:h-auto' : ''
-                    } panel absolute z-10 hidden w-80 flex-none divide-y divide-[#ebedf2] overflow-y-auto border-0 p-0 dark:divide-[#191e3a] xl:relative xl:block`}
+                    className={`${isShowCryptoMenu ? '!block h-full xl:h-auto' : ''
+                        } panel absolute z-10 hidden w-80 flex-none divide-y divide-[#ebedf2] overflow-y-auto border-0 p-0 dark:divide-[#191e3a] xl:relative xl:block`}
                 >
                     {coins.map((item) => {
                         return (

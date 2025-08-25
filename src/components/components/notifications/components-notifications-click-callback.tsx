@@ -11,7 +11,7 @@ const ComponentsNotificationsClickCallback = () => {
             text: 'Custom callback when action button is clicked.',
             showCloseButton: true,
             showConfirmButton: false,
-        }).then((result) => {
+        }).then((_result) => {
             Swal.fire({
                 toast: true,
                 position: 'bottom-start',

@@ -1,5 +1,6 @@
 'use client';
-import { DataTable, DataTableSortStatus } from 'mantine-datatable';
+import type { DataTableSortStatus } from 'mantine-datatable';
+import { DataTable } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import sortBy from 'lodash/sortBy';
 import IconStar from '@/components/icon/icon-star';
@@ -623,7 +624,7 @@ const ComponentsDatatablesAdvanced = () => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
         setInitialRecords(sortStatus.direction === 'desc' ? data.reverse() : data);
         setPage(1);
-    }, [sortStatus]);
+    }, [initialRecords, sortStatus]);
 
     const randomColor = () => {
         const color = ['#4361ee', '#805dca', '#00ab55', '#e7515a', '#e2a03f', '#2196f3'];

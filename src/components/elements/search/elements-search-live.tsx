@@ -52,6 +52,7 @@ const ElementsSearchLive = () => {
                 return item.name.toLowerCase().includes(search.toLowerCase()) || item.email.toLowerCase().includes(search.toLowerCase());
             });
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
     return (
         <PanelCodeHighlight

@@ -16,10 +16,10 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { Navigation, Pagination } from 'swiper';
 import { useSelector } from 'react-redux';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 
 const ComponentsModalCustom = () => {
-    const swiperRef = useRef<any>();
+    const swiperRef = useRef<any>(null);
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const items = ['carousel1.jpeg', 'carousel2.jpeg', 'carousel3.jpeg'];
     const [modal17, setModal17] = useState(false);
@@ -34,7 +34,7 @@ const ComponentsModalCustom = () => {
             className="md:col-span-2"
             codeHighlight={`import { Dialog, Transition,Tab } from '@headlessui/react';
 import { useState, Fragment } from 'react';
-    const swiperRef = useRef<any>();
+    const swiperRef = useRef<any>(null);
     const items = ['carousel1.jpeg', 'carousel2.jpeg', 'carousel3.jpeg'];
     const [modal17, setModal17] = useState(false);
     const [modal18, setModal18] = useState(false);
@@ -680,11 +680,10 @@ import { useState, Fragment } from 'react';
                                                                 {({ selected }) => (
                                                                     <button
                                                                         type="button"
-                                                                        className={`${
-                                                                            selected
-                                                                                ? '!border-white-light !border-b-white  text-primary !outline-none dark:!border-[#191e3a] dark:!border-b-black '
-                                                                                : ''
-                                                                        } -mb-[1px] block border border-transparent p-3.5 py-2 hover:text-primary dark:hover:border-b-black`}
+                                                                        className={`${selected
+                                                                            ? '!border-white-light !border-b-white  text-primary !outline-none dark:!border-[#191e3a] dark:!border-b-black '
+                                                                            : ''
+                                                                            } -mb-[1px] block border border-transparent p-3.5 py-2 hover:text-primary dark:hover:border-b-black`}
                                                                     >
                                                                         Home
                                                                     </button>
@@ -694,11 +693,10 @@ import { useState, Fragment } from 'react';
                                                                 {({ selected }) => (
                                                                     <button
                                                                         type="button"
-                                                                        className={`${
-                                                                            selected
-                                                                                ? '!border-white-light !border-b-white  text-primary !outline-none dark:!border-[#191e3a] dark:!border-b-black '
-                                                                                : ''
-                                                                        }-mb-[1px] block border border-transparent p-3.5 py-2 hover:text-primary dark:hover:border-b-black`}
+                                                                        className={`${selected
+                                                                            ? '!border-white-light !border-b-white  text-primary !outline-none dark:!border-[#191e3a] dark:!border-b-black '
+                                                                            : ''
+                                                                            }-mb-[1px] block border border-transparent p-3.5 py-2 hover:text-primary dark:hover:border-b-black`}
                                                                     >
                                                                         Profile
                                                                     </button>
@@ -708,11 +706,10 @@ import { useState, Fragment } from 'react';
                                                                 {({ selected }) => (
                                                                     <button
                                                                         type="button"
-                                                                        className={`${
-                                                                            selected
-                                                                                ? '!border-white-light !border-b-white  text-primary !outline-none dark:!border-[#191e3a] dark:!border-b-black '
-                                                                                : ''
-                                                                        }-mb-[1px] block border border-transparent p-3.5 py-2 hover:text-primary dark:hover:border-b-black`}
+                                                                        className={`${selected
+                                                                            ? '!border-white-light !border-b-white  text-primary !outline-none dark:!border-[#191e3a] dark:!border-b-black '
+                                                                            : ''
+                                                                            }-mb-[1px] block border border-transparent p-3.5 py-2 hover:text-primary dark:hover:border-b-black`}
                                                                     >
                                                                         Contact
                                                                     </button>

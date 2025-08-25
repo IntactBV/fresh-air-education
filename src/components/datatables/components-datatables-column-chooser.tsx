@@ -1,9 +1,10 @@
 'use client';
-import { DataTable, DataTableSortStatus } from 'mantine-datatable';
+import type { DataTableSortStatus } from 'mantine-datatable';
+import { DataTable } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import sortBy from 'lodash/sortBy';
 import { useSelector } from 'react-redux';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import Dropdown from '@/components/dropdown';
 import IconCaretDown from '@/components/icon/icon-caret-down';
 
@@ -538,7 +539,7 @@ const ComponentsDatatablesColumnChooser = () => {
         return '';
     };
 
-    const showHideColumns = (col: any, value: any) => {
+    const showHideColumns = (col: any, _value: any) => {
         if (hideCols.includes(col)) {
             setHideCols((col: any) => hideCols.filter((d: any) => d !== col));
         } else {
@@ -590,6 +591,7 @@ const ComponentsDatatablesColumnChooser = () => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
         setInitialRecords(sortStatus.direction === 'desc' ? data.reverse() : data);
         setPage(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sortStatus]);
 
     return (

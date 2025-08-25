@@ -1,7 +1,8 @@
 'use client';
-import { PropsWithChildren, useEffect, useState } from 'react';
+import type { PropsWithChildren} from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { toggleRTL, toggleTheme, toggleMenu, toggleLayout, toggleAnimation, toggleNavbar, toggleSemidark } from '@/store/themeConfigSlice';
 import Loading from '@/components/layouts/loading';
 import { getTranslation } from '@fa/i18n';

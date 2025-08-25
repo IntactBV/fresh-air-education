@@ -1,12 +1,13 @@
 'use client';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
 import React, { useState } from 'react';
-import ImageUploading, { ImageListType } from 'react-images-uploading';
+import type { ImageListType } from 'react-images-uploading';
+import ImageUploading from 'react-images-uploading';
 
 const ComponentsFormsFileUploadSingle = () => {
     const [images, setImages] = useState<any>([]);
     const maxNumber = 69;
-    const onChange = (imageList: ImageListType, addUpdateIndex: number[] | undefined) => {
+    const onChange = (imageList: ImageListType, _addUpdateIndex: number[] | undefined) => {
         setImages(imageList as never[]);
     };
     return (
@@ -37,7 +38,7 @@ const onChange = (imageList: ImageListType, addUpdateIndex: number[] | undefined
             ×
         </button>
     </div>
-    <label className="custom-file-container__custom-file"></label>
+    <label className="custom-file-container__custom-file">Choose file</label>
     <input type="file" className="custom-file-container__custom-file__custom-file-input" accept="image/*" />
     <input type="hidden" name="MAX_FILE_SIZE" value="10485760" />
     <ImageUploading value={images} onChange={onChange} maxNumber={maxNumber}>
@@ -77,7 +78,7 @@ const onChange = (imageList: ImageListType, addUpdateIndex: number[] | undefined
                     <input type="file" className="custom-file-container__custom-file__custom-file-input" accept="image/*" />
                     <input type="hidden" name="MAX_FILE_SIZE" value="10485760" />
                     <ImageUploading value={images} onChange={onChange} maxNumber={maxNumber}>
-                        {({ imageList, onImageUpload, onImageRemoveAll, onImageUpdate, onImageRemove, isDragging, dragProps }) => (
+                        {({ imageList, onImageUpload }) => (
                             <div className="upload__image-wrapper">
                                 <button className="custom-file-container__custom-file__custom-file-control" onClick={onImageUpload}>
                                     Choose File...

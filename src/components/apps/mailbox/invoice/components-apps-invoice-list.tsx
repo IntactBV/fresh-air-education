@@ -4,7 +4,8 @@ import IconEye from '@/components/icon/icon-eye';
 import IconPlus from '@/components/icon/icon-plus';
 import IconTrashLines from '@/components/icon/icon-trash-lines';
 import { sortBy } from 'lodash';
-import { DataTableSortStatus, DataTable } from 'mantine-datatable';
+import type { DataTableSortStatus } from 'mantine-datatable';
+import { DataTable } from 'mantine-datatable';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 
@@ -168,12 +169,14 @@ const ComponentsAppsInvoiceList = () => {
                 );
             });
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
 
     useEffect(() => {
         const data2 = sortBy(initialRecords, sortStatus.columnAccessor);
         setRecords(sortStatus.direction === 'desc' ? data2.reverse() : data2);
         setPage(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sortStatus]);
 
     const deleteRow = (id: any = null) => {
@@ -257,7 +260,7 @@ const ComponentsAppsInvoiceList = () => {
                                 accessor: 'amount',
                                 sortable: true,
                                 titleClassName: 'text-right',
-                                render: ({ amount, id }) => <div className="text-right font-semibold">{`$${amount}`}</div>,
+                                render: ({ amount }) => <div className="text-right font-semibold">{`$${amount}`}</div>,
                             },
                             {
                                 accessor: 'status',
@@ -277,7 +280,7 @@ const ComponentsAppsInvoiceList = () => {
                                         <Link href="/apps/invoice/preview" className="flex hover:text-primary">
                                             <IconEye />
                                         </Link>
-                                        <button type="button" className="flex hover:text-danger" onClick={(e) => deleteRow(id)}>
+                                        <button type="button" className="flex hover:text-danger" onClick={(_e) => deleteRow(id)}>
                                             <IconTrashLines />
                                         </button>
                                     </div>

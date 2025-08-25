@@ -10,7 +10,7 @@ import IconInfoCircle from '@/components/icon/icon-info-circle';
 import IconLitecoin from '@/components/icon/icon-litecoin';
 import IconSolana from '@/components/icon/icon-solana';
 import IconTether from '@/components/icon/icon-tether';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';

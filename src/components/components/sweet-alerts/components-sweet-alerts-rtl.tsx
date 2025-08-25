@@ -12,7 +12,7 @@ const ComponentsSweetAlertsRtl = () => {
             showCancelButton: true,
             showCloseButton: true,
             padding: '2em',
-            customClass: 'sweet-alerts',
+            customClass: { popup: 'sweet-alerts' },
         });
     };
 

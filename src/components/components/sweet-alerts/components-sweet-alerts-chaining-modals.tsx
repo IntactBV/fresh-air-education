@@ -16,18 +16,18 @@ const ComponentsSweetAlertsChainingModals = () => {
             },
             validationMessage: 'This field is required',
             padding: '2em',
-            customClass: 'sweet-alerts',
+            customClass: { popup: 'sweet-alerts' },
         });
         const values: any = [];
         let currentStep;
-        for (currentStep = 0; currentStep < steps.length; ) {
+        for (currentStep = 0; currentStep < steps.length;) {
             const result = await swalQueueStep.fire({
                 title: `Question ${steps[currentStep]}`,
                 text: currentStep === 0 ? 'Chaining swal modals is easy.' : '',
                 inputValue: values[currentStep],
                 showCancelButton: currentStep > 0,
                 currentProgressStep: currentStep,
-                customClass: 'sweet-alerts',
+                customClass: { popup: 'sweet-alerts' },
             });
             if (result.value) {
                 values[currentStep] = result.value;
@@ -44,7 +44,7 @@ const ComponentsSweetAlertsChainingModals = () => {
                 padding: '2em',
                 html: 'Your answers: <pre>' + JSON.stringify(values) + '</pre>',
                 confirmButtonText: 'Lovely!',
-                customClass: 'sweet-alerts',
+                customClass: { popup: 'sweet-alerts' },
             });
         }
     };

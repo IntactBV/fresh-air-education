@@ -1,7 +1,7 @@
 'use client';
 import Dropdown from '@/components/dropdown';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import React from 'react';
 import { useSelector } from 'react-redux';
 

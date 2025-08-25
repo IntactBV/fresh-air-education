@@ -38,7 +38,7 @@ import IconUsers from '@/components/icon/icon-users';
 import IconVideo from '@/components/icon/icon-video';
 import IconWheel from '@/components/icon/icon-wheel';
 import IconZipFile from '@/components/icon/icon-zip-file';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { Disclosure } from '@headlessui/react';
 import Tippy from '@tippyjs/react';
 import React, { useEffect, useState } from 'react';
@@ -860,6 +860,7 @@ const ComponentsAppsMailbox = () => {
 
     useEffect(() => {
         searchMails();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedTab, searchText, mailList]);
 
     const refreshMails = () => {
@@ -1089,7 +1090,7 @@ const ComponentsAppsMailbox = () => {
         clearSelection();
     };
 
-    const saveMail = (type: any, id: any) => {
+    const saveMail = (type: any, _id: any) => {
         if (!params.to) {
             showMessage('To email address is required.', 'error');
             return false;
@@ -1175,7 +1176,7 @@ const ComponentsAppsMailbox = () => {
         setIds([]);
     };
 
-    const tabChanged = (tabType: any) => {
+    const tabChanged = (_tabType: any) => {
         setIsEdit(false);
         setIsShowMailMenu(false);
         setSelectedMail(null);
@@ -1231,9 +1232,8 @@ const ComponentsAppsMailbox = () => {
                     onClick={() => setIsShowMailMenu(!isShowMailMenu)}
                 ></div>
                 <div
-                    className={`panel dark:gray-50 absolute z-10 hidden h-full w-[250px] max-w-full flex-none space-y-3 overflow-hidden p-4 ltr:rounded-r-none rtl:rounded-l-none xl:relative xl:block xl:h-auto ltr:xl:rounded-r-md rtl:xl:rounded-l-md ${
-                        isShowMailMenu ? '!block' : ''
-                    }`}
+                    className={`panel dark:gray-50 absolute z-10 hidden h-full w-[250px] max-w-full flex-none space-y-3 overflow-hidden p-4 ltr:rounded-r-none rtl:rounded-l-none xl:relative xl:block xl:h-auto ltr:xl:rounded-r-md rtl:xl:rounded-l-md ${isShowMailMenu ? '!block' : ''
+                        }`}
                 >
                     <div className="flex h-full flex-col pb-16">
                         <div className="pb-5">
@@ -1245,9 +1245,8 @@ const ComponentsAppsMailbox = () => {
                             <div className="space-y-1">
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        !isEdit && selectedTab === 'inbox' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${!isEdit && selectedTab === 'inbox' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                        }`}
                                     onClick={() => {
                                         setSelectedTab('inbox');
                                         tabChanged('inbox');
@@ -1264,9 +1263,8 @@ const ComponentsAppsMailbox = () => {
 
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        !isEdit && selectedTab === 'star' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${!isEdit && selectedTab === 'star' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                        }`}
                                     onClick={() => {
                                         setSelectedTab('star');
                                         tabChanged('star');
@@ -1280,9 +1278,8 @@ const ComponentsAppsMailbox = () => {
 
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        !isEdit && selectedTab === 'sent_mail' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${!isEdit && selectedTab === 'sent_mail' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                        }`}
                                     onClick={() => {
                                         setSelectedTab('sent_mail');
                                         tabChanged('sent_mail');
@@ -1297,9 +1294,8 @@ const ComponentsAppsMailbox = () => {
 
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        !isEdit && selectedTab === 'spam' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${!isEdit && selectedTab === 'spam' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                        }`}
                                     onClick={() => {
                                         setSelectedTab('spam');
                                         tabChanged('spam');
@@ -1313,9 +1309,8 @@ const ComponentsAppsMailbox = () => {
 
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        !isEdit && selectedTab === 'draft' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${!isEdit && selectedTab === 'draft' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                        }`}
                                     onClick={() => {
                                         setSelectedTab('draft');
                                         tabChanged('draft');
@@ -1332,9 +1327,8 @@ const ComponentsAppsMailbox = () => {
 
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        !isEdit && selectedTab === 'trash' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${!isEdit && selectedTab === 'trash' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                        }`}
                                     onClick={() => {
                                         setSelectedTab('trash');
                                         tabChanged('trash');
@@ -1359,9 +1353,8 @@ const ComponentsAppsMailbox = () => {
                                                 <li>
                                                     <button
                                                         type="button"
-                                                        className={`flex h-10 w-full items-center rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                                            !isEdit && selectedTab === 'archive' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                                        }`}
+                                                        className={`flex h-10 w-full items-center rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${!isEdit && selectedTab === 'archive' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                                            }`}
                                                         onClick={() => {
                                                             setSelectedTab('archive');
                                                             tabChanged('archive');
@@ -1374,9 +1367,8 @@ const ComponentsAppsMailbox = () => {
                                                 <li>
                                                     <button
                                                         type="button"
-                                                        className={`flex h-10 w-full items-center rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                                            !isEdit && selectedTab === 'important' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                                        }`}
+                                                        className={`flex h-10 w-full items-center rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${!isEdit && selectedTab === 'important' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                                            }`}
                                                         onClick={() => {
                                                             setSelectedTab('important');
                                                             tabChanged('important');
@@ -1749,9 +1741,8 @@ const ComponentsAppsMailbox = () => {
                                                                     <Tippy content="Important">
                                                                         <button
                                                                             type="button"
-                                                                            className={`flex rotate-90 items-center enabled:hover:text-primary disabled:opacity-60 ${
-                                                                                mail.isImportant ? 'text-primary' : ''
-                                                                            }`}
+                                                                            className={`flex rotate-90 items-center enabled:hover:text-primary disabled:opacity-60 ${mail.isImportant ? 'text-primary' : ''
+                                                                                }`}
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
                                                                                 setImportant(mail.id);
@@ -1778,12 +1769,11 @@ const ComponentsAppsMailbox = () => {
                                                         <td>
                                                             <div className="flex items-center">
                                                                 <div
-                                                                    className={`h-2 w-2 rounded-full ${
-                                                                        (mail.group === 'personal' && 'bg-primary') ||
+                                                                    className={`h-2 w-2 rounded-full ${(mail.group === 'personal' && 'bg-primary') ||
                                                                         (mail.group === 'work' && 'bg-warning') ||
                                                                         (mail.group === 'social' && 'bg-success') ||
                                                                         (mail.group === 'private' && 'bg-danger')
-                                                                    }`}
+                                                                        }`}
                                                                 ></div>
                                                                 {mail.attachments && (
                                                                     <div className="ltr:ml-4 rtl:mr-4">
@@ -1844,12 +1834,11 @@ const ComponentsAppsMailbox = () => {
                                                 <div className="ltr:mr-4 rtl:ml-4">
                                                     <Tippy content={selectedMail.group} className="capitalize">
                                                         <div
-                                                            className={`h-2 w-2 rounded-full ${
-                                                                (selectedMail.group === 'personal' && 'bg-primary') ||
+                                                            className={`h-2 w-2 rounded-full ${(selectedMail.group === 'personal' && 'bg-primary') ||
                                                                 (selectedMail.group === 'work' && 'bg-warning') ||
                                                                 (selectedMail.group === 'social' && 'bg-success') ||
                                                                 (selectedMail.group === 'private' && 'bg-danger')
-                                                            }`}
+                                                                }`}
                                                         ></div>
                                                     </Tippy>
                                                 </div>

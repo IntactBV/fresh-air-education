@@ -2,7 +2,7 @@
 import Dropdown from '@/components/dropdown';
 import IconSettings from '@/components/icon/icon-settings';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import React from 'react';
 import { useSelector } from 'react-redux';
 

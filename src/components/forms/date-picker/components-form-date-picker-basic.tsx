@@ -1,6 +1,6 @@
 'use client';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import Flatpickr from 'react-flatpickr';

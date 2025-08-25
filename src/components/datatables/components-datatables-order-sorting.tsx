@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
-import { DataTable, DataTableSortStatus } from 'mantine-datatable';
+import type { DataTableSortStatus } from 'mantine-datatable';
+import { DataTable } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import sortBy from 'lodash/sortBy';
 import { useSelector } from 'react-redux';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 const rowData = [
     {
         id: 1,

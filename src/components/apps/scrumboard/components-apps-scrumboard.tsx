@@ -8,7 +8,7 @@ import IconPlusCircle from '@/components/icon/icon-plus-circle';
 import IconTag from '@/components/icon/icon-tag';
 import IconTrashLines from '@/components/icon/icon-trash-lines';
 import IconX from '@/components/icon/icon-x';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { Transition, Dialog } from '@headlessui/react';
 import React, { Fragment, useState } from 'react';
 import { useSelector } from 'react-redux';

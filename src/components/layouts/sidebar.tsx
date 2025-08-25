@@ -1,10 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { toggleSidebar } from '@/store/themeConfigSlice';
 import AnimateHeight from 'react-animate-height';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { useState, useEffect } from 'react';
 import IconCaretsDown from '@/components/icon/icon-carets-down';
 import IconMenuDashboard from '@/components/icon/menu/icon-menu-dashboard';
@@ -604,9 +605,8 @@ const Sidebar = () => {
                                         <li className="menu nav-item">
                                             <button
                                                 type="button"
-                                                className={`${
-                                                    errorSubMenu ? 'open' : ''
-                                                } w-full before:h-[5px] before:w-[5px] before:rounded before:bg-gray-300 hover:bg-gray-100 ltr:before:mr-2 rtl:before:ml-2 dark:text-[#888ea8] dark:hover:bg-gray-900`}
+                                                className={`${errorSubMenu ? 'open' : ''
+                                                    } w-full before:h-[5px] before:w-[5px] before:rounded before:bg-gray-300 hover:bg-gray-100 ltr:before:mr-2 rtl:before:ml-2 dark:text-[#888ea8] dark:hover:bg-gray-900`}
                                                 onClick={() => setErrorSubMenu(!errorSubMenu)}
                                             >
                                                 {t('error')}

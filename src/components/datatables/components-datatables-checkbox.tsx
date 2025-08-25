@@ -1,5 +1,6 @@
 'use client';
-import { DataTable, DataTableSortStatus } from 'mantine-datatable';
+import type { DataTableSortStatus } from 'mantine-datatable';
+import { DataTable } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import sortBy from 'lodash/sortBy';
 
@@ -547,7 +548,7 @@ const ComponentsDatatablesCheckbox = () => {
     useEffect(() => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
         setInitialRecords(sortStatus.direction === 'desc' ? data.reverse() : data);
-    }, [sortStatus]);
+    }, [initialRecords, sortStatus]);
 
     return (
         <div className="panel mt-6">

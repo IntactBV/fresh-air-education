@@ -1,6 +1,6 @@
 'use client';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import ReactApexChart from 'react-apexcharts';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -42,7 +42,7 @@ const ComponentsChartsRadialBar = () => {
                         total: {
                             show: true,
                             label: 'Total',
-                            formatter: function (w: any) {
+                            formatter: function (_w: any) {
                                 // By default this function returns the average of all series. The below is just an example to show the use of custom formatter function
                                 return 249;
                             },

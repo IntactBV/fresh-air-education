@@ -68,11 +68,11 @@ const ComponentsFormsLayoutsHorizontal = () => {
                         <input id="horizontalPassword" type="password" placeholder="Enter Password" className="form-input flex-1" />
                     </div>
                     <div className="flex flex-col sm:flex-row">
-                        <label className="rtl:ml-2 sm:w-1/4 sm:ltr:mr-2">Choose Segements</label>
+                        <label htmlFor="segements1" className="rtl:ml-2 sm:w-1/4 sm:ltr:mr-2">Choose Segements</label>
                         <div className="flex-1">
                             <div className="mb-2">
                                 <label className="mt-1 inline-flex cursor-pointer">
-                                    <input type="radio" name="segements" className="form-radio" />
+                                    <input id="segements1" type="radio" name="segements" className="form-radio" />
                                     <span className="text-white-dark">Segements 1</span>
                                 </label>
                             </div>
@@ -91,9 +91,9 @@ const ComponentsFormsLayoutsHorizontal = () => {
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row">
-                        <label className="font-semibold rtl:ml-2 sm:w-1/4 sm:ltr:mr-2">Apply</label>
+                        <label htmlFor="applyTerms" className="font-semibold rtl:ml-2 sm:w-1/4 sm:ltr:mr-2">Apply</label>
                         <label className="mb-0 inline-flex cursor-pointer">
-                            <input type="checkbox" className="form-checkbox" />
+                            <input id="applyTerms" type="checkbox" className="form-checkbox" />
                             <span className="text-white-dark">Terms Conditions</span>
                         </label>
                     </div>
