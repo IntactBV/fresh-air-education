@@ -11,7 +11,7 @@ const ComponentsSweetAlertsWithFooter = () => {
             text: 'Something went wrong!',
             footer: '<a href="javascript:;">Why do I have this issue?</a>',
             padding: '2em',
-            customClass: 'sweet-alerts',
+            customClass: { popup: 'sweet-alerts' },
         });
     };
     return (

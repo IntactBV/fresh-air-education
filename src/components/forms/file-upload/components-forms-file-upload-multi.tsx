@@ -2,12 +2,13 @@
 import IconX from '@/components/icon/icon-x';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
 import React, { useState } from 'react';
-import ImageUploading, { ImageListType } from 'react-images-uploading';
+import type { ImageListType } from 'react-images-uploading';
+import ImageUploading from 'react-images-uploading';
 
 const ComponentsFormsFileUploadMulti = () => {
     const [images2, setImages2] = useState<any>([]);
     const maxNumber = 69;
-    const onChange2 = (imageList: ImageListType, addUpdateIndex: number[] | undefined) => {
+    const onChange2 = (imageList: ImageListType, _addUpdateIndex: number[] | undefined) => {
         setImages2(imageList as never[]);
     };
 
@@ -89,7 +90,7 @@ const onChange2 = (imageList: ImageListType, addUpdateIndex: number[] | undefine
                     <input type="file" className="custom-file-container__custom-file__custom-file-input" accept="image/*" />
                     <input type="hidden" name="MAX_FILE_SIZE" value="10485760" />
                     <ImageUploading multiple value={images2} onChange={onChange2} maxNumber={maxNumber}>
-                        {({ imageList, onImageUpload, onImageRemoveAll, onImageUpdate, onImageRemove, isDragging, dragProps }) => (
+                        {({ imageList, onImageUpload, onImageRemove }) => (
                             <div className="upload__image-wrapper">
                                 <button className="custom-file-container__custom-file__custom-file-control" onClick={onImageUpload}>
                                     Choose File...

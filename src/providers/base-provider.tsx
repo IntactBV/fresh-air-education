@@ -2,7 +2,8 @@
 
 import store from '@/store';
 import { Provider } from 'react-redux';
-import React, { ReactNode, Suspense } from 'react';
+import type { ReactNode} from 'react';
+import React, { Suspense } from 'react';
 import Loading from '@faComponents/layouts/loading';
 import AppProvider from '@faProviders/app-provider';
 // import { appWithI18Next } from 'ni18n';

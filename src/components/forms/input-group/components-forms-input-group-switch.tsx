@@ -33,6 +33,7 @@ const ComponentsFormsInputGroupSwitch = () => {
                     <div className="flex">
                         <div className="flex items-center justify-center border border-white-light bg-[#eee] px-3 font-semibold ltr:rounded-l-md ltr:border-r-0 rtl:rounded-r-md rtl:border-l-0 dark:border-[#17263c] dark:bg-[#1b2e4b]">
                             <label className="relative mb-0 h-4 w-7 cursor-pointer">
+                                <span className="sr-only">Toggle switch</span>
                                 <input type="checkbox" className="peer absolute z-10 h-full w-full cursor-pointer opacity-0 focus:outline-none focus:ring-0" id="custom_switch_checkbox1" />
                                 <span className="block h-full rounded-full border border-[#adb5bd] bg-white before:absolute before:bottom-[2px] before:h-3 before:w-3 before:rounded-full before:bg-[#adb5bd] before:transition-all before:duration-300 peer-checked:border-primary peer-checked:bg-primary peer-checked:before:bg-white ltr:before:left-0.5 ltr:peer-checked:before:left-3.5 rtl:before:right-0.5 rtl:peer-checked:before:right-3.5 dark:bg-dark dark:before:bg-white-dark"></span>
                             </label>
@@ -46,6 +47,7 @@ const ComponentsFormsInputGroupSwitch = () => {
                         <input id="switchRight" type="text" placeholder="Switch" className="form-input ltr:rounded-r-none rtl:rounded-l-none" />
                         <div className="flex items-center justify-center border border-white-light bg-[#eee] px-3 font-semibold ltr:rounded-r-md ltr:border-l-0 rtl:rounded-l-md rtl:border-r-0 dark:border-[#17263c] dark:bg-[#1b2e4b]">
                             <label className="relative mb-0 h-4 w-7 cursor-pointer">
+                                <span className="sr-only">Toggle switch</span>
                                 <input type="checkbox" className="peer absolute z-10 h-full w-full cursor-pointer opacity-0 focus:outline-none focus:ring-0" id="custom_switch_checkbox2" />
                                 <span className="block h-full rounded-full border border-[#adb5bd] bg-white before:absolute before:bottom-[2px] before:h-3 before:w-3 before:rounded-full before:bg-[#adb5bd] before:transition-all before:duration-300 peer-checked:border-primary peer-checked:bg-primary peer-checked:before:bg-white ltr:before:left-0.5 ltr:peer-checked:before:left-3.5 rtl:before:right-0.5 rtl:peer-checked:before:right-3.5 dark:bg-dark dark:before:bg-white-dark"></span>
                             </label>

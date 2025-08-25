@@ -10,8 +10,19 @@ import react from 'eslint-plugin-react';
 import hooks from 'eslint-plugin-react-hooks';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import next from '@next/eslint-plugin-next';
+import { FlatCompat } from '@eslint/eslintrc'
 
-export default [
+const compat = new FlatCompat({
+  // import.meta.dirname is available after Node.js v20.11.0
+  baseDirectory: import.meta.dirname,
+  recommendedConfig: js.configs.recommended,
+});
+
+const config = [
+  ...compat.config({
+    extends: ['eslint:recommended', 'next'],
+  }),
+
   // Ignore build artifacts
   {
     ignores: [
@@ -88,6 +99,10 @@ export default [
 
       // Accessibility: already covered by jsx-a11y recommended,
       // but you can tighten further if desired.
+      "jsx-a11y/click-events-have-key-events": "off",
+      "jsx-a11y/no-noninteractive-element-interactions": "off",
+      "jsx-a11y/no-static-element-interactions": "off",
+      "jsx-a11y/label-has-associated-control": "off",
     },
   },
 
@@ -118,3 +133,5 @@ export default [
     },
   },
 ];
+
+export default config;

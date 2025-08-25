@@ -1,5 +1,5 @@
 import 'react-perfect-scrollbar/dist/css/styles.css';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { Nunito } from 'next/font/google';
 import BaseProvider from '@faProviders/base-provider';
 

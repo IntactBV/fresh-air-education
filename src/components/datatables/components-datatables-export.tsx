@@ -1,5 +1,6 @@
 'use client';
-import { DataTable, DataTableSortStatus } from 'mantine-datatable';
+import type { DataTableSortStatus } from 'mantine-datatable';
+import { DataTable } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import sortBy from 'lodash/sortBy';
 import IconFile from '@/components/icon/icon-file';
@@ -554,6 +555,7 @@ const ComponentsDatatablesExport = () => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
         setInitialRecords(sortStatus.direction === 'desc' ? data.reverse() : data);
         setPage(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sortStatus]);
 
     const formatDate = (date: any) => {

@@ -62,6 +62,7 @@ const ComponentsAppsInvoiceEdit = () => {
             invoiceDate: dt.getFullYear() + '-' + month + '-' + date,
             dueDate: dt.getFullYear() + '-' + month + '-' + date,
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const addItem = () => {
@@ -415,7 +416,7 @@ const ComponentsAppsInvoiceEdit = () => {
                                         </td>
                                     </tr>
                                 )}
-                                {items.map((item: any, index: any) => {
+                                {items.map((item: any, _index: any) => {
                                     return (
                                         <tr className="align-top" key={item.id}>
                                             <td>

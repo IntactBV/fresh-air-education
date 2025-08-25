@@ -1,5 +1,5 @@
 'use client';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -18,6 +18,7 @@ const ContentAnimation = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => {
             setAnimation('');
         }, 1100);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname]);
     return (
         <>

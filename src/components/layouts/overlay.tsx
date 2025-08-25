@@ -1,5 +1,5 @@
 'use client';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { toggleSidebar } from '@/store/themeConfigSlice';
 import { useDispatch, useSelector } from 'react-redux';
 

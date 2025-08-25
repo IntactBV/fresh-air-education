@@ -14,7 +14,7 @@ import IconPlus from '@/components/icon/icon-plus';
 import IconShoppingCart from '@/components/icon/icon-shopping-cart';
 import IconTag from '@/components/icon/icon-tag';
 import IconUser from '@/components/icon/icon-user';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';

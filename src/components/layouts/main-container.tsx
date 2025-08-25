@@ -1,5 +1,5 @@
 'use client';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import React from 'react';
 import { useSelector } from 'react-redux';
 

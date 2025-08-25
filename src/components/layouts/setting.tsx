@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { toggleAnimation, toggleLayout, toggleMenu, toggleNavbar, toggleRTL, toggleTheme, toggleSemidark, resetToggleSidebar } from '@/store/themeConfigSlice';
 import IconSettings from '@/components/icon/icon-settings';
 import IconX from '@/components/icon/icon-x';

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unknown-property */
 'use client';
 import Dropdown from '@/components/dropdown';
 import IconBell from '@/components/icon/icon-bell';
@@ -22,7 +23,7 @@ import IconTrashLines from '@/components/icon/icon-trash-lines';
 import IconUserPlus from '@/components/icon/icon-user-plus';
 import IconVideo from '@/components/icon/icon-video';
 import PerfectScrollbar from 'react-perfect-scrollbar';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -388,9 +389,8 @@ const ComponentsAppsChat = () => {
                                     <div key={person.userId}>
                                         <button
                                             type="button"
-                                            className={`flex w-full items-center justify-between rounded-md p-2 hover:bg-gray-100 hover:text-primary dark:hover:bg-[#050b14] dark:hover:text-primary ${
-                                                selectedUser && selectedUser.userId === person.userId ? 'bg-gray-100 text-primary dark:bg-[#050b14] dark:text-primary' : ''
-                                            }`}
+                                            className={`flex w-full items-center justify-between rounded-md p-2 hover:bg-gray-100 hover:text-primary dark:hover:bg-[#050b14] dark:hover:text-primary ${selectedUser && selectedUser.userId === person.userId ? 'bg-gray-100 text-primary dark:bg-[#050b14] dark:text-primary' : ''
+                                                }`}
                                             onClick={() => selectUser(person)}
                                         >
                                             <div className="flex-1">
@@ -638,11 +638,10 @@ const ComponentsAppsChat = () => {
                                                             <div className="space-y-2">
                                                                 <div className="flex items-center gap-3">
                                                                     <div
-                                                                        className={`rounded-md bg-black/10 p-4 py-2 dark:bg-gray-800 ${
-                                                                            message.fromUserId === selectedUser.userId
+                                                                        className={`rounded-md bg-black/10 p-4 py-2 dark:bg-gray-800 ${message.fromUserId === selectedUser.userId
                                                                                 ? '!bg-primary text-white ltr:rounded-br-none rtl:rounded-bl-none'
                                                                                 : 'ltr:rounded-bl-none rtl:rounded-br-none'
-                                                                        }`}
+                                                                            }`}
                                                                     >
                                                                         {message.text}
                                                                     </div>

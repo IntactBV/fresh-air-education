@@ -8,7 +8,7 @@ import ComponentsTablesLight from '@/components/tables/components-tables-light';
 import ComponentsTablesProgress from '@/components/tables/components-tables-progress';
 import ComponentsTablesSimple from '@/components/tables/components-tables-simple';
 import ComponentsTablesStripped from '@/components/tables/components-tables-stripped';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {

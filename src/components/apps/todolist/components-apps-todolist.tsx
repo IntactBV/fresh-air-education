@@ -15,7 +15,7 @@ import IconThumbUp from '@/components/icon/icon-thumb-up';
 import IconTrashLines from '@/components/icon/icon-trash-lines';
 import IconUser from '@/components/icon/icon-user';
 import IconX from '@/components/icon/icon-x';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { Transition, Dialog } from '@headlessui/react';
 import React, { Fragment, useEffect, useState } from 'react';
 import ReactQuill from 'react-quill';
@@ -440,6 +440,7 @@ const ComponentsAppsTodoList = () => {
 
     useEffect(() => {
         searchTasks();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedTab, searchTask, allTasks]);
 
     const changeValue = (e: any) => {
@@ -597,9 +598,8 @@ const ComponentsAppsTodoList = () => {
         <div>
             <div className="relative flex h-full gap-5 sm:h-[calc(100vh_-_150px)]">
                 <div
-                    className={`panel absolute z-10 hidden h-full w-[240px] max-w-full flex-none space-y-4 p-4 ltr:rounded-r-none rtl:rounded-l-none xl:relative xl:block xl:h-auto ltr:xl:rounded-r-md rtl:xl:rounded-l-md ${
-                        isShowTaskMenu && '!block'
-                    }`}
+                    className={`panel absolute z-10 hidden h-full w-[240px] max-w-full flex-none space-y-4 p-4 ltr:rounded-r-none rtl:rounded-l-none xl:relative xl:block xl:h-auto ltr:xl:rounded-r-md rtl:xl:rounded-l-md ${isShowTaskMenu && '!block'
+                        }`}
                 >
                     <div className="flex h-full flex-col pb-16">
                         <div className="pb-5">
@@ -615,9 +615,8 @@ const ComponentsAppsTodoList = () => {
                             <div className="space-y-1">
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        selectedTab === '' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${selectedTab === '' ? 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary' : ''
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('');
@@ -633,9 +632,8 @@ const ComponentsAppsTodoList = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        selectedTab === 'complete' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${selectedTab === 'complete' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('complete');
@@ -651,9 +649,8 @@ const ComponentsAppsTodoList = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        selectedTab === 'important' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${selectedTab === 'important' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('important');
@@ -669,9 +666,8 @@ const ComponentsAppsTodoList = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        selectedTab === 'trash' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${selectedTab === 'trash' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('trash');
@@ -686,9 +682,8 @@ const ComponentsAppsTodoList = () => {
                                 <div className="px-1 py-3 text-white-dark">Tags</div>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-success duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'team' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-success duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'team' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('team');
@@ -699,9 +694,8 @@ const ComponentsAppsTodoList = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-warning duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'low' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-warning duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'low' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('low');
@@ -713,9 +707,8 @@ const ComponentsAppsTodoList = () => {
 
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-primary duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'medium' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-primary duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'medium' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('medium');
@@ -726,9 +719,8 @@ const ComponentsAppsTodoList = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-danger duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'high' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-danger duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'high' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('high');
@@ -739,9 +731,8 @@ const ComponentsAppsTodoList = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-info duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'update' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-info duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'update' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => {
                                         tabChanged();
                                         setSelectedTab('update');
@@ -847,21 +838,20 @@ const ComponentsAppsTodoList = () => {
                                                                         btnClassName="align-middle"
                                                                         button={
                                                                             <span
-                                                                                className={`badge rounded-full capitalize hover:top-0 hover:text-white ${
-                                                                                    task.priority === 'medium'
+                                                                                className={`badge rounded-full capitalize hover:top-0 hover:text-white ${task.priority === 'medium'
                                                                                         ? 'badge-outline-primary hover:bg-primary'
                                                                                         : task.priority === 'low'
-                                                                                        ? 'badge-outline-warning hover:bg-warning'
-                                                                                        : task.priority === 'high'
-                                                                                        ? 'badge-outline-danger hover:bg-danger'
-                                                                                        : task.priority === 'medium' && isPriorityMenu === task.id
-                                                                                        ? 'bg-primary text-white'
-                                                                                        : task.priority === 'low' && isPriorityMenu === task.id
-                                                                                        ? 'bg-warning text-white'
-                                                                                        : task.priority === 'high' && isPriorityMenu === task.id
-                                                                                        ? 'bg-danger text-white'
-                                                                                        : ''
-                                                                                }`}
+                                                                                            ? 'badge-outline-warning hover:bg-warning'
+                                                                                            : task.priority === 'high'
+                                                                                                ? 'badge-outline-danger hover:bg-danger'
+                                                                                                : task.priority === 'medium' && isPriorityMenu === task.id
+                                                                                                    ? 'bg-primary text-white'
+                                                                                                    : task.priority === 'low' && isPriorityMenu === task.id
+                                                                                                        ? 'bg-warning text-white'
+                                                                                                        : task.priority === 'high' && isPriorityMenu === task.id
+                                                                                                            ? 'bg-danger text-white'
+                                                                                                            : ''
+                                                                                    }`}
                                                                             >
                                                                                 {task.priority}
                                                                             </span>
@@ -896,17 +886,16 @@ const ComponentsAppsTodoList = () => {
                                                                         btnClassName="align-middle"
                                                                         button={
                                                                             <span
-                                                                                className={`badge rounded-full capitalize hover:top-0 hover:text-white ${
-                                                                                    task.tag === 'team'
+                                                                                className={`badge rounded-full capitalize hover:top-0 hover:text-white ${task.tag === 'team'
                                                                                         ? 'badge-outline-success hover:bg-success'
                                                                                         : task.tag === 'update'
-                                                                                        ? 'badge-outline-info hover:bg-info'
-                                                                                        : task.tag === 'team' && isTagMenu === task.id
-                                                                                        ? 'bg-success text-white '
-                                                                                        : task.tag === 'update' && isTagMenu === task.id
-                                                                                        ? 'bg-info text-white '
-                                                                                        : ''
-                                                                                }`}
+                                                                                            ? 'badge-outline-info hover:bg-info'
+                                                                                            : task.tag === 'team' && isTagMenu === task.id
+                                                                                                ? 'bg-success text-white '
+                                                                                                : task.tag === 'update' && isTagMenu === task.id
+                                                                                                    ? 'bg-info text-white '
+                                                                                                    : ''
+                                                                                    }`}
                                                                             >
                                                                                 {task.tag}
                                                                             </span>
@@ -1165,24 +1154,22 @@ const ComponentsAppsTodoList = () => {
                                             <div>{selectedTask.title}</div>
                                             {selectedTask.priority && (
                                                 <div
-                                                    className={`badge rounded-3xl capitalize ${
-                                                        selectedTask.priority === 'medium'
+                                                    className={`badge rounded-3xl capitalize ${selectedTask.priority === 'medium'
                                                             ? 'badge-outline-primary'
                                                             : selectedTask.priority === 'low'
-                                                            ? 'badge-outline-warning '
-                                                            : selectedTask.priority === 'high'
-                                                            ? 'badge-outline-danger '
-                                                            : ''
-                                                    }`}
+                                                                ? 'badge-outline-warning '
+                                                                : selectedTask.priority === 'high'
+                                                                    ? 'badge-outline-danger '
+                                                                    : ''
+                                                        }`}
                                                 >
                                                     {selectedTask.priority}
                                                 </div>
                                             )}
                                             {selectedTask.tag && (
                                                 <div
-                                                    className={`badge rounded-3xl capitalize ${
-                                                        selectedTask.tag === 'team' ? 'badge-outline-success' : selectedTask.tag === 'update' ? 'badge-outline-info ' : ''
-                                                    }`}
+                                                    className={`badge rounded-3xl capitalize ${selectedTask.tag === 'team' ? 'badge-outline-success' : selectedTask.tag === 'update' ? 'badge-outline-info ' : ''
+                                                        }`}
                                                 >
                                                     {selectedTask.tag}
                                                 </div>

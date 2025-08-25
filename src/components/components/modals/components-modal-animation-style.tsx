@@ -1,7 +1,7 @@
 'use client';
 import IconX from '@/components/icon/icon-x';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { Transition, Dialog } from '@headlessui/react';
 import React, { Fragment, useState } from 'react';
 import { useSelector } from 'react-redux';

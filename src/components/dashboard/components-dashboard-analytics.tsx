@@ -18,7 +18,7 @@ import IconSquareCheck from '@/components/icon/icon-square-check';
 import IconThumbUp from '@/components/icon/icon-thumb-up';
 import IconTrendingUp from '@/components/icon/icon-trending-up';
 import IconUsersGroup from '@/components/icon/icon-users-group';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';

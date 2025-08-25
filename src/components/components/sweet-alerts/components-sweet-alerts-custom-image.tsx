@@ -13,7 +13,7 @@ const ComponentsSweetAlertsCustomImage = () => {
             imageHeight: 'auto',
             imageAlt: 'Custom image',
             padding: '2em',
-            customClass: 'sweet-alerts',
+            customClass: { popup: 'sweet-alerts' },
         });
     };
     return (

@@ -5,7 +5,7 @@ import IconChatDot from '@/components/icon/icon-chat-dot';
 import IconHorizontalDots from '@/components/icon/icon-horizontal-dots';
 import IconPhone from '@/components/icon/icon-phone';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import React from 'react';
 import { useSelector } from 'react-redux';
 

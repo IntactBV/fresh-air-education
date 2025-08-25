@@ -3,17 +3,17 @@ const cookieObj = typeof window === 'undefined' ? require('next/headers') : requ
 import en from './locales/en.json';
 const langObj: any = { en };
 
-const getLang = async () => {
-    let lang = null;
-    if (typeof window !== 'undefined') {
-        const cookies = new cookieObj.default(null, { path: '/' });
-        lang = await cookies.get('i18nextLng');
-    } else {
-        const cookies = cookieObj.cookies();
-        lang = await cookies.get('i18nextLng')?.value;
-    }
-    return lang;
-};
+// const getLang = async () => {
+//     let lang = null;
+//     if (typeof window !== 'undefined') {
+//         const cookies = new cookieObj.default(null, { path: '/' });
+//         lang = await cookies.get('i18nextLng');
+//     } else {
+//         const cookies = cookieObj.cookies();
+//         lang = await cookies.get('i18nextLng')?.value;
+//     }
+//     return lang;
+// };
 
 export const getTranslation = () => {
     // @TODO: change default lang to ro

@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 
 const ComponentsSweetAlertsAutoCloseTimer = () => {
     const showAlert = async () => {
-        let timerInterval: string | number | NodeJS.Timer | undefined;
+        let timerInterval: ReturnType<typeof setInterval> | undefined;
         Swal.fire({
             title: 'Auto close alert!',
             html: 'I will close in <b></b> milliseconds.',

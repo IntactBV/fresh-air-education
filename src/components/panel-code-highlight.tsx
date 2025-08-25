@@ -1,7 +1,8 @@
 'use client';
 import CodeHighlight from '@/components/highlight';
 import IconCode from '@/components/icon/icon-code';
-import React, { useState, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React, { useState } from 'react';
 
 interface PanelCodeHighlightProps {
     children: ReactNode;

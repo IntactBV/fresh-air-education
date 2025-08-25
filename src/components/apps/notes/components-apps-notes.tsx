@@ -13,7 +13,7 @@ import IconStar from '@/components/icon/icon-star';
 import IconTrashLines from '@/components/icon/icon-trash-lines';
 import IconUser from '@/components/icon/icon-user';
 import IconX from '@/components/icon/icon-x';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { Transition, Dialog } from '@headlessui/react';
 import React, { Fragment, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -367,6 +367,7 @@ const ComponentsAppsNotes = () => {
 
     useEffect(() => {
         searchNotes();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedTab, notesList]);
 
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl';
@@ -405,9 +406,8 @@ const ComponentsAppsNotes = () => {
                             <div className="space-y-1">
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        selectedTab === 'all' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${selectedTab === 'all' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
+                                        }`}
                                     onClick={() => tabChanged('all')}
                                 >
                                     <div className="flex items-center">
@@ -417,9 +417,8 @@ const ComponentsAppsNotes = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${
-                                        selectedTab === 'fav' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
-                                    }`}
+                                    className={`flex h-10 w-full items-center justify-between rounded-md p-2 font-medium hover:bg-white-dark/10 hover:text-primary dark:hover:bg-[#181F32] dark:hover:text-primary ${selectedTab === 'fav' && 'bg-gray-100 text-primary dark:bg-[#181F32] dark:text-primary'
+                                        }`}
                                     onClick={() => tabChanged('fav')}
                                 >
                                     <div className="flex items-center">
@@ -431,9 +430,8 @@ const ComponentsAppsNotes = () => {
                                 <div className="px-1 py-3 text-white-dark">Tags</div>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-primary duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'personal' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-primary duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'personal' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => tabChanged('personal')}
                                 >
                                     <IconSquareRotated className="shrink-0 fill-primary" />
@@ -441,9 +439,8 @@ const ComponentsAppsNotes = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-warning duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'work' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-warning duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'work' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => tabChanged('work')}
                                 >
                                     <IconSquareRotated className="shrink-0 fill-warning" />
@@ -451,9 +448,8 @@ const ComponentsAppsNotes = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-info duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'social' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-info duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'social' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => tabChanged('social')}
                                 >
                                     <IconSquareRotated className="shrink-0 fill-info" />
@@ -461,9 +457,8 @@ const ComponentsAppsNotes = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-danger duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${
-                                        selectedTab === 'important' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
-                                    }`}
+                                    className={`flex h-10 w-full items-center rounded-md p-1 font-medium text-danger duration-300 hover:bg-white-dark/10 ltr:hover:pl-3 rtl:hover:pr-3 dark:hover:bg-[#181F32] ${selectedTab === 'important' && 'bg-gray-100 ltr:pl-3 rtl:pr-3 dark:bg-[#181F32]'
+                                        }`}
                                     onClick={() => tabChanged('important')}
                                 >
                                     <IconSquareRotated className="shrink-0 fill-danger" />
@@ -491,17 +486,16 @@ const ComponentsAppsNotes = () => {
                                 {filterdNotesList.map((note: any) => {
                                     return (
                                         <div
-                                            className={`panel pb-12 ${
-                                                note.tag === 'personal'
+                                            className={`panel pb-12 ${note.tag === 'personal'
                                                     ? 'bg-primary-light shadow-primary'
                                                     : note.tag === 'work'
-                                                    ? 'bg-warning-light shadow-warning'
-                                                    : note.tag === 'social'
-                                                    ? 'bg-info-light shadow-info'
-                                                    : note.tag === 'important'
-                                                    ? 'bg-danger-light shadow-danger'
-                                                    : 'dark:shadow-dark'
-                                            }`}
+                                                        ? 'bg-warning-light shadow-warning'
+                                                        : note.tag === 'social'
+                                                            ? 'bg-info-light shadow-info'
+                                                            : note.tag === 'important'
+                                                                ? 'bg-danger-light shadow-danger'
+                                                                : 'dark:shadow-dark'
+                                                }`}
                                             key={note.id}
                                         >
                                             <div className="min-h-[142px]">
@@ -572,17 +566,16 @@ const ComponentsAppsNotes = () => {
                                                             <Dropdown
                                                                 offset={[0, 5]}
                                                                 placement={`${isRtl ? 'bottom-end' : 'bottom-start'}`}
-                                                                btnClassName={`${
-                                                                    note.tag === 'personal'
+                                                                btnClassName={`${note.tag === 'personal'
                                                                         ? 'text-primary'
                                                                         : note.tag === 'work'
-                                                                        ? 'text-warning'
-                                                                        : note.tag === 'social'
-                                                                        ? 'text-info'
-                                                                        : note.tag === 'important'
-                                                                        ? 'text-danger'
-                                                                        : ''
-                                                                }`}
+                                                                            ? 'text-warning'
+                                                                            : note.tag === 'social'
+                                                                                ? 'text-info'
+                                                                                : note.tag === 'important'
+                                                                                    ? 'text-danger'
+                                                                                    : ''
+                                                                    }`}
                                                                 button={
                                                                     <span>
                                                                         <IconSquareRotated
@@ -590,12 +583,12 @@ const ComponentsAppsNotes = () => {
                                                                                 note.tag === 'personal'
                                                                                     ? 'fill-primary'
                                                                                     : note.tag === 'work'
-                                                                                    ? 'fill-warning'
-                                                                                    : note.tag === 'social'
-                                                                                    ? 'fill-info'
-                                                                                    : note.tag === 'important'
-                                                                                    ? 'fill-danger'
-                                                                                    : ''
+                                                                                        ? 'fill-warning'
+                                                                                        : note.tag === 'social'
+                                                                                            ? 'fill-info'
+                                                                                            : note.tag === 'important'
+                                                                                                ? 'fill-danger'
+                                                                                                : ''
                                                                             }
                                                                         />
                                                                     </span>
@@ -846,12 +839,11 @@ const ComponentsAppsNotes = () => {
                                                 {params.tag && (
                                                     <button
                                                         type="button"
-                                                        className={`badge badge-outline-primary rounded-3xl capitalize ltr:mr-3 rtl:ml-3 ${
-                                                            (params.tag === 'personal' && 'shadow-primary',
-                                                            params.tag === 'work' && 'shadow-warning',
-                                                            params.tag === 'social' && 'shadow-info',
-                                                            params.tag === 'important' && 'shadow-danger')
-                                                        }`}
+                                                        className={`badge badge-outline-primary rounded-3xl capitalize ltr:mr-3 rtl:ml-3 ${(params.tag === 'personal' && 'shadow-primary',
+                                                                params.tag === 'work' && 'shadow-warning',
+                                                                params.tag === 'social' && 'shadow-info',
+                                                                params.tag === 'important' && 'shadow-danger')
+                                                            }`}
                                                     >
                                                         {params.tag}
                                                     </button>

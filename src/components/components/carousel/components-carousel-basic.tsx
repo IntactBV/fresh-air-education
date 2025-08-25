@@ -7,7 +7,7 @@ import 'swiper/css/pagination';
 import { Navigation, Pagination } from 'swiper';
 import IconCaretDown from '@/components/icon/icon-caret-down';
 import PanelCodeHighlight from '@/components/panel-code-highlight';
-import { IRootState } from '@/store';
+import type { IRootState } from '@/store';
 import { useSelector } from 'react-redux';
 
 const ComponentsCarouselBasic = () => {

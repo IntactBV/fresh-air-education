@@ -1,5 +1,6 @@
 'use client';
-import { DataTable, DataTableSortStatus } from 'mantine-datatable';
+import type { DataTableSortStatus } from 'mantine-datatable';
+import { DataTable } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import sortBy from 'lodash/sortBy';
 
@@ -546,7 +547,7 @@ const ComponentsDatatablesAltPagination = () => {
         const data = sortBy(initialRecords, sortStatus.columnAccessor);
         setInitialRecords(sortStatus.direction === 'desc' ? data.reverse() : data);
         setPage(1);
-    }, [sortStatus]);
+    }, [initialRecords, sortStatus]);
     return (
         <div className="panel mt-6">
             <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
