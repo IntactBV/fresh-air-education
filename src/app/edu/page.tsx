@@ -1,23 +1,45 @@
-import { DataTable } from "@faeComponents/dashboard/data-table";
-import { SectionCards } from "@faeComponents/dashboard/section-cards";
-import { SiteHeader } from "@faeCommon/site-header";
-import { SidebarInset, SidebarProvider } from "@ui/sidebar";
+import ComponentsTablesCaptions from '@/components/tables/components-tables-captions';
+import ComponentsTablesCheckboxes from '@/components/tables/components-tables-checkboxes';
+import ComponentsTablesContextual from '@/components/tables/components-tables-contextual';
+import ComponentsTablesDropdown from '@/components/tables/components-tables-dropdown';
+import ComponentsTablesFooter from '@/components/tables/components-tables-footer';
+import ComponentsTablesHover from '@/components/tables/components-tables-hover';
+import ComponentsTablesLight from '@/components/tables/components-tables-light';
+import ComponentsTablesProgress from '@/components/tables/components-tables-progress';
+import ComponentsTablesSimple from '@/components/tables/components-tables-simple';
+import ComponentsTablesStripped from '@/components/tables/components-tables-stripped';
+import { Metadata } from 'next';
+import React from 'react';
 
-import data from "./data.json";
-import { PageHeader } from "@faeCommon/page-header";
+export const metadata: Metadata = {
+    title: 'Prima pagina',
+};
 
-export default function EducationDashboard() {
-  return (
-    <SidebarInset>
-      <PageHeader title="Dashboard" />
-      <div className="flex flex-1 flex-col">
-        <div className="@container/main flex flex-1 flex-col gap-2">
-          <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-            <SectionCards />
-            <DataTable data={data} />
-          </div>
+const Tables = () => {
+    return (
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {/* Simple */}
+            <ComponentsTablesSimple />
+            {/* Hover Table  */}
+            <ComponentsTablesHover />
+            {/* stripped Table  */}
+            <ComponentsTablesStripped />
+            {/* light Table  */}
+            <ComponentsTablesLight />
+            {/* captions */}
+            <ComponentsTablesCaptions />
+            {/* progress */}
+            <ComponentsTablesProgress />
+            {/* Contextual */}
+            <ComponentsTablesContextual />
+            {/* dropdown */}
+            <ComponentsTablesDropdown />
+            {/* footer Table  */}
+            <ComponentsTablesFooter />
+            {/* checkboxes */}
+            <ComponentsTablesCheckboxes />
         </div>
-      </div>
-    </SidebarInset>
-  );
-}
+    );
+};
+
+export default Tables;
