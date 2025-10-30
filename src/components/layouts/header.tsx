@@ -30,7 +30,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 
 type UserType = 'Student' | 'Tutore' | 'Admin';
-const USER_TYPE: UserType = 'Admin';
+let USER_TYPE: UserType = 'Admin';
 
 const Header = () => {
     const pathname = usePathname();
