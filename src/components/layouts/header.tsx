@@ -29,8 +29,21 @@ import IconMenuMore from '@/components/icon/menu/icon-menu-more';
 import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 
-type UserType = 'Student' | 'Tutore' | 'Admin';
-let USER_TYPE: UserType = 'Admin';
+enum EUserTypes {
+    Student = 'Student',
+    Tutore = 'Tutore',
+    Admin = 'Admin',
+}
+
+type MockUser = {
+    id: string,
+    name: string,
+    email: string,
+    type: EUserTypes,
+    avatarUrl: string,
+};
+
+let USER_TYPE: EUserTypes = EUserTypes.Admin;
 
 const Header = () => {
     const pathname = usePathname();
@@ -154,7 +167,7 @@ const Header = () => {
     const [auth, setAuth] = useState<{ isAuthenticated: boolean; user: AuthUser }>({ isAuthenticated: false, user: null });
 
     const login = useCallback(async () => {
-        const mockUser = {
+        const mockUser: MockUser = {
             id: 'u_123',
             name: 'John Doe',
             email: 'johndoe@gmail.com',
@@ -165,9 +178,9 @@ const Header = () => {
         setAuth({ isAuthenticated: true, user: mockUser });
 
         // redirect imediat după autentificare, în funcție de rol
-        if (mockUser.type === 'Student') router.push('/edu');
-        else if (mockUser.type === 'Tutore') router.push('/tutore');
-        else if (mockUser.type === 'Admin') router.push('/admin');
+        if (mockUser.type === EUserTypes.Student) router.push('/edu');
+        else if (mockUser.type === EUserTypes.Tutore) router.push('/tutore');
+        else if (mockUser.type === EUserTypes.Admin) router.push('/admin');
     }, [router]);
 
     const logout = useCallback(async () => {
