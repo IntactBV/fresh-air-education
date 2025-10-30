@@ -1,27 +1,22 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useCallback, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import type { IRootState } from '@/store';
 import { toggleTheme, toggleSidebar, toggleRTL } from '@/store/themeConfigSlice';
 import Dropdown from '@/components/dropdown';
 import IconMenu from '@/components/icon/icon-menu';
-import IconCalendar from '@/components/icon/icon-calendar';
-import IconEdit from '@/components/icon/icon-edit';
-import IconChatNotification from '@/components/icon/icon-chat-notification';
-import IconSearch from '@/components/icon/icon-search';
 import IconXCircle from '@/components/icon/icon-x-circle';
 import IconSun from '@/components/icon/icon-sun';
 import IconMoon from '@/components/icon/icon-moon';
 import IconLaptop from '@/components/icon/icon-laptop';
-import IconMailDot from '@/components/icon/icon-mail-dot';
-import IconArrowLeft from '@/components/icon/icon-arrow-left';
 import IconInfoCircle from '@/components/icon/icon-info-circle';
 import IconBellBing from '@/components/icon/icon-bell-bing';
 import IconUser from '@/components/icon/icon-user';
 import IconMail from '@/components/icon/icon-mail';
 import IconLockDots from '@/components/icon/icon-lock-dots';
 import IconLogout from '@/components/icon/icon-logout';
+import IconLogin from '@/components/icon/icon-login';
 import IconMenuDashboard from '@/components/icon/menu/icon-menu-dashboard';
 import IconCaretDown from '@/components/icon/icon-caret-down';
 import IconMenuApps from '@/components/icon/menu/icon-menu-apps';
@@ -33,6 +28,9 @@ import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuMore from '@/components/icon/menu/icon-menu-more';
 import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
+
+type UserType = 'Student' | 'Tutore' | 'Admin';
+const USER_TYPE: UserType = 'Admin';
 
 const Header = () => {
     const pathname = usePathname();
@@ -145,71 +143,84 @@ const Header = () => {
 
     const [search, setSearch] = useState(false);
 
+    type AuthUser = {
+        id: string;
+        name: string;
+        email: string;
+        type: string;
+        avatarUrl: string;
+    } | null;
+
+    const [auth, setAuth] = useState<{ isAuthenticated: boolean; user: AuthUser }>({ isAuthenticated: false, user: null });
+
+    const login = useCallback(async () => {
+        const mockUser = {
+            id: 'u_123',
+            name: 'John Doe',
+            email: 'johndoe@gmail.com',
+            type: USER_TYPE,
+            avatarUrl: '/assets/images/user-profile.jpeg',
+        };
+
+        setAuth({ isAuthenticated: true, user: mockUser });
+
+        // redirect imediat după autentificare, în funcție de rol
+        if (mockUser.type === 'Student') router.push('/edu');
+        else if (mockUser.type === 'Tutore') router.push('/tutore');
+        else if (mockUser.type === 'Admin') router.push('/admin');
+    }, [router]);
+
+    const logout = useCallback(async () => {
+        // await signOut();
+        // localStorage.removeItem("access_token");
+        setAuth({ isAuthenticated: false, user: null });
+        router.push("/public");
+    }, [router]);
+
+    function getInitials(name: string | undefined) {
+        if (!name) return "NA";
+        return name
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((s) => s[0]?.toUpperCase())
+            .join("");
+        }
+
+    const initials = useMemo(() => getInitials(auth.user?.name), [auth.user]);
+
+    const isEduRoute = pathname.startsWith("/edu");
+    const isAdminRoute = pathname.startsWith("/admin");
+
+    useEffect(() => {
+        // In /edu, always show authenticated header (static assumption).
+        if (isEduRoute || isAdminRoute) {
+            login();
+        }
+        }, [isEduRoute, isAdminRoute]);
+
     return (
         <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
             <div className="shadow-sm">
                 <div className="relative flex w-full items-center bg-white px-5 py-2.5 dark:bg-black">
-                    <div className="horizontal-logo flex items-center justify-between ltr:mr-2 rtl:ml-2 lg:hidden">
+  
+                    <div className={`horizontal-logo flex items-center justify-between ltr:mr-2 rtl:ml-2 ${isEduRoute || isAdminRoute ? 'lg:hidden' : ''}`}>
                         <Link href="/" className="main-logo flex shrink-0 items-center">
-                            <img className="inline w-8 ltr:-ml-1 rtl:-mr-1" src="/assets/images/logo.svg" alt="logo" />
-                            <span className="hidden align-middle text-2xl  font-semibold  transition-all duration-300 ltr:ml-1.5 rtl:mr-1.5 dark:text-white-light md:inline">VRISTO</span>
+                            <img className="inline w-8 ltr:-ml-1 rtl:-mr-1" src="/assets/images/logo.png" alt="logo" />
+                            <span className="hidden md:inline align-middle text-2xl font-semibold transition-all duration-300 ltr:ml-1.5 rtl:mr-1.5 text-zinc-600 dark:text-zinc-400">FRESH AIR</span>
                         </Link>
-                        <button
-                            type="button"
-                            className="collapse-icon flex flex-none rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary ltr:ml-2 rtl:mr-2 dark:bg-dark/40 dark:text-[#d0d2d6] dark:hover:bg-dark/60 dark:hover:text-primary lg:hidden"
-                            onClick={() => dispatch(toggleSidebar())}
-                        >
-                            <IconMenu className="h-5 w-5" />
-                        </button>
-                    </div>
-
-                    <div className="hidden ltr:mr-2 rtl:ml-2 sm:block">
-                        <ul className="flex items-center space-x-2 rtl:space-x-reverse dark:text-[#d0d2d6]">
-                            <li>
-                                <Link href="/apps/calendar" className="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60">
-                                    <IconCalendar />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/apps/todolist" className="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60">
-                                    <IconEdit />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/apps/chat" className="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60">
-                                    <IconChatNotification />
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-                    <div className="flex items-center space-x-1.5 ltr:ml-auto rtl:mr-auto rtl:space-x-reverse dark:text-[#d0d2d6] sm:flex-1 ltr:sm:ml-0 sm:rtl:mr-0 lg:space-x-2">
-                        <div className="sm:ltr:mr-auto sm:rtl:ml-auto">
-                            <form
-                                className={`${search && '!block'} absolute inset-x-0 top-1/2 z-10 mx-4 hidden -translate-y-1/2 sm:relative sm:top-0 sm:mx-0 sm:block sm:translate-y-0`}
-                                onSubmit={() => setSearch(false)}
-                            >
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        className="peer form-input bg-gray-100 placeholder:tracking-widest ltr:pl-9 ltr:pr-9 rtl:pl-9 rtl:pr-9 sm:bg-transparent ltr:sm:pr-4 rtl:sm:pl-4"
-                                        placeholder="Search..."
-                                    />
-                                    <button type="button" className="absolute inset-0 h-9 w-9 appearance-none peer-focus:text-primary ltr:right-auto rtl:left-auto">
-                                        <IconSearch className="mx-auto" />
-                                    </button>
-                                    <button type="button" className="absolute top-1/2 block -translate-y-1/2 hover:opacity-80 ltr:right-2 rtl:left-2 sm:hidden" onClick={() => setSearch(false)}>
-                                        <IconXCircle />
-                                    </button>
-                                </div>
-                            </form>
+                        { auth.isAuthenticated && ( isEduRoute || isAdminRoute ) && (
                             <button
                                 type="button"
-                                onClick={() => setSearch(!search)}
-                                className="search_btn rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 dark:bg-dark/40 dark:hover:bg-dark/60 sm:hidden"
+                                className="collapse-icon flex flex-none rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary ltr:ml-2 rtl:mr-2 dark:bg-dark/40 dark:text-[#d0d2d6] dark:hover:bg-dark/60 dark:hover:text-primary"
+                                onClick={() => dispatch(toggleSidebar())}
                             >
-                                <IconSearch className="mx-auto h-4.5 w-4.5 dark:text-[#d0d2d6]" />
+                                <IconMenu className="h-5 w-5" />
                             </button>
-                        </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-center justify-end space-x-1.5 ltr:ml-auto rtl:mr-auto rtl:space-x-reverse dark:text-[#d0d2d6] sm:flex-1 ltr:sm:ml-0 sm:rtl:mr-0 lg:space-x-2">
                         <div>
                             {themeConfig.theme === 'light' ? (
                                 <button
@@ -247,7 +258,7 @@ const Header = () => {
                                 </button>
                             )}
                         </div>
-                        <div className="dropdown shrink-0">
+                        {/* <div className="dropdown shrink-0">
                             <Dropdown
                                 offset={[0, 8]}
                                 placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
@@ -274,8 +285,8 @@ const Header = () => {
                                     })}
                                 </ul>
                             </Dropdown>
-                        </div>
-                        <div className="dropdown shrink-0">
+                        </div> */}
+                        {/* <div className="dropdown shrink-0">
                             <Dropdown
                                 offset={[0, 8]}
                                 placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
@@ -329,7 +340,8 @@ const Header = () => {
                                     )}
                                 </ul>
                             </Dropdown>
-                        </div>
+                        </div> */}
+                        { auth.isAuthenticated && (
                         <div className="dropdown shrink-0">
                             <Dropdown
                                 offset={[0, 8]}
@@ -404,54 +416,98 @@ const Header = () => {
                                 </ul>
                             </Dropdown>
                         </div>
+                        )}
                         <div className="dropdown flex shrink-0">
-                            <Dropdown
-                                offset={[0, 8]}
-                                placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                btnClassName="relative group block"
-                                button={<img className="h-9 w-9 rounded-full object-cover saturate-50 group-hover:saturate-100" src="/assets/images/user-profile.jpeg" alt="userProfile" />}
-                            >
-                                <ul className="w-[230px] !py-0 font-semibold text-dark dark:text-white-dark dark:text-white-light/90">
-                                    <li>
-                                        <div className="flex items-center px-4 py-4">
-                                            <img className="h-10 w-10 rounded-md object-cover" src="/assets/images/user-profile.jpeg" alt="userProfile" />
-                                            <div className="truncate ltr:pl-4 rtl:pr-4">
-                                                <h4 className="text-base">
-                                                    John Doe
-                                                    <span className="rounded bg-success-light px-1 text-xs text-success ltr:ml-2 rtl:ml-2">Pro</span>
-                                                </h4>
-                                                <button type="button" className="text-black/60 hover:text-primary dark:text-dark-light/60 dark:hover:text-white">
-                                                    johndoe@gmail.com
-                                                </button>
+                            {/* GUEST: show gray icon dropdown */}
+                            {!auth.isAuthenticated && (
+                                <Dropdown
+                                    offset={[0, 8]}
+                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
+                                    btnClassName="relative group block"
+                                    button={<span className="flex justify-center items-center w-9 h-9 rounded-full bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-300"><IconUser className="w-5 h-5" /></span>}
+                                >
+                                    <ul className="w-[230px] !py-0 font-semibold text-dark dark:text-white-dark dark:text-white-light/90">
+                                        <li>
+                                            <button
+                                                type="button"
+                                                onClick={login}
+                                                className="w-full flex items-center px-4 py-3 text-left dark:hover:text-white"
+                                            >
+                                                <IconLogin className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
+                                                Autentificare
+                                            </button>
+                                        </li>
+                                        <li className="border-t border-white-light dark:border-white-light/10">
+                                            <Link href="/public/formular-de-inscriere-studenti" className="!py-3 text-info">
+                                                <IconLogin className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
+                                                Inscriere Studenti
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                </Dropdown>
+                            )}
+
+                            {/* LOGGED IN: show initials (JD) dropdown */}
+                            {auth.isAuthenticated && (
+                                <Dropdown
+                                    offset={[0, 8]}
+                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
+                                    btnClassName="relative group block"
+                                    button={<span className="flex justify-center items-center w-9 h-9 text-center rounded-full object-cover bg-info text-l text-white">{initials}</span>}
+                                >
+                                    <ul className="w-[230px] !py-0 font-semibold text-dark dark:text-white-dark dark:text-white-light/90">
+                                        <li>
+                                            <div className="flex items-center px-4 py-4">
+                                                <div className="h-10 w-10 flex items-center justify-center rounded-md border text-sm font-semibold">
+                                                    {initials}
+                                                </div>
+                                                <div className="truncate ltr:pl-4 rtl:pr-4">
+                                                    <h4 className="text-base">
+                                                        {auth.user?.name || "User"}
+                                                        {auth.user?.type === "Student" && (
+                                                        <span className="rounded bg-success-light px-1 text-xs text-success ltr:ml-2 rtl:ml-2">
+                                                            {auth.user?.type}
+                                                        </span>
+                                                        )}
+                                                    </h4>
+                                                    <button type="button" className="text-black/60 hover:text-primary dark:text-dark-light/60 dark:hover:text-white" title={auth.user?.email}>
+                                                        {auth.user?.email}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <Link href="/users/profile" className="dark:hover:text-white">
-                                            <IconUser className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
-                                            Profile
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/apps/mailbox" className="dark:hover:text-white">
-                                            <IconMail className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
-                                            Inbox
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/auth/boxed-lockscreen" className="dark:hover:text-white">
-                                            <IconLockDots className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
-                                            Lock Screen
-                                        </Link>
-                                    </li>
-                                    <li className="border-t border-white-light dark:border-white-light/10">
-                                        <Link href="/auth/boxed-signin" className="!py-3 text-danger">
-                                            <IconLogout className="h-4.5 w-4.5 shrink-0 rotate-90 ltr:mr-2 rtl:ml-2" />
-                                            Sign Out
-                                        </Link>
-                                    </li>
-                                </ul>
-                            </Dropdown>
+                                        </li>
+                                        <li>
+                                            <Link href="/users/profile" className="dark:hover:text-white">
+                                                <IconUser className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
+                                                Profile
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/apps/mailbox" className="dark:hover:text-white">
+                                                <IconMail className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
+                                                Inbox
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/auth/boxed-lockscreen" className="dark:hover:text-white">
+                                                <IconLockDots className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
+                                                Lock Screen
+                                            </Link>
+                                        </li>
+                                        <li className="border-t border-white-light dark:border-white-light/10">
+                                            {/* Trigger the simulated logout */}
+                                            <button
+                                                type="button"
+                                                onClick={logout}
+                                                className="w-full flex items-center px-4 py-3 text-left text-danger"
+                                            >
+                                                <IconLogout className="h-4.5 w-4.5 shrink-0 rotate-90 ltr:mr-2 rtl:ml-2" />
+                                                Deconectare
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </Dropdown>
+                            )}
                         </div>
                     </div>
                 </div>

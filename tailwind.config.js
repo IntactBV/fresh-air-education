@@ -96,10 +96,10 @@ module.exports = {
         }),
         require('@tailwindcss/typography'),
         rotateX,
-        plugin(function ({ addBase }) {
-            addBase({
-                'html': { fontSize: "14px" },
-            })
-        }),
+        // plugin(function ({ addBase }) {
+        //     addBase({
+        //         'html': { fontSize: "14px" },
+        //     })
+        // }),
     ],
 };

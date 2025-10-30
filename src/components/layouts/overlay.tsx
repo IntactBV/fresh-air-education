@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 const Overlay = () => {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const dispatch = useDispatch();
+
     return (
         <>
             {/* sidebar menu overlay */}
