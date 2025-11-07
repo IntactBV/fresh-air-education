@@ -51,7 +51,7 @@ const Header = () => {
     const dispatch = useDispatch();
     const router = useRouter();
     const { t, i18n } = getTranslation();
-    const { data: session, sessionLoading } = authClient.useSession();
+    const { data: session, isPending: sessionLoading } = authClient.useSession();
 
     useEffect(() => {
         const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.pathname + '"]');
