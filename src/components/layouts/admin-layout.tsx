@@ -1,3 +1,5 @@
+'use client';
+
 import ContentAnimation from '@faLayouts/content-animation';
 import Footer from '@faLayouts/footer';
 import Header from '@faLayouts/header';

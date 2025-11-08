@@ -25,7 +25,7 @@ type SidebarProps = {
   userRole?: UserRole;          // dacă nu e dat, presupunem 'student'
 };
 
-const Sidebar = ({ userRole = 'student' }: SidebarProps) => {
+const Sidebar = ({ userRole = 'admin' }: SidebarProps) => {
   const dispatch = useDispatch();
   const pathname = usePathname();
 
@@ -50,9 +50,8 @@ const Sidebar = ({ userRole = 'student' }: SidebarProps) => {
   return (
     <div className={semidark ? 'dark' : ''}>
       <nav
-        className={`sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[260px] shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-all duration-300 ${
-          semidark ? 'text-white-dark' : ''
-        }`}
+        className={`sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[260px] shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-all duration-300 ${semidark ? 'text-white-dark' : ''
+          }`}
       >
         <div className="h-full bg-white dark:bg-black">
           {/* Header + buton collapse */}

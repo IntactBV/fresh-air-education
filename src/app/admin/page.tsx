@@ -3,11 +3,25 @@ import Link from 'next/link';
 import IconHome from '@faComponents/icon/icon-home';
 import PanouPrincipalAdminComponent from './panouPrincipalAdminComponent';
 
+import { auth } from "@/utils/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
 export const metadata: Metadata = {
   title: 'Panou principal',
 };
 
 export default async function Page() {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
+
+  console.log('admin session');
+
+  if (!session) {
+    redirect("/sign-in")
+  }
+
   return (
     <div>
       {/* breadcrumb */}
@@ -21,7 +35,9 @@ export default async function Page() {
           <span>Panou principal</span>
         </li>
       </ul>
-
+      <div>
+        <h1>Welcome {session.user.name}</h1>
+      </div>
       <PanouPrincipalAdminComponent />
     </div>
   );

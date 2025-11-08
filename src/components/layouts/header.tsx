@@ -28,6 +28,7 @@ import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuMore from '@/components/icon/menu/icon-menu-more';
 import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
+import { authClient } from '@fa/utils/auth-client';
 
 enum EUserTypes {
     Student = 'Student',
@@ -50,6 +51,7 @@ const Header = () => {
     const dispatch = useDispatch();
     const router = useRouter();
     const { t, i18n } = getTranslation();
+    const { data: session, isPending: sessionLoading } = authClient.useSession();
 
     useEffect(() => {
         const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.pathname + '"]');
@@ -187,8 +189,15 @@ const Header = () => {
         // await signOut();
         // localStorage.removeItem("access_token");
         setAuth({ isAuthenticated: false, user: null });
-        router.push("/public");
-    }, [router]);
+        // router.push("/public");
+        await authClient.signOut({
+            fetchOptions: {
+                onSuccess: () => {
+                    router.push("/public"); // redirect to login page
+                },
+            },
+        });
+    }, []);
 
     function getInitials(name: string | undefined) {
         if (!name) return "NA";
@@ -198,7 +207,7 @@ const Header = () => {
             .slice(0, 2)
             .map((s) => s[0]?.toUpperCase())
             .join("");
-        }
+    }
 
     const initials = useMemo(() => getInitials(auth.user?.name), [auth.user]);
 
@@ -210,19 +219,22 @@ const Header = () => {
         if (isEduRoute || isAdminRoute) {
             login();
         }
-        }, [isEduRoute, isAdminRoute]);
+    }, [isEduRoute, isAdminRoute]);
+
+    if (sessionLoading) return <span>Loading…</span>;
+    if (!session) return <a href="/sign-in">Sign in</a>;
 
     return (
         <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
             <div className="shadow-sm">
                 <div className="relative flex w-full items-center bg-white px-5 py-2.5 dark:bg-black">
-  
+
                     <div className={`horizontal-logo flex items-center justify-between ltr:mr-2 rtl:ml-2 ${isEduRoute || isAdminRoute ? 'lg:hidden' : ''}`}>
                         <Link href="/" className="main-logo flex shrink-0 items-center">
                             <img className="inline w-8 ltr:-ml-1 rtl:-mr-1" src="/assets/images/logo.png" alt="logo" />
                             <span className="hidden md:inline align-middle text-2xl font-semibold transition-all duration-300 ltr:ml-1.5 rtl:mr-1.5 text-zinc-600 dark:text-zinc-400">FRESH AIR</span>
                         </Link>
-                        { auth.isAuthenticated && ( isEduRoute || isAdminRoute ) && (
+                        {auth.isAuthenticated && (isEduRoute || isAdminRoute) && (
                             <button
                                 type="button"
                                 className="collapse-icon flex flex-none rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary ltr:ml-2 rtl:mr-2 dark:bg-dark/40 dark:text-[#d0d2d6] dark:hover:bg-dark/60 dark:hover:text-primary"
@@ -237,10 +249,9 @@ const Header = () => {
                         <div>
                             {themeConfig.theme === 'light' ? (
                                 <button
-                                    className={`${
-                                        themeConfig.theme === 'light' &&
+                                    className={`${themeConfig.theme === 'light' &&
                                         'flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60'
-                                    }`}
+                                        }`}
                                     onClick={() => dispatch(toggleTheme('dark'))}
                                 >
                                     <IconSun />
@@ -250,10 +261,9 @@ const Header = () => {
                             )}
                             {themeConfig.theme === 'dark' && (
                                 <button
-                                    className={`${
-                                        themeConfig.theme === 'dark' &&
+                                    className={`${themeConfig.theme === 'dark' &&
                                         'flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60'
-                                    }`}
+                                        }`}
                                     onClick={() => dispatch(toggleTheme('system'))}
                                 >
                                     <IconMoon />
@@ -261,10 +271,9 @@ const Header = () => {
                             )}
                             {themeConfig.theme === 'system' && (
                                 <button
-                                    className={`${
-                                        themeConfig.theme === 'system' &&
+                                    className={`${themeConfig.theme === 'system' &&
                                         'flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60'
-                                    }`}
+                                        }`}
                                     onClick={() => dispatch(toggleTheme('light'))}
                                 >
                                     <IconLaptop />
@@ -354,81 +363,81 @@ const Header = () => {
                                 </ul>
                             </Dropdown>
                         </div> */}
-                        { auth.isAuthenticated && (
-                        <div className="dropdown shrink-0">
-                            <Dropdown
-                                offset={[0, 8]}
-                                placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                btnClassName="relative block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60"
-                                button={
-                                    <span>
-                                        <IconBellBing />
-                                        <span className="absolute top-0 flex h-3 w-3 ltr:right-0 rtl:left-0">
-                                            <span className="absolute -top-[3px] inline-flex h-full w-full animate-ping rounded-full bg-success/50 opacity-75 ltr:-left-[3px] rtl:-right-[3px]"></span>
-                                            <span className="relative inline-flex h-[6px] w-[6px] rounded-full bg-success"></span>
+                        {auth.isAuthenticated && (
+                            <div className="dropdown shrink-0">
+                                <Dropdown
+                                    offset={[0, 8]}
+                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
+                                    btnClassName="relative block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60"
+                                    button={
+                                        <span>
+                                            <IconBellBing />
+                                            <span className="absolute top-0 flex h-3 w-3 ltr:right-0 rtl:left-0">
+                                                <span className="absolute -top-[3px] inline-flex h-full w-full animate-ping rounded-full bg-success/50 opacity-75 ltr:-left-[3px] rtl:-right-[3px]"></span>
+                                                <span className="relative inline-flex h-[6px] w-[6px] rounded-full bg-success"></span>
+                                            </span>
                                         </span>
-                                    </span>
-                                }
-                            >
-                                <ul className="w-[300px] divide-y !py-0 text-dark dark:divide-white/10 dark:text-white-dark sm:w-[350px]">
-                                    <li onClick={(e) => e.stopPropagation()}>
-                                        <div className="flex items-center justify-between px-4 py-2 font-semibold">
-                                            <h4 className="text-lg">Notification</h4>
-                                            {notifications.length ? <span className="badge bg-primary/80">{notifications.length}New</span> : ''}
-                                        </div>
-                                    </li>
-                                    {notifications.length > 0 ? (
-                                        <>
-                                            {notifications.map((notification) => {
-                                                return (
-                                                    <li key={notification.id} className="dark:text-white-light/90" onClick={(e) => e.stopPropagation()}>
-                                                        <div className="group flex items-center px-4 py-2">
-                                                            <div className="grid place-content-center rounded">
-                                                                <div className="relative h-12 w-12">
-                                                                    <img className="h-12 w-12 rounded-full object-cover" alt="profile" src={`/assets/images/${notification.profile}`} />
-                                                                    <span className="absolute bottom-0 right-[6px] block h-2 w-2 rounded-full bg-success"></span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex flex-auto ltr:pl-3 rtl:pr-3">
-                                                                <div className="ltr:pr-3 rtl:pl-3">
-                                                                    <h6
-                                                                        dangerouslySetInnerHTML={{
-                                                                            __html: notification.message,
-                                                                        }}
-                                                                    ></h6>
-                                                                    <span className="block text-xs font-normal dark:text-gray-500">{notification.time}</span>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    className="text-neutral-300 opacity-0 hover:text-danger group-hover:opacity-100 ltr:ml-auto rtl:mr-auto"
-                                                                    onClick={() => removeNotification(notification.id)}
-                                                                >
-                                                                    <IconXCircle />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                );
-                                            })}
-                                            <li>
-                                                <div className="p-4">
-                                                    <button className="btn btn-primary btn-small block w-full">Read All Notifications</button>
-                                                </div>
-                                            </li>
-                                        </>
-                                    ) : (
+                                    }
+                                >
+                                    <ul className="w-[300px] divide-y !py-0 text-dark dark:divide-white/10 dark:text-white-dark sm:w-[350px]">
                                         <li onClick={(e) => e.stopPropagation()}>
-                                            <button type="button" className="!grid min-h-[200px] place-content-center text-lg hover:!bg-transparent">
-                                                <div className="mx-auto mb-4 rounded-full ring-4 ring-primary/30">
-                                                    <IconInfoCircle fill={true} className="h-10 w-10 text-primary" />
-                                                </div>
-                                                No data available.
-                                            </button>
+                                            <div className="flex items-center justify-between px-4 py-2 font-semibold">
+                                                <h4 className="text-lg">Notification</h4>
+                                                {notifications.length ? <span className="badge bg-primary/80">{notifications.length}New</span> : ''}
+                                            </div>
                                         </li>
-                                    )}
-                                </ul>
-                            </Dropdown>
-                        </div>
+                                        {notifications.length > 0 ? (
+                                            <>
+                                                {notifications.map((notification) => {
+                                                    return (
+                                                        <li key={notification.id} className="dark:text-white-light/90" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="group flex items-center px-4 py-2">
+                                                                <div className="grid place-content-center rounded">
+                                                                    <div className="relative h-12 w-12">
+                                                                        <img className="h-12 w-12 rounded-full object-cover" alt="profile" src={`/assets/images/${notification.profile}`} />
+                                                                        <span className="absolute bottom-0 right-[6px] block h-2 w-2 rounded-full bg-success"></span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex flex-auto ltr:pl-3 rtl:pr-3">
+                                                                    <div className="ltr:pr-3 rtl:pl-3">
+                                                                        <h6
+                                                                            dangerouslySetInnerHTML={{
+                                                                                __html: notification.message,
+                                                                            }}
+                                                                        ></h6>
+                                                                        <span className="block text-xs font-normal dark:text-gray-500">{notification.time}</span>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="text-neutral-300 opacity-0 hover:text-danger group-hover:opacity-100 ltr:ml-auto rtl:mr-auto"
+                                                                        onClick={() => removeNotification(notification.id)}
+                                                                    >
+                                                                        <IconXCircle />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    );
+                                                })}
+                                                <li>
+                                                    <div className="p-4">
+                                                        <button className="btn btn-primary btn-small block w-full">Read All Notifications</button>
+                                                    </div>
+                                                </li>
+                                            </>
+                                        ) : (
+                                            <li onClick={(e) => e.stopPropagation()}>
+                                                <button type="button" className="!grid min-h-[200px] place-content-center text-lg hover:!bg-transparent">
+                                                    <div className="mx-auto mb-4 rounded-full ring-4 ring-primary/30">
+                                                        <IconInfoCircle fill={true} className="h-10 w-10 text-primary" />
+                                                    </div>
+                                                    No data available.
+                                                </button>
+                                            </li>
+                                        )}
+                                    </ul>
+                                </Dropdown>
+                            </div>
                         )}
                         <div className="dropdown flex shrink-0">
                             {/* GUEST: show gray icon dropdown */}
@@ -478,17 +487,18 @@ const Header = () => {
                                                     <h4 className="text-base">
                                                         {auth.user?.name || "User"}
                                                         {auth.user?.type === "Student" && (
-                                                        <span className="rounded bg-success-light px-1 text-xs text-success ltr:ml-2 rtl:ml-2">
-                                                            {auth.user?.type}
-                                                        </span>
+                                                            <span className="rounded bg-success-light px-1 text-xs text-success ltr:ml-2 rtl:ml-2">
+                                                                {auth.user?.type}
+                                                            </span>
                                                         )}
                                                     </h4>
-                                                    <button type="button" className="text-black/60 hover:text-primary dark:text-dark-light/60 dark:hover:text-white" title={auth.user?.email}>
-                                                        {auth.user?.email}
+                                                    <button type="button" className="text-black/60 hover:text-primary dark:text-dark-light/60 dark:hover:text-white" title={session.user?.email}>
+                                                        {session.user?.email}
                                                     </button>
                                                 </div>
                                             </div>
                                         </li>
+                                        <li>{JSON.stringify(session.user)}</li>
                                         <li>
                                             <Link href="/users/profile" className="dark:hover:text-white">
                                                 <IconUser className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" />
