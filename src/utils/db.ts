@@ -11,7 +11,7 @@ const config = {
     port: parseInt(process.env.DB_PORT || '5432', 10),
     database: process.env.DB_NAME,
     ssl: {
-        rejectUnauthorized: true,
+        rejectUnauthorized: false,
         ca: process.env.DB_SSL_CA,
     },
 };
