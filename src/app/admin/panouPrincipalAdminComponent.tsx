@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import CountUp from 'react-countup';
-import AnimateHeight from 'react-animate-height';
 
 // ICONS
 import IconBook from '@/components/icon/icon-book';
@@ -18,11 +17,10 @@ import IconMenuDatatables from '@faComponents/icon/menu/icon-menu-datatables';
 interface PanouPrincipalAdminProps {
   userName?: string;
 
-  // statistici
-  pendingRequestsCount?: number;   // cereri în așteptare
-  enrolledStudentsCount?: number;  // studenți înscriși
-  materialsCount?: number;         // materiale încărcate
-  articlesCount?: number;          // articole publicate
+  pendingRequestsCount?: number;
+  enrolledStudentsCount?: number;
+  materialsCount?: number; // va fi "Materiale studenti"
+  articlesCount?: number; // va fi "Documente publice"
 
   announcements?: Array<{
     id: string | number;
@@ -33,36 +31,23 @@ interface PanouPrincipalAdminProps {
     ctaHref?: string;
     badge?: 'Info' | 'Important' | 'Nou';
   }>;
+
+  staticArticles?: Array<{
+    title: string;
+    href: string;
+  }>;
 }
 
 export default function PanouPrincipalAdminComponent({
   userName = 'admin@example.com',
-  pendingRequestsCount = 5,
-  enrolledStudentsCount = 128,
-  materialsCount = 27,
-  articlesCount = 12,
-  announcements = [
-    {
-      id: 'a1',
-      title: 'Program secretariat actualizat',
-      date: '2025-10-01',
-      content:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere, arcu vitae posuere ultricies, lorem mi interdum orci, ac pulvinar lorem sem et nisi.',
-      ctaLabel: 'Vezi detalii',
-      ctaHref: '/admin/anunturi',
-      badge: 'Important',
-    },
-    {
-      id: 'a2',
-      title: 'Înscriere la workshop-ul de toamnă',
-      date: '2025-10-07',
-      content:
-        'Nulla facilisi. Cras a nibh eros. Integer interdum lorem a justo tempus, vel lacinia urna dapibus. Phasellus vulputate metus ac libero volutpat.',
-      badge: 'Nou',
-    },
-  ],
+  pendingRequestsCount = 0,
+  enrolledStudentsCount = 0,
+  materialsCount = 0,
+  articlesCount = 0,
+  announcements = [],
+  staticArticles = [],
 }: PanouPrincipalAdminProps) {
-  const [heroOpen, setHeroOpen] = useState(true);
+  const [heroOpen] = useState(true);
 
   return (
     <div>
@@ -89,56 +74,56 @@ export default function PanouPrincipalAdminComponent({
           </div>
 
           <p className="mx-auto mb-6 max-w-2xl text-center text-sm font-semibold text-[#0E1726] dark:text-white-light">
-            Gestionează cererile, utilizatorii și conținutul platformei dintr-un singur loc.
+            Gestioneaza cererile, studentii si documentele publice dintr-un singur loc.
           </p>
 
-          {/* SCURTĂTURI ADMIN */}
+          {/* SCURTATURI ADMIN */}
           <div className="flex flex-wrap items-center justify-center gap-2 font-semibold text-[#2196F3] sm:gap-4">
-            <div className="whitespace-nowrap font-medium text-black dark:text-white">Scurtături:</div>
+            <div className="whitespace-nowrap font-medium text-black dark:text-white">Scurtaturi:</div>
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
               <Link
                 href="/admin/cereri-in-asteptare"
                 className="rounded-full bg-white px-3 py-1 text-sm text-danger shadow-sm duration-300 hover:underline dark:bg-[#0E1726] dark:text-white"
               >
-                Cereri în așteptare
+                Cereri in asteptare
               </Link>
               <Link
                 href="/admin/studenti-inscrisi"
                 className="rounded-full bg-white px-3 py-1 text-sm text-success shadow-sm duration-300 hover:underline dark:bg-[#0E1726] dark:text-white"
               >
-                Studenți înscriși
+                Studenti inscrisi
               </Link>
               <Link
                 href="/admin/materiale"
                 className="rounded-full bg-white px-3 py-1 text-sm text-primary shadow-sm duration-300 hover:underline dark:bg-[#0E1726] dark:text-white"
               >
-                Materiale
+                Materiale studenti
               </Link>
               <Link
-                href="/admin/articole"
+                href="/admin/documente-publice"
                 className="rounded-full bg-white px-3 py-1 text-sm text-warning shadow-sm duration-300 hover:underline dark:bg-[#0E1726] dark:text-white"
               >
-                Articole
+                Documente publice
               </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* GRID Statistici (înlocuiește FAQ) */}
+      {/* GRID Statistici */}
       <div className="pt-5">
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
-          {/* KPI: Cereri în așteptare */}
+          {/* Cereri in asteptare */}
           <div className="panel">
             <div className="mb-5 flex items-center justify-between">
               <h5 className="text-lg font-semibold dark:text-white-light flex items-center gap-2">
                 <span className="grid h-9 w-9 place-content-center rounded-full bg-danger-light text-danger dark:bg-danger dark:text-danger-light">
                   <IconBell />
                 </span>
-                Cereri în așteptare
+                Cereri in asteptare
               </h5>
               <Link href="/admin/cereri-in-asteptare" className="btn btn-danger">
-                Gestionează <IconArrowForward className="ml-2 h-4 w-4" />
+                Gestioneaza <IconArrowForward className="ml-2 h-4 w-4" />
               </Link>
             </div>
             <div className="flex items-center gap-4">
@@ -148,20 +133,20 @@ export default function PanouPrincipalAdminComponent({
                 </span>
               </div>
               <div className="text-white-dark">
-                <div className="font-medium">Înscrieri care așteaptă aprobare.</div>
-                <div className="text-xs">Verifică și aprobă / respinge cererile.</div>
+                <div className="font-medium">Inscrieri care asteapta aprobare.</div>
+                <div className="text-xs">Verifica si aproba / respinge cererile.</div>
               </div>
             </div>
           </div>
 
-          {/* KPI: Studenți înscriși */}
+          {/* Studenti inscrisi */}
           <div className="panel">
             <div className="mb-5 flex items-center justify-between">
               <h5 className="text-lg font-semibold dark:text-white-light flex items-center gap-2">
                 <span className="grid h-9 w-9 place-content-center rounded-full bg-success-light text-success dark:bg-success dark:text-success-light">
                   <IconBarChart />
                 </span>
-                Studenți înscriși
+                Studenti inscrisi
               </h5>
               <Link href="/admin/studenti-inscrisi" className="btn btn-success">
                 Deschide <IconArrowForward className="ml-2 h-4 w-4" />
@@ -174,20 +159,20 @@ export default function PanouPrincipalAdminComponent({
                 </span>
               </div>
               <div className="text-white-dark">
-                <div className="font-medium">Total utilizatori activi (studenți).</div>
-                <div className="text-xs">Actualizat la reîmprospătarea paginii.</div>
+                <div className="font-medium">Total studenti activi/absolventi.</div>
+                <div className="text-xs">Actualizat la reimprospatare.</div>
               </div>
             </div>
           </div>
 
-          {/* KPI: Materiale */}
+          {/* Materiale studenti */}
           <div className="panel">
             <div className="mb-5 flex items-center justify-between">
               <h5 className="text-lg font-semibold dark:text-white-light flex items-center gap-2">
                 <span className="grid h-9 w-9 place-content-center rounded-full bg-primary-light text-primary dark:bg-primary dark:text-primary-light">
                   <IconMenuDatatables />
                 </span>
-                Materiale
+                Materiale studenti
               </h5>
               <Link href="/admin/materiale" className="btn btn-primary">
                 Deschide <IconArrowForward className="ml-2 h-4 w-4" />
@@ -200,22 +185,22 @@ export default function PanouPrincipalAdminComponent({
                 </span>
               </div>
               <div className="text-white-dark">
-                <div className="font-medium">Fișiere și resurse încărcate.</div>
-                <div className="text-xs">Administrabile din secțiunea Materiale.</div>
+                <div className="font-medium">Fisiere si resurse incarcate.</div>
+                <div className="text-xs">Administrabile din sectiunea Materiale.</div>
               </div>
             </div>
           </div>
 
-          {/* KPI: Articole */}
+          {/* Documente publice */}
           <div className="panel">
             <div className="mb-5 flex items-center justify-between">
               <h5 className="text-lg font-semibold dark:text-white-light flex items-center gap-2">
                 <span className="grid h-9 w-9 place-content-center rounded-full bg-warning-light text-warning dark:bg-warning dark:text-warning-light">
                   <IconBook />
                 </span>
-                Articole
+                Documente publice
               </h5>
-              <Link href="/admin/articole" className="btn btn-warning">
+              <Link href="/admin/documente-publice" className="btn btn-warning">
                 Deschide <IconArrowForward className="ml-2 h-4 w-4" />
               </Link>
             </div>
@@ -226,25 +211,27 @@ export default function PanouPrincipalAdminComponent({
                 </span>
               </div>
               <div className="text-white-dark">
-                <div className="font-medium">Postări publicate în secțiunea articole.</div>
-                <div className="text-xs">Editează / adaugă din modulul Articole.</div>
+                <div className="font-medium">PDF-uri publicate pe site.</div>
+                <div className="text-xs">Anunturi + metodologii.</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Anunțuri + Linkuri utile */}
+        {/* Anunturi + Articole (pagini publice) */}
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
-          {/* Anunțuri */}
+          {/* Anunturi */}
           <div className="panel">
             <div className="mb-5 flex items-center justify-between">
               <h5 className="text-lg font-semibold dark:text-white-light flex items-center gap-2">
                 <span className="grid h-9 w-9 place-content-center rounded-full bg-secondary-light text-secondary dark:bg-secondary dark:text-secondary-light">
                   <IconBell />
                 </span>
-                Anunțuri
+                Ultimele anunturi
               </h5>
-              <Link href="/admin/anunturi" className="text-primary hover:underline">Vezi toate</Link>
+              <Link href="/admin/documente-publice?tab=anunturi" className="text-primary hover:underline">
+                Vezi toate
+              </Link>
             </div>
             <div className="space-y-4">
               {announcements.map((a) => (
@@ -254,117 +241,58 @@ export default function PanouPrincipalAdminComponent({
                 >
                   <div className="mb-2 flex items-start justify-between gap-3">
                     <div>
-                      <div className="mb-1 flex items-center gap-2">
-                        {a.badge === 'Important' && (
-                          <span className="rounded-full bg-danger-light px-2 py-0.5 text-xs font-semibold text-danger dark:bg-danger dark:text-danger-light">
-                            Important
-                          </span>
-                        )}
-                        {a.badge === 'Nou' && (
-                          <span className="rounded-full bg-success-light px-2 py-0.5 text-xs font-semibold text-success dark:bg-success dark:text-success-light">
-                            Nou
-                          </span>
-                        )}
-                        {a.badge === 'Info' && (
-                          <span className="rounded-full bg-info-light px-2 py-0.5 text-xs font-semibold text-info dark:bg-info dark:text-info-light">
-                            Info
-                          </span>
-                        )}
-                      </div>
                       <h6 className="font-semibold dark:text-white">{a.title}</h6>
                     </div>
                     {a.date && (
-                      <span className="flex items-center gap-1 text-xs text-white-dark">
+                      <span className="flex items-center gap-1 text-xs text-white-dark whitespace-nowrap">
                         <IconCalendar className="h-4 w-4" /> {a.date}
                       </span>
                     )}
                   </div>
                   <p className="text-[13px] leading-relaxed text-white-dark">{a.content}</p>
-                  {a.ctaHref && (
-                    <div className="mt-3">
-                      <Link href={a.ctaHref} className="btn btn-sm btn-outline-primary">
-                        {a.ctaLabel || 'Detalii'}
-                      </Link>
-                    </div>
-                  )}
+                  <div className="mt-3">
+                    <a
+                      href={`/api/admin/public-documents/${a.id}/download`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-outline-primary"
+                    >
+                      Vezi anunt
+                    </a>
+                  </div>
                 </article>
               ))}
-              {announcements.length === 0 && (
-                <div className="text-sm text-white-dark">Momentan nu există anunțuri.</div>
-              )}
+              {announcements.length === 0 && <div className="text-sm text-white-dark">Momentan nu exista anunturi.</div>}
             </div>
           </div>
 
-          {/* Linkuri utile (admin) */}
+          {/* Articole (paginile publice) */}
           <div className="panel">
             <h5 className="mb-5 text-lg font-semibold dark:text-white-light flex items-center gap-2">
               <span className="grid h-9 w-9 place-content-center rounded-full bg-info-light text-info dark:bg-info dark:text-info-light">
                 <IconBookmark />
               </span>
-              Linkuri utile
+              Articole
             </h5>
             <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <li>
-                <Link
-                  href="/admin/cereri-in-asteptare"
-                  className="group flex items-center justify-between rounded-lg border border-white-light p-4 hover:border-primary dark:border-white/10"
-                >
-                  <span className="text-sm font-medium">Cereri în așteptare</span>
-                  <IconArrowForward className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/studenti-inscrisi"
-                  className="group flex items-center justify-between rounded-lg border border-white-light p-4 hover:border-primary dark:border-white/10"
-                >
-                  <span className="text-sm font-medium">Studenți înscriși</span>
-                  <IconArrowForward className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/materiale"
-                  className="group flex items-center justify-between rounded-lg border border-white-light p-4 hover:border-primary dark:border-white/10"
-                >
-                  <span className="text-sm font-medium">Materiale</span>
-                  <IconArrowForward className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/articole"
-                  className="group flex items-center justify-between rounded-lg border border-white-light p-4 hover:border-primary dark:border-white/10"
-                >
-                  <span className="text-sm font-medium">Articole</span>
-                  <IconArrowForward className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </li>
+              {staticArticles.map((page) => (
+                <li key={page.href}>
+                  <Link
+                    href={page.href}
+                    className="group flex items-center justify-between rounded-lg border border-white-light p-4 hover:border-primary dark:border-white/10"
+                  >
+                    <span className="text-sm font-medium">{page.title}</span>
+                    <IconArrowForward className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </li>
+              ))}
+              {staticArticles.length === 0 && (
+                <li className="text-sm text-white-dark">Nu exista pagini publice definite.</li>
+              )}
             </ul>
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="mt-2 flex flex-col-reverse items-center justify-between gap-5 rounded-md bg-gradient-to-tl from-[rgba(234,241,255,0.44)] to-[rgba(234,241,255,0.96)] px-6 py-3 dark:from-[rgba(14,23,38,0.44)] dark:to-[#0E1726] md:flex-row xl:px-10">
-          <div className="flex-1 py-2 text-center md:text-start">
-            <h3 className="mb-1 text-xl font-bold dark:text-white md:text-2xl">Ai nevoie de ajutor?</h3>
-            <div className="text-sm font-medium text-white-dark md:text-base">
-              Vezi documentația de administrare sau scrie echipei de suport.
-            </div>
-            <div className="mt-4 flex justify-center md:justify-start lg:mt-6">
-              <Link href="/admin/suport" className="btn btn-primary">
-                Contactează suportul
-              </Link>
-            </div>
-          </div>
-          <div className="w-52 max-w-xs lg:w-72">
-            <img
-              src="/assets/images/knowledge/find-solution.svg"
-              alt="help"
-              className="w-full object-cover rtl:rotate-y-180 dark:brightness-[2.0] dark:grayscale-[60%]"
-            />
-          </div>
-        </div>
       </div>
     </div>
   );

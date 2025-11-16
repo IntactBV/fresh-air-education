@@ -13,9 +13,9 @@ const NotFound = () => {
                 <div className="relative">
                     <img src="/assets/images/error/404-dark.svg" alt="404" className="dark-img mx-auto -mt-10 w-full max-w-xs object-cover md:-mt-14 md:max-w-xl" />
                     <img src="/assets/images/error/404-light.svg" alt="404" className="light-img mx-auto -mt-10 w-full max-w-xs object-cover md:-mt-14 md:max-w-xl" />
-                    <p className="mt-5 text-base dark:text-white">The page you requested was not found!</p>
-                    <Link href="/" className="btn btn-gradient mx-auto !mt-7 w-max border-0 uppercase shadow-none">
-                        Home
+                    <p className="mt-5 text-base dark:text-white">Aceasta pagina nu exista!</p>
+                    <Link href="/" className="btn btn-secondary mx-auto !mt-7 w-max border-0 uppercase shadow-none">
+                        Acasa
                     </Link>
                 </div>
             </div>
@@ -24,3 +24,5 @@ const NotFound = () => {
 };
 
 export default NotFound;
+
+

@@ -1,17 +1,29 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import IconHome from '@faComponents/icon/icon-home';
-import ContulMeuComponent from './contulMeuComponent';
+import ContulMeuComponent from '@/app/edu/contul-meu/contulMeuComponent';
+import { auth } from "@/utils/auth";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: 'Contul meu',
 };
 
-export default function Page() {
-  const user = {
-    name: 'Ion Popescu',
-    email: 'ion.popescu@student.ro',
-  };
+export default async function Page() {
+    const session = await auth.api.getSession({
+      headers: await headers()
+    })
+  const user = session?.user
+    ? {
+        ...session.user,
+        role: typeof session.user.role === 'string' ? session.user.role : '',
+      }
+    : {
+        name: '',
+        email: '',
+        role: '',
+        id: '',
+      };
 
   return (
     <div>
