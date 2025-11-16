@@ -1,10 +1,9 @@
 // src/utils/db.ts
 import { Pool } from 'pg';
-import fs from 'fs';
-import path from 'path';
 
-const connectionString = `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
-const certPath = path.resolve(process.cwd(), "cert/ca.pem");
+
+// const connectionString = `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+
 const config = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -13,7 +12,7 @@ const config = {
     database: process.env.DB_NAME,
     ssl: {
         rejectUnauthorized: true,
-        ca: fs.readFileSync(certPath, "utf8"),
+        ca: process.env.DB_SSL_CA,
     },
 };
 

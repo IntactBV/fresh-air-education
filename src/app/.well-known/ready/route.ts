@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
 import { Pool } from "pg";
-import fs from 'fs';
-import path from 'path';
 
 
 const _testDbConnection = async() => {
 
-  const certPath = path.resolve(process.cwd(), "cert/ca.pem");
   const config = {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
@@ -16,7 +13,7 @@ const _testDbConnection = async() => {
       
       ssl: {
           rejectUnauthorized: false,
-          ca: fs.readFileSync(certPath, "utf8"),
+          ca: process.env.DB_SSL_CA,
       },
   };
 
