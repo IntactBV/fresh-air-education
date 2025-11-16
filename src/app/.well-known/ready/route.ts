@@ -1,3 +1,4 @@
+import { db } from '@fa/utils/db';
 import { NextResponse } from 'next/server';
 import { Pool } from "pg";
 
@@ -17,8 +18,7 @@ const _testDbConnection = async() => {
       },
   };
 
-  const database = new Pool(config);
-  const result = await database.query("SELECT COUNT(*) FROM public.public_documents;" );
+  const result = await db.query("SELECT COUNT(*) FROM public.public_documents;" );
   let docsCount = 0;
 
   docsCount = parseInt(result.rows[0].count, 10);

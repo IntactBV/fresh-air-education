@@ -3,7 +3,7 @@ import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
 // import { Pool } from "pg";
 import { sendPasswordResetEmail } from "./email";
-import { db } from '@/utils/db';
+import { getDbPool } from '@/utils/db';
 
 // const database = new Pool({
 //   connectionString: `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
@@ -15,6 +15,7 @@ import { db } from '@/utils/db';
 // const isDev = process.env.NODE_ENV !== "production";
 
 export const auth = betterAuth({
+  database: getDbPool(),
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,
@@ -29,7 +30,6 @@ export const auth = betterAuth({
       await sendPasswordResetEmail(email, url);
     },
   },
-  database: db,
   user: {
     additionalFields: {
       role: {

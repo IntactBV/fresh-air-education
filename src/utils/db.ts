@@ -51,7 +51,7 @@ function createPool() {
     port: parseInt(process.env.DB_PORT || '5432', 10),
     database: process.env.DB_NAME,
     ssl: getSslConfig(),
-    max: Number(process.env.DB_POOL_MAX ?? 5), // 👈 limitează conexiunile
+    max: Number(process.env.DB_POOL_MAX ?? 2), // 👈 limitează conexiunile
     idleTimeoutMillis: 30_000,                // 30s idle timeout
   };
 
