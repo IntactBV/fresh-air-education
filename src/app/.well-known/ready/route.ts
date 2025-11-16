@@ -7,11 +7,11 @@ import url from 'url';
 
 const _testDbConnection = () => {
   const config = {
-      user: "avnadmin",
-      password: "AVNS_HlxoGtlxA9J0_lijgK_",
-      host: "pg-freshair-prod-pias-freshair.h.aivencloud.com",
-      port: 24677,
-      database: "defaultdb",
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      database: process.env.DB_NAME,
       ssl: {
           rejectUnauthorized: true,
           ca: `-----BEGIN CERTIFICATE-----
@@ -43,7 +43,7 @@ const _testDbConnection = () => {
       },
   };
 
-  const client = new pg.Client(config);
+  // const client = new pg.Client(config);
 
   // client.connect(function (err) {
   //     if (err)
@@ -65,12 +65,12 @@ const _testDbConnection = () => {
   database.connect(function (err) {
       if (err)
           throw err;
-      client.query("SELECT VERSION()", [], function (err, result) {
+      database.query("SELECT VERSION()", [], function (err, result) {
           if (err)
               throw err;
 
           console.log(result.rows[0].version);
-          client.end(function (err) {
+          database.end(function (err) {
               if (err)
                   throw err;
           });
