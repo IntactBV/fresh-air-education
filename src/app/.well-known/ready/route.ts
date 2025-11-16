@@ -18,28 +18,21 @@ const _testDbConnection = async() => {
   };
 
   const database = new Pool(config);
+  const result = await database.query("SELECT COUNT(*) FROM public.public_documents;" );
+  let docsCount = 0;
 
-  database.connect(async function (err) {
-      if (err)
-          throw err;
-      database.query("SELECT VERSION()", [], function (err, result) {
-          if (err)
-              throw err;
+  docsCount = parseInt(result.rows[0].count, 10);
 
-          // console.log(result.rows[0].version);
-          database.end();
-      });
-
-  });
-
+  return {docsCount};
 }
 
 export async function GET() {
 
   let dbStatus = 'disconnected';
-
+  let dbData = {};
+  
   try {
-    _testDbConnection();
+    dbData = await _testDbConnection();
     dbStatus = 'connected';
   } catch (error) {
     console.error('Database connection error:', error);
@@ -49,6 +42,7 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     database: dbStatus,
+    dbData,
     timestamp: new Date().toISOString(),
   });
 }
