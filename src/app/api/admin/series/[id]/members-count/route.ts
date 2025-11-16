@@ -2,12 +2,11 @@ import type { NextRequest} from 'next/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/utils/db';
 
-type Params = {
-  params: { id: string };
-};
+type RouteParams = { id: string };
 
-export async function GET(_req: NextRequest, { params }: Params) {
-  const seriesId = Number(params.id);
+export async function GET(_req: NextRequest, context: { params: Promise<RouteParams> }) {
+  const { id } = await context.params;
+  const seriesId = Number(id);
   if (Number.isNaN(seriesId)) {
     return NextResponse.json({ error: 'Invalid series id' }, { status: 400 });
   }

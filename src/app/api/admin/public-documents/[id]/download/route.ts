@@ -2,16 +2,14 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/utils/db';
 
-interface Params {
-  params: { id: string };
-}
+type RouteParams = { id: string };
 
 // GET /api/admin/public-documents/:id/download
 export async function GET(
     _req: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<RouteParams> }
   ) {
-    const { id } = await params;
+    const { id } = await context.params;
 
   const result = await db.query<
     {
