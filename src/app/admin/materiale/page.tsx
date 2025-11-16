@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import IconHome from '@faComponents/icon/icon-home';
-import ListaMaterialeComponent from './listaMaterialeComponent';
+import ListaMaterialeComponent from '@/components/custom/listaMaterialeComponent';
 
 export default function Page() {
   return (

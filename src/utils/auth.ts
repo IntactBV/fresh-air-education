@@ -1,29 +1,42 @@
 import { betterAuth } from "better-auth";
-import { createAuthClient } from "better-auth/react"
 import { nextCookies } from "better-auth/next-js";
-import { admin, organization } from "better-auth/plugins"
-import { Pool } from "pg";
+import { admin } from "better-auth/plugins";
+// import { Pool } from "pg";
+import { sendPasswordResetEmail } from "./email";
+import { db } from '@/utils/db';
 
-const connectionString = `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+// const database = new Pool({
+//   connectionString: `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+//   ssl: {
+//     rejectUnauthorized: false,
+//   },
+// });
 
-console.log('connectionString', connectionString);
-
-const database = new Pool({
-    connectionString
-  });
+// const isDev = process.env.NODE_ENV !== "production";
 
 export const auth = betterAuth({
-  emailAndPassword: { 
-    enabled: true, 
-    // optional: requireEmailVerification: true,
-    // optional: minPasswordLength: 8,
-  }, 
-  database,
-  plugins: [
-    admin(),
-    // organization(),
-    nextCookies()
-  ]
-});
+  emailAndPassword: {
+    enabled: true,
+    disableSignUp: true,
+    sendResetPassword: async ({ user, url }) => {
+      const email = user.email;
 
-export const { signIn, signUp, useSession } = createAuthClient()
+      // if (isDev) {
+      //   console.log("[DEV] reset password for", email, "=>", url);
+      //   return;
+      // }
+
+      await sendPasswordResetEmail(email, url);
+    },
+  },
+  database: db,
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: "student",
+      },
+    },
+  },
+  plugins: [admin(), nextCookies()],
+});

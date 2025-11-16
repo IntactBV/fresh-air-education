@@ -1,15 +1,15 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import Link from 'next/link';
 import AnimateHeight from 'react-animate-height';
 import { useDispatch, useSelector } from 'react-redux';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 import type { IRootState } from '@/store';
-import { toggleSidebar } from '@/store/themeConfigSlice';
+import { toggleSidebar, resetToggleSidebar } from '@/store/themeConfigSlice';
 
 import IconCaretsDown from '@/components/icon/icon-carets-down';
 import IconCaretDown from '@/components/icon/icon-caret-down';
@@ -17,15 +17,14 @@ import IconMinus from '@/components/icon/icon-minus';
 
 import { SIDEBAR_MENUS } from './sidebar.config';
 
-// Dacă ai un authSlice, poți citi rolul din store.
-// Altfel, pasează `role` ca prop în layout-ul /edu /tutore /admin.
-type UserRole = 'student' | 'tutor' | 'admin';
+type UserRole = 'student' | 'tutore' | 'admin';
 
 type SidebarProps = {
-  userRole?: UserRole;          // dacă nu e dat, presupunem 'student'
+  userRole?: UserRole;
 };
 
-const Sidebar = ({ userRole = 'admin' }: SidebarProps) => {
+const Sidebar = ({ userRole = 'tutore' }: SidebarProps) => {
+
   const dispatch = useDispatch();
   const pathname = usePathname();
 
@@ -35,15 +34,22 @@ const Sidebar = ({ userRole = 'admin' }: SidebarProps) => {
   const menuDef = SIDEBAR_MENUS[userRole];
   const basePath = menuDef.basePath;
 
-  // pentru collapsible (dacă vei introduce collapse-uri în viitor)
   const [openKey, setOpenKey] = React.useState<string>('');
   const toggle = (key: string) => setOpenKey(prev => (prev === key ? '' : key));
 
-  // Compose href: absolut (http) rămâne, altfel prefixăm cu basePath
+  useEffect(() => {
+  const rootPaths = ['/admin', '/tutore', '/edu'];
+
+  if (rootPaths.includes(pathname)) {
+    // fortam sidebar-ul sa fie deschis pe aceste rute exacte
+    dispatch(resetToggleSidebar());
+  }
+}, [pathname, dispatch]);
+
+  // Compose href: absolut (http) ramane, altfel prefixam cu basePath
   const wrapHref = (href: string) =>
     href.startsWith('http') ? href : `${basePath}${href === '/' ? '' : href}`;
 
-  // activ: exact sau și pe subrute (în funcție de flag-ul item.exact)
   const isActive = (fullHref: string, exact?: boolean) =>
     exact ? pathname === fullHref : (pathname === fullHref || pathname.startsWith(fullHref + '/'));
 
@@ -56,10 +62,42 @@ const Sidebar = ({ userRole = 'admin' }: SidebarProps) => {
         <div className="h-full bg-white dark:bg-black">
           {/* Header + buton collapse */}
           <div className="flex items-center justify-between px-4 py-3">
-            <Link href="/" className="main-logo flex shrink-0 items-center">
-              <img className="inline w-8 ltr:-ml-1 rtl:-mr-1" src="/assets/images/logo.png" alt="logo" />
-              <span className="md:inline align-middle text-2xl font-semibold transition-all duration-300 ltr:ml-1.5 rtl:mr-1.5 text-[#ba2025] dark:text-[#ba2025]">
-                FRESH AIR
+            <Link href="/" className="main-logo flex shrink-0 items-center gap-2 group">
+              <div className="relative h-8 w-8 overflow-hidden rounded-md">
+                <Image
+                  src="/assets/images/logo.png"
+                  alt="logo"
+                  width={32}
+                  height={32}
+                  sizes="32px"
+                  className="
+                    h-full w-full object-contain
+                    transition-transform duration-500
+                    group-hover:animate-spinSlow
+                  "
+                />
+              </div>
+    
+              <span
+                className="
+                  hidden md:inline
+                  align-middle
+                  font-sans
+                  text-[1.15rem] leading-[1.2rem]
+                  font-semibold
+                  tracking-tight
+                  select-none
+                  text-zinc-800 dark:text-zinc-100
+                "
+              >
+                <span className="inline-block align-baseline text-[1.3rem] leading-none">
+                  F
+                </span>
+                RESH{" "}
+                <span className="inline-block align-baseline text-[1.3rem] leading-none text-primary">
+                  T
+                </span>
+                <span className="text-primary">ECH</span>
               </span>
             </Link>
 
@@ -110,7 +148,7 @@ const Sidebar = ({ userRole = 'admin' }: SidebarProps) => {
                   );
                 }
 
-                // COLLAPSE (dacă vei folosi)
+                // COLLAPSE
                 if (item.type === 'collapse') {
                   const isOpen = openKey === item.label;
                   const Icon = item.icon;

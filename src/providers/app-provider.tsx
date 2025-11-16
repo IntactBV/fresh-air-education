@@ -14,9 +14,6 @@ function AppProvider({ children }: PropsWithChildren) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-
-        console.log('localStorage', localStorage);
-
         dispatch(toggleTheme(localStorage.getItem('theme') || themeConfig.theme));
         dispatch(toggleMenu(localStorage.getItem('menu') || themeConfig.menu));
         dispatch(toggleLayout(localStorage.getItem('layout') || themeConfig.layout));

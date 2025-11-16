@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import IconHome from '@faComponents/icon/icon-home';
-import StudentDetaliiComponent from './studentDetaliiComponent';
+import StudentDetaliiComponent from '@/components/custom/studentDetaliiComponent';
 
 export const metadata: Metadata = {
   title: 'Detalii student',
@@ -27,7 +27,7 @@ export default function Page() {
         </li>
       </ul>
 
-      <StudentDetaliiComponent />
+      <StudentDetaliiComponent baseFolder="admin" />
     </div>
   );
 }

@@ -1,36 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import IconHome from '@faComponents/icon/icon-home';
-import StudentiInscrisiComponent from './studentiInscrisiComponent';
+import StudentiInscrisiComponent from '@/components/custom/studentiInscrisiComponent';
 
 export const metadata: Metadata = {
-  title: 'Detalii student',
+  title: 'Studenti inscrisi',
 };
 
 type Params = { studentId: string };
 
 export default async function Page({ params }: { params: Params }) {
-  const { studentId } = params;
-
-  // TODO: fetch din API în loc de mock
-  const student = {
-    id: studentId,
-    fullName: 'Popescu Andrei-Ionuț',
-    email: 'andrei.popescu@student.univ.ro',
-    cnp: '1234567890123',
-    faculty: 'FMI — Universitatea București',
-    program: 'Informatică',
-    year: 'Anul 3',
-    phone: '+40 712 345 678',
-    address: 'Str. Exemplu 10, București',
-    approvedAt: '2025-09-12T10:00:00.000Z',
-    status: 'activ' as 'activ' | 'absolvent',
-    // câmpuri suplimentare provenite din cererea în așteptare (exemplu):
-    internshipPeriod: '01 iulie 2025 — 30 septembrie 2025',
-    internshipCompany: 'Fresh Air Tech SRL',
-    internshipMentor: 'Dragoș I.',
-  };
-
   return (
     <div>
       {/* breadcrumb */}
@@ -45,7 +24,7 @@ export default async function Page({ params }: { params: Params }) {
         </li>
       </ul>
 
-      <StudentiInscrisiComponent />
+      <StudentiInscrisiComponent baseFolder="admin" />
     </div>
   );
 }

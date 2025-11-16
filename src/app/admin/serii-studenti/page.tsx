@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import IconHome from '@faComponents/icon/icon-home';
-import SeriiComponent from './seriiComponent';
+import SeriiComponent from '@/components/custom/seriiComponent';
 
 export const metadata: Metadata = {
   title: 'Serii',
@@ -22,7 +22,7 @@ export default function Page() {
         </li>
       </ul>
 
-      <SeriiComponent />
+      <SeriiComponent baseFolder="admin" />
     </div>
   );
 }

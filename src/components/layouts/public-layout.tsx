@@ -1,12 +1,8 @@
-import Header from '@faLayouts/header';
+import Header from './header';
 import Footer from '@faLayouts/footer';
-import PublicHeader from '@faLayouts/public-header';
 import ContentAnimation from '@faLayouts/content-animation';
 import MainContainer from '@faLayouts/main-container';
-import Overlay from '@faLayouts/overlay';
 import ScrollToTop from '@faLayouts/scroll-to-top';
-import Setting from '@/components/layouts/setting';
-// import Setting from '@faLayouts/setting';
 import Portals from '@faComponents/portals';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {

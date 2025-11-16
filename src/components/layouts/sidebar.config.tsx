@@ -1,5 +1,5 @@
 // components/layouts/sidebar.config.tsx
-import React from 'react';
+import type React from 'react';
 
 import IconMenuDashboard from '@/components/icon/menu/icon-menu-dashboard';
 import IconMenuDatatables from '@/components/icon/menu/icon-menu-datatables';
@@ -11,10 +11,15 @@ import IconMenuInvoice from '@/components/icon/menu/icon-menu-invoice';
 import IconMenuMailbox from '@/components/icon/menu/icon-menu-mailbox';
 import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
 import IconUsersGroup from '@/components/icon/icon-users-group';
-import IconNotes from '@faComponents/icon/icon-notes';
+// import IconNotes from '@faComponents/icon/icon-notes';
+import IconSave from '@/components/icon/icon-save';
 import IconNotesEdit from '@faComponents/icon/icon-notes-edit';
+import IconClipboardText from '@faComponents/icon/icon-clipboard-text';
+import IconOpenBook from '@/components/icon/icon-open-book';
+import IconMenuContacts from '@faComponents/icon/menu/icon-menu-contacts';
+import IconUser from '@/components/icon/icon-user';
 
-export type UserRole = 'student' | 'tutor' | 'admin';
+export type UserRole = 'student' | 'tutore' | 'admin';
 
 type MenuLink = {
   type: 'link';
@@ -95,8 +100,7 @@ export const SIDEBAR_MENUS: Record<UserRole, RoleMenus> = {
     ],
   },
 
-  // ==== TUTOR (placeholder hardcodat, de completat ulterior) ====
-  tutor: {
+  tutore: {
     basePath: '/tutore',
     items: [
       {
@@ -104,31 +108,37 @@ export const SIDEBAR_MENUS: Record<UserRole, RoleMenus> = {
         label: 'Panou principal',
         href: '/',
         icon: IconMenuDashboard,
+        exact: true
       },
-      { type: 'group', label: 'TUTORE' },
+      { type: 'group', label: 'STUDENTI' },
       {
         type: 'link',
-        label: 'Sesiuni',
-        href: '/sesiuni',
-        icon: IconMenuChat,
+        label: 'Studenti inscrisi',
+        href: '/studenti-inscrisi',
+        icon: IconMenuUsers,
       },
       {
         type: 'link',
-        label: 'Facturare',
-        href: '/facturare',
-        icon: IconMenuInvoice,
+        label: 'Serii studenti',
+        href: '/serii-studenti',
+        icon: IconUsersGroup,
       },
-      { type: 'group', label: 'SUPORT' },
+      { type: 'group', label: 'MATERIALE' },
+      { type: 'link',
+        label: 'Materiale studenti',
+        href: '/materiale',
+        icon: IconMenuDatatables,
+      },
+      { type: 'group', label: 'PROFIL' },
       {
         type: 'link',
-        label: 'Documentație',
-        href: 'https://vristo.sbthemes.com',
-        icon: IconMenuDocumentation,
+        label: 'Contul meu',
+        href: '/contul-meu',
+        icon: IconMenuAuthentication,
       },
     ],
   },
 
-  // ==== ADMIN (placeholder hardcodat, de completat ulterior) ====
   admin: {
     basePath: '/admin',
     items: [
@@ -160,22 +170,60 @@ export const SIDEBAR_MENUS: Record<UserRole, RoleMenus> = {
       },
       { type: 'group', label: 'MATERIALE' },
       { type: 'link',
-        label: 'Lista materiale',
+        label: 'Materiale studenti',
         href: '/materiale',
         icon: IconMenuDatatables,
+      },
+      {
+        type: 'link',
+        label: 'Documente publice',
+        href: '/documente-publice',
+        icon: IconClipboardText,
       },
       { type: 'group', label: 'ARTICOLE' },
       {
         type: 'link',
-        label: 'Lista articole',
-        href: '/articole',
-        icon: IconNotes,
+        label: 'Program de practica',
+        href: '/program-de-practica',
+        icon: IconOpenBook,
       },
       {
         type: 'link',
-        label: 'Adauga articol',
-        href: '/adauga-articol',
+        label: 'Termeni si conditii',
+        href: '/termeni-si-conditii',
         icon: IconNotesEdit,
+      },
+      {
+        type: 'link',
+        label: 'Politica de confidentialitate',
+        href: '/politica-de-confidentialitate',
+        icon: IconSave,
+      },  
+      // {
+      //   type: 'link',
+      //   label: 'Lista articole',
+      //   href: '/articole',
+      //   icon: IconNotes,
+      // },
+      // {
+      //   type: 'link',
+      //   label: 'Adauga articol',
+      //   href: '/adauga-articol',
+      //   icon: IconNotesEdit,
+      // },
+      { type: 'group', label: 'UTILIZATORI' },
+      {
+        type: 'link',
+        label: 'Utilizatori',
+        href: '/utilizatori',
+        icon: IconUser,
+      },      
+      { type: 'group', label: 'PROFIL' },
+      {
+        type: 'link',
+        label: 'Contul meu',
+        href: '/contul-meu',
+        icon: IconMenuAuthentication,
       },
 
     ],
