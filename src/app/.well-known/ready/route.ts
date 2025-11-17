@@ -43,6 +43,11 @@ export async function GET() {
     status: 'ok',
     database: dbStatus,
     dbData,
+    env: {
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "not-set",
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "not-set",
+      NODE_ENV: process.env.NODE_ENV || "not-set",
+    },
     timestamp: new Date().toISOString(),
   });
 }
