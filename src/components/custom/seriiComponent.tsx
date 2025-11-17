@@ -9,6 +9,7 @@ import 'tippy.js/dist/tippy.css';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import IconX from '@/components/icon/icon-x';
+import IconDatabase from '@/components/icon/icon-database';
 
 type Serie = {
   id: string;
@@ -189,7 +190,7 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
 
       {/* table */}
       <div className="datatables">
-        {isMounted && (
+        {isMounted && pageRecords.length > 0 ? (
           <DataTable
             className="table-hover whitespace-nowrap"
             records={pageRecords}
@@ -286,6 +287,13 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
               `Afisez ${from}-${to} din ${totalRecords} inregistrari`
             }
           />
+        ) : (
+          <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded border border-dashed border-gray-200 bg-gray-50/30 dark:border-gray-700 dark:bg-[#1b2333]/40">
+            <IconDatabase className="h-10 w-10 text-gray-400 dark:text-gray-500" />
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Nu exista inregistrari de afisat
+            </span>
+          </div>
         )}
       </div>
 

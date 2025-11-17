@@ -309,7 +309,7 @@ export default function UtilizatoriComponent() {
             onClick={() => setCreateModalOpen(true)}
           >
             <IconPlus className="h-4 w-4" />
-            Create user
+            Creeaza utilizator nou
           </button>
         </div>
       </div>
@@ -390,7 +390,7 @@ export default function UtilizatoriComponent() {
                     <button
                       type="button"
                       onClick={() => openRoleModal(u)}
-                      className="btn btn-outline-primary btn-sm flex items-center gap-0.5"
+                      className="btn btn-outline-primary btn-sm flex items-center gap-2"
                     >
                       <IconEdit className="h-4 w-4" />
                       Modificare rol
@@ -398,21 +398,22 @@ export default function UtilizatoriComponent() {
                     <button
                       type="button"
                       onClick={() => handleSendReset(u)}
-                      className="btn btn-outline-secondary btn-sm px-2"
+                      className="btn btn-outline-secondary btn-sm px-2 gap-2"
                       disabled={resetSavingId === u.id}
                     >
+                      <IconSend className="h-4 w-4" />
                       {resetSavingId === u.id
                         ? "Se trimite..."
-                        : "Trimite resetare parola"}
+                        : "Resetare parola"}
                     </button>
                     <button
                       type="button"
                       onClick={() => openBanModal(u)}
-                      className={`btn btn-sm w-20 flex items-center gap-0.5 ${
+                      className={`btn btn-sm flex w-24 items-center gap-2 ${
                         u.banned ? "btn-success" : "btn-danger"
                       }`}
                     >
-                      <IconLock className="h-4 w-4" />
+                      {u.banned ? '' : <IconLock className="h-4 w-4" />}
                       {u.banned ? "Deblocare" : "Blocare"}
                     </button>
                   </div>
