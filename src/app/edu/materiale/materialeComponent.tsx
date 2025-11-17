@@ -350,7 +350,7 @@ const MaterialeEduComponent = () => {
                 {loading && (
                   <tr>
                     <td colSpan={2} className="py-6 text-sm text-muted-foreground">
-                      Se incarci…
+                      Se incarca...
                     </td>
                   </tr>
                 )}
@@ -519,7 +519,7 @@ const MaterialeEduComponent = () => {
 
           <div className="px-4 pb-4">
             {loading ? (
-              <div className="py-6 text-sm text-muted-foreground">Se incarci…</div>
+              <div className="py-6 text-sm text-muted-foreground">Se incarca...</div>
             ) : err ? (
               <div className="py-6 text-sm text-danger">Eroare: {err}</div>
             ) : filtered.length === 0 ? (
