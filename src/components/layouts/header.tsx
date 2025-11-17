@@ -16,6 +16,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { authClient } from '@fa/utils/auth-client';
 import IconServer from '@faComponents/icon/icon-server';
 import Image from 'next/image';
+import Loading from '@/components/layouts/loading';
 
 enum EUserTypes {
     Student = 'student',
@@ -160,7 +161,7 @@ const Header = () => {
         syncAuthFromSession(false);
     }, [sessionLoading, isEduRoute, isAdminRoute, isTutoreRoute, syncAuthFromSession]);
 
-    if (sessionLoading) return <span>Loading…</span>;
+    if (sessionLoading) return <Loading />;
 
     const currentUserPlatformUrl =
         session?.user?.role === 'admin'
