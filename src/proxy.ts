@@ -25,3 +25,5 @@
 // export const config = {
 // 	matcher: ["/admin"], // Specify the routes the middleware applies to
 // };
+
+export default () => {};

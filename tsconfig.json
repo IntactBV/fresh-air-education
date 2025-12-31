@@ -20,7 +20,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "baseUrl": ".",
     "plugins": [
@@ -52,7 +52,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "tailwind.config.js",
-    "postcss.config.js"
+    "postcss.config.js",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
