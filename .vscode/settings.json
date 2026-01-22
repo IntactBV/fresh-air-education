@@ -2,7 +2,8 @@
   "conventionalCommits.scopes": [
     "setup",
     "db",
-    "well-known"
+    "well-known",
+    "ui"
   ],
   "[javascript]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",

@@ -4,6 +4,7 @@ import { Nunito } from 'next/font/google';
 import BaseProvider from '@faProviders/base-provider';
 
 import '../styles/tailwind.css';
+import { MasterHeader } from '@faComponents/master-header';
 
 export const metadata: Metadata = {
     title: {
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="en">
             <body className={nunito.variable}>
+                <MasterHeader />
                 <BaseProvider>{children}</BaseProvider>
             </body>
         </html>
