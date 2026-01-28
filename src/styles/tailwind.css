@@ -41,6 +41,11 @@
 
 /* Select2*/
 @import './select2.css';
+
+/* Master header */
+@import './master-header.css';
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -1,0 +1,5 @@
+.master-header {
+  @apply bg-white w-full px-6 py-4 sticky top-0 shadow-md z-50 dark:bg-white;
+  color: #004990;
+  font-family: Arial, sans-serif;
+}

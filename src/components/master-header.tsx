@@ -2,7 +2,7 @@ import Image from 'next/image'
 
 export const MasterHeader = () => {
   return (
-    <header className="w-full bg-white text-black p-4 sticky top-0 shadow-md z-50" style={{ color: '#06389f' }}>
+    <header className="master-header">
       <div className="flex justify-between items-center align-middle">
         <div className='flex justify-start'>
           <Image src="/assets/images/ue-flag.jpeg" alt="Logo" width={92} height={50} />
