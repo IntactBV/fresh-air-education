@@ -1,42 +1,33 @@
 // src/utils/db.ts
-import { Pool, PoolConfig } from 'pg';
+import type { PoolConfig } from 'pg';
+import { Pool } from 'pg';
 
 /**
  * Build SSL config based on environment.
  * - In production: if DB_SSL_CA is present, enforce TLS with rejectUnauthorized: true
  * - In dev: allow self-signed certs (rejectUnauthorized: false), still passing CA if exists
  */
-function getSslConfig() {
+function getSslConfig(): PoolConfig["ssl"] {
   const ca = process.env.DB_SSL_CA;
 
-  // Dacă providerul tău cere neapărat SSL și ai CA în env
-  if (process.env.NODE_ENV === 'production') {
+  // PRODUCTION: SSL obligatoriu (cu CA)
+  if (process.env.NODE_ENV === "production") {
     if (!ca) {
-      // Dacă în producție ai nevoie de SSL, e mai bine să crape explicit
-      // decât să meargă fără verificare.
       throw new Error(
-        'DB_SSL_CA is not set in environment variables, but NODE_ENV=production'
+        "DB_SSL_CA is not set in environment variables, but NODE_ENV=production"
       );
     }
 
     return {
-      rejectUnauthorized: false,
+      rejectUnauthorized: true,
       ca,
     };
   }
 
-  // Dev / local: mai permisiv (poți ajusta după nevoie)
-  if (ca) {
-    return {
-      rejectUnauthorized: false,
-      ca,
-    };
-  }
-
-  return {
-    rejectUnauthorized: false,
-  };
+  // LOCAL: fara SSL
+  return false;
 }
+
 
 /**
  * Creează un nou Pool de conexiuni.
@@ -51,7 +42,7 @@ function createPool() {
     port: parseInt(process.env.DB_PORT || '5432', 10),
     database: process.env.DB_NAME,
     ssl: getSslConfig(),
-    max: Number(process.env.DB_POOL_MAX ?? 2), // 👈 limitează conexiunile
+    max: Number(process.env.DB_POOL_MAX ?? 2),
     idleTimeoutMillis: 30_000,                // 30s idle timeout
   };
 

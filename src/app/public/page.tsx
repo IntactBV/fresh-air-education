@@ -2,7 +2,6 @@ import { type Metadata } from 'next';
 import React from 'react';
 import Link from 'next/link';
 import IconArrowWaveLeftUp from '@/components/icon/icon-arrow-wave-left-up';
-import DocumentePubliceWidget from '@/app/public/documentePubliceWidget';
 import PublicPageRenderer from './PublicPageRenderer';
 import Image from 'next/image';
 
@@ -152,8 +151,6 @@ const Home = () => {
           </div>
         </div>
       </div>
-
-      <DocumentePubliceWidget />
 
       <div
         id="program-de-practica-section"
