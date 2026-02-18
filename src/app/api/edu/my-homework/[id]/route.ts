@@ -22,7 +22,8 @@ function contentDisposition(filename: string, download: boolean) {
   return `${download ? 'attachment' : 'inline'}; filename="${safe}"`;
 }
 
-export async function GET(req: NextRequest, ctx: { params: { id: string } }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+
   const session = await auth.api.getSession({ headers: req.headers });
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest, ctx: { params: { id: string } }) {
     return NextResponse.json({ error: 'Student not found' }, { status: 404 });
   }
 
-  const id = ctx.params.id;
+  const { id } = await ctx.params;
   const url = new URL(req.url);
   const download = url.searchParams.get('download') === '1';
 
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest, ctx: { params: { id: string } }) {
   });
 }
 
-export async function DELETE(req: NextRequest, ctx: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: req.headers });
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -92,7 +93,7 @@ export async function DELETE(req: NextRequest, ctx: { params: { id: string } }) 
     return NextResponse.json({ error: 'Student not found' }, { status: 404 });
   }
 
-  const id = ctx.params.id;
+  const { id } = await ctx.params;
 
   const res = await db.query(
     `
