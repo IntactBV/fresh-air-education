@@ -5,7 +5,7 @@ import { db } from '@/utils/db';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const limit = Number(searchParams.get('limit') || 50);
+  const limit = Number(searchParams.get('limit') || 500);
   const offset = Number(searchParams.get('offset') || 0);
   const status = searchParams.get('status');
 

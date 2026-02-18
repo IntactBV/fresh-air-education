@@ -1,3 +1,4 @@
+//src/components/custom/AcroFormDocumentDialog.tsx
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -371,7 +372,7 @@ export default function AcroFormDocumentDialog({
           body: formData,
         });
       } else {
-        // varianta generata – comportament identic cu ce aveai
+        // varianta generata
         const body: any = {
           studentId: student.id,
           documentType,
@@ -424,15 +425,15 @@ export default function AcroFormDocumentDialog({
 
 
   return (
-    <div className={`${isOpen ? 'fixed' : 'hidden'} inset-0 z-50 flex items-center justify-center px-3`}>
+    <div className={`${isOpen ? 'fixed' : 'hidden'} inset-0 z-[9999] flex items-center justify-center px-3`}>
       {/* overlay */}
       <div
-        className="fixed inset-0 bg-black/40"
+        className="fixed inset-0 z-[9999] bg-black/40"
         onClick={() => (!disabledAll ? onClose() : null)}
       />
 
       {/* dialog */}
-      <div className="relative z-10 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-lg border-0 text-black shadow-xl dark:text-white-dark bg-white dark:bg-[#0e1726] flex flex-col">
+      <div className="relative z-[10000] w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-lg border-0 text-black shadow-xl dark:text-white-dark bg-white dark:bg-[#0e1726] flex flex-col">
         {/* header */}
         <div className="flex items-center justify-between bg-[#fbfbfb] px-6 py-6 dark:bg-[#121c2c] border-b border-white-light dark:border-[#1b2e4b]">
           <h5 className="text-base font-semibold">

@@ -1,8 +1,9 @@
+// src/components/custom/studentiInscrisiComponent.tsx
 'use client';
 
 import { useEffect, useMemo, useState, Fragment } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { DataTable, type DataTableSortStatus } from 'mantine-datatable';
 import sortBy from 'lodash/sortBy';
 import Tippy from '@tippyjs/react';
@@ -26,9 +27,17 @@ type StudentFromApi = {
   status: 'activ' | 'inactiv' | 'absolvent' | string;
   serieId: string | null;
   serieName: string;
+
+  tutorUserId: string | null;
+  tutorName: string;
 };
 
 type Serie = {
+  id: string;
+  name: string;
+};
+
+type Tutor = {
   id: string;
   name: string;
 };
@@ -43,6 +52,9 @@ type Row = {
   status: 'activ' | 'inactiv' | 'absolvent' | string;
   serieId: string | null;
   serieName: string;
+
+  tutorUserId: string | null;
+  tutorName: string;
 };
 
 function formatRoDate(iso: string | null) {
@@ -56,9 +68,11 @@ function formatRoDate(iso: string | null) {
   return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
 }
 
-export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder: 'admin' | 'tutore' } ) {
+export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 'admin' | 'tutore' }) {
   const [isMounted, setIsMounted] = useState(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [students, setStudents] = useState<StudentFromApi[]>([]);
   const [studentsLoading, setStudentsLoading] = useState(true);
@@ -66,23 +80,24 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
   const [series, setSeries] = useState<Serie[]>([]);
   const [seriesLoading, setSeriesLoading] = useState(true);
 
+  const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [tutorsLoading, setTutorsLoading] = useState(true);
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // tab: inscrisi (activ+inactiv) vs absolventi
   const [tab, setTab] = useState<'enrolled' | 'graduates'>('enrolled');
-
-  // selectie pentru bulk assign (doar in tab 1)
   const [selectedRecords, setSelectedRecords] = useState<Row[]>([]);
 
-  // modal assign
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignSerieId, setAssignSerieId] = useState<string>('');
 
-  // filtre
+  const [assignTutorOpen, setAssignTutorOpen] = useState(false);
+  const [assignTutorId, setAssignTutorId] = useState<string>('');
+
   const [search, setSearch] = useState('');
   const [serieFilter, setSerieFilter] = useState<string | 'all'>('all');
+  const [tutorFilter, setTutorFilter] = useState<string | 'all'>('all'); // 'all' | '__none__' | tutorId
 
-  // paginare + sort
   const PAGE_SIZES = [10, 20, 30, 50, 100];
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [page, setPage] = useState(1);
@@ -94,7 +109,6 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
   useEffect(() => {
     setIsMounted(true);
 
-    // fetch students
     (async () => {
       try {
         const res = await fetch('/api/admin/students', { cache: 'no-store' });
@@ -108,7 +122,6 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
       }
     })();
 
-    // fetch series
     (async () => {
       try {
         const res = await fetch('/api/admin/series', { cache: 'no-store' });
@@ -120,19 +133,49 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
         setSeriesLoading(false);
       }
     })();
+
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/tutors', { cache: 'no-store' });
+        const data: any[] = await res.json();
+        setTutors(
+          data.map((u) => ({
+            id: u.id,
+            name: (u.name || u.email || '').toString(),
+          }))
+        );
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setTutorsLoading(false);
+      }
+    })();
   }, []);
 
-  // init filtru din query (?serieId=...)
+  // init filtre din query
   useEffect(() => {
     const sid = searchParams.get('serieId');
+    const tid = searchParams.get('tutorId');
+
     if (sid) {
       setSerieFilter(sid);
       setTab('enrolled');
+    } else {
+      setSerieFilter('all');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  // rows de baza
+    if (tid) {
+      setTutorFilter(tid);
+      setTab('enrolled');
+    } else {
+      setTutorFilter('all');
+    }
+
+    const t = searchParams.get('tab');
+    if (t === 'graduates') setTab('graduates');
+    else setTab('enrolled');
+  }, [searchParams]);
+
   const base: Row[] = useMemo(() => {
     return students.map((s) => ({
       id: s.id,
@@ -144,10 +187,11 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
       status: s.status,
       serieId: s.serieId,
       serieName: s.serieName,
+      tutorUserId: s.tutorUserId,
+      tutorName: s.tutorName,
     }));
   }, [students]);
 
-  // counturi pentru taburi
   const counts = useMemo(() => {
     let enrolled = 0;
     let graduates = 0;
@@ -158,15 +202,11 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
     return { enrolled, graduates };
   }, [base]);
 
-  // aplicam filtrul de tab
   const filteredByTab: Row[] = useMemo(() => {
-    if (tab === 'enrolled') {
-      return base.filter((r) => r.status !== 'absolvent');
-    }
+    if (tab === 'enrolled') return base.filter((r) => r.status !== 'absolvent');
     return base.filter((r) => r.status === 'absolvent');
   }, [base, tab]);
 
-  // filtrare dupa search + serie (doar tab 1)
   const filtered: Row[] = useMemo(() => {
     const q = search.trim().toLowerCase();
     let rows = filteredByTab;
@@ -180,29 +220,34 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
           r.phone,
           r.status,
           r.serieName,
+          r.tutorName,
         ].some((v) => v.toLowerCase().includes(q))
       );
     }
 
-    if (tab === 'enrolled' && serieFilter !== 'all') {
-      if (serieFilter === '__none__') {
-        rows = rows.filter((r) => r.serieId === null);
-      } else {
-        rows = rows.filter((r) => r.serieId === serieFilter);
+    if (tab === 'enrolled') {
+      // filtre serie
+      if (serieFilter !== 'all') {
+        if (serieFilter === '__none__') rows = rows.filter((r) => r.serieId === null);
+        else rows = rows.filter((r) => r.serieId === serieFilter);
+      }
+
+      // filtre tutore
+      if (tutorFilter !== 'all') {
+        if (tutorFilter === '__none__') rows = rows.filter((r) => r.tutorUserId === null);
+        else rows = rows.filter((r) => r.tutorUserId === tutorFilter);
       }
     }
 
     return rows;
-  }, [filteredByTab, search, tab, serieFilter]);
+  }, [filteredByTab, search, tab, serieFilter, tutorFilter]);
 
-  // sortare
   const sorted: Row[] = useMemo(() => {
     const data = sortBy(filtered, sortStatus.columnAccessor as keyof Row);
     return sortStatus.direction === 'desc' ? data.reverse() : data;
   }, [filtered, sortStatus]);
 
-  // reset paginare la schimbare de filtru/tab
-  useEffect(() => setPage(1), [pageSize, search, sortStatus, tab, serieFilter]);
+  useEffect(() => setPage(1), [pageSize, search, sortStatus, tab, serieFilter, tutorFilter]);
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize;
@@ -211,12 +256,47 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
   const handleTabChange = (next: 'enrolled' | 'graduates') => {
     setTab(next);
     setSelectedRecords([]);
+
     if (next === 'graduates') {
       setSerieFilter('all');
+      setTutorFilter('all');
     }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', next);
+
+    if (next === 'graduates') {
+      params.delete('serieId');
+      params.delete('tutorId');
+    }
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // modal assign
+  const handleSerieFilterChange = (value: string) => {
+    setSerieFilter(value);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === 'all') params.delete('serieId');
+    else params.set('serieId', value);
+
+    // rămânem pe enrolled când filtrăm
+    params.set('tab', 'enrolled');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const handleTutorFilterChange = (value: string) => {
+    setTutorFilter(value);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === 'all') params.delete('tutorId');
+    else params.set('tutorId', value);
+
+    params.set('tab', 'enrolled');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  // modal assign serie
   const openAssign = () => {
     setAssignSerieId('');
     setAssignOpen(true);
@@ -242,29 +322,16 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
 
       if (!res.ok) {
         const err = await res.json().catch(() => null);
-        setErrorMsg(
-          err?.error?.message || 'Nu am putut asigna/deasigna seria.'
-        );
+        setErrorMsg(err?.error?.message || 'Nu am putut asigna/deasigna seria.');
         return;
       }
 
-      // update local
       setStudents((prev) =>
         prev.map((st) => {
           if (selectedRecords.find((sel) => sel.id === st.id)) {
-            if (isRemove) {
-              return {
-                ...st,
-                serieId: null,
-                serieName: '',
-              };
-            }
+            if (isRemove) return { ...st, serieId: null, serieName: '' };
             const serie = series.find((s) => s.id === assignSerieId);
-            return {
-              ...st,
-              serieId: assignSerieId,
-              serieName: serie ? serie.name : '',
-            };
+            return { ...st, serieId: assignSerieId, serieName: serie ? serie.name : '' };
           }
           return st;
         })
@@ -279,7 +346,56 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
     }
   };
 
-  // coloanele difera un pic in functie de tab
+  // modal assign tutor
+  const openAssignTutor = () => {
+    setAssignTutorId('');
+    setAssignTutorOpen(true);
+  };
+
+  const saveAssignTutor = async () => {
+    if (!selectedRecords.length) {
+      setAssignTutorOpen(false);
+      return;
+    }
+
+    const isRemove = assignTutorId === '__none__';
+
+    try {
+      const res = await fetch('/api/admin/students/assign-tutor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentIds: selectedRecords.map((s) => s.id),
+          tutorUserId: isRemove ? null : assignTutorId,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        setErrorMsg(err?.error?.message || 'Nu am putut asigna/deasigna tutorele.');
+        return;
+      }
+
+      setStudents((prev) =>
+        prev.map((st) => {
+          if (selectedRecords.find((sel) => sel.id === st.id)) {
+            if (isRemove) return { ...st, tutorUserId: null, tutorName: '' };
+            const t = tutors.find((x) => x.id === assignTutorId);
+            return { ...st, tutorUserId: assignTutorId, tutorName: t?.name ?? '' };
+          }
+          return st;
+        })
+      );
+
+      setAssignTutorOpen(false);
+      setSelectedRecords([]);
+      setErrorMsg(null);
+    } catch (e) {
+      console.error(e);
+      setErrorMsg('Eroare la comunicarea cu serverul.');
+    }
+  };
+
   const columns =
     tab === 'enrolled'
       ? [
@@ -290,16 +406,8 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
             width: 110,
             render: (row: Row) => row.studentNo ?? '—',
           },
-          {
-            accessor: 'fullName',
-            title: 'Nume',
-            sortable: true,
-          },
-          {
-            accessor: 'email',
-            title: 'E-mail',
-            sortable: true,
-          },
+          { accessor: 'fullName', title: 'Nume', sortable: true },
+          { accessor: 'email', title: 'E-mail', sortable: true },
           {
             accessor: 'serieName',
             title: 'Serie',
@@ -312,16 +420,23 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
               ),
           },
           {
+            accessor: 'tutorName',
+            title: 'Tutore',
+            sortable: true,
+            render: (row: Row) =>
+              row.tutorName ? (
+                <span className="badge bg-success/10 text-success">{row.tutorName}</span>
+              ) : (
+                <span className="text-xs text-gray-500">—</span>
+              ),
+          },
+          {
             accessor: 'status',
             title: 'Status',
             sortable: true,
             render: (row: Row) => {
-              if (row.status === 'activ') {
-                return <span className="badge bg-success/10 text-success">Activ</span>;
-              }
-              if (row.status === 'inactiv') {
-                return <span className="badge bg-warning/10 text-warning">Inactiv</span>;
-              }
+              if (row.status === 'activ') return <span className="badge bg-success/10 text-success">Activ</span>;
+              if (row.status === 'inactiv') return <span className="badge bg-warning/10 text-warning">Inactiv</span>;
               return <span className="badge bg-info/10 text-info">Absolvent</span>;
             },
           },
@@ -337,7 +452,9 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
                     className="btn btn-sm btn-outline-primary flex items-center gap-2"
                   >
                     <span>Detalii</span>
-                    <IconArrowForward className="h-4 w-4" />
+                    <span className="h-4 w-4">
+                      <IconArrowForward className="h-4 w-4" />
+                    </span>
                   </Link>
                 </Tippy>
               </div>
@@ -352,16 +469,8 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
             width: 110,
             render: (row: Row) => row.studentNo ?? '—',
           },
-          {
-            accessor: 'fullName',
-            title: 'Nume',
-            sortable: true,
-          },
-          {
-            accessor: 'email',
-            title: 'E-mail',
-            sortable: true,
-          },
+          { accessor: 'fullName', title: 'Nume', sortable: true },
+          { accessor: 'email', title: 'E-mail', sortable: true },
           {
             accessor: 'approvedAt',
             title: 'Data inscriere',
@@ -386,7 +495,9 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
                     className="btn btn-sm btn-outline-primary flex items-center gap-2"
                   >
                     <span>Detalii</span>
-                    <IconArrowForward className="h-4 w-4" />
+                    <span className="h-4 w-4">
+                      <IconArrowForward className="h-4 w-4" />
+                    </span>
                   </Link>
                 </Tippy>
               </div>
@@ -396,17 +507,13 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
 
   return (
     <div className="panel mt-6">
-      {/* header */}
       <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
         <div>
           <h2 className="text-xl font-semibold">Studenti inscrisi</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Studentii aprobati din cererile in asteptare.
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Studentii aprobati din cererile in asteptare.</p>
         </div>
       </div>
 
-      {/* tabs ca la cereri */}
       <div>
         <ul className="mb-5 overflow-y-auto whitespace-nowrap border-b border-[#ebedf2] font-semibold dark:border-[#191e3a] sm:flex">
           <li className="inline-block">
@@ -442,28 +549,20 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
         </ul>
       </div>
 
-      {/* alert eroare */}
       {errorMsg && (
         <div className="mb-4 flex items-center rounded bg-danger-light p-3.5 text-danger dark:bg-danger-dark-light">
           <span className="pr-2">
             <strong className="mr-1">Eroare:</strong> {errorMsg}
           </span>
-          <button
-            type="button"
-            className="ml-auto hover:opacity-80"
-            onClick={() => setErrorMsg(null)}
-          >
+          <button type="button" className="ml-auto hover:opacity-80" onClick={() => setErrorMsg(null)}>
             <IconX className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* filtre specifice tabului */}
       {tab === 'enrolled' && (
         <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Studentii activi sau inactivi.
-          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Studentii activi sau inactivi.</div>
           <div className="ltr:ml-auto rtl:mr-auto flex items-center gap-3">
             <input
               type="text"
@@ -472,10 +571,11 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+
             <select
               className="form-select w-64"
               value={serieFilter}
-              onChange={(e) => setSerieFilter(e.target.value)}
+              onChange={(e) => handleSerieFilterChange(e.target.value)}
               disabled={seriesLoading}
             >
               <option value="all">Toate seriile</option>
@@ -487,15 +587,27 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
               ))}
             </select>
 
+            <select
+              className="form-select w-64"
+              value={tutorFilter}
+              onChange={(e) => handleTutorFilterChange(e.target.value)}
+              disabled={tutorsLoading}
+            >
+              <option value="all">Toti tutorii</option>
+              <option value="__none__">— fara tutore —</option>
+              {tutors.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       )}
 
       {tab === 'graduates' && (
         <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Studentii marcati ca absolvent.
-          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Studentii marcati ca absolvent.</div>
           <div className="ltr:ml-auto rtl:mr-auto flex items-center gap-3">
             <input
               type="text"
@@ -508,7 +620,6 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
         </div>
       )}
 
-      {/* bulk toolbar – doar in tabul de inscrisi */}
       {tab === 'enrolled' && selectedRecords.length > 0 && (
         <div className="mb-3 flex items-center justify-between rounded-md border border-primary/20 p-3 dark:border-[#1b2e4b]">
           <div className="text-sm">
@@ -518,17 +629,16 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
             <button className="btn btn-primary btn-sm" onClick={openAssign}>
               Asigneaza la serie…
             </button>
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() => setSelectedRecords([])}
-            >
+            <button className="btn btn-success btn-sm" onClick={openAssignTutor} disabled={tutorsLoading}>
+              Asigneaza tutore…
+            </button>
+            <button className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedRecords([])}>
               Goleste selectia
             </button>
           </div>
         </div>
       )}
 
-      {/* tabel */}
       <div className="datatables">
         {isMounted && pageRecords.length > 0 ? (
           <DataTable<Row>
@@ -548,16 +658,12 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
             selectedRecords={tab === 'enrolled' ? selectedRecords : []}
             onSelectedRecordsChange={tab === 'enrolled' ? setSelectedRecords : () => {}}
             minHeight={200}
-            paginationText={({ from, to, totalRecords }) =>
-              `Afisez ${from}-${to} din ${totalRecords} inregistrari`
-            }
+            paginationText={({ from, to, totalRecords }) => `Afisez ${from}-${to} din ${totalRecords} inregistrari`}
           />
         ) : (
           <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded border border-dashed border-gray-200 bg-gray-50/30 dark:border-gray-700 dark:bg-[#1b2333]/40">
             <IconDatabase className="h-10 w-10 text-gray-400 dark:text-gray-500" />
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Nu exista inregistrari de afisat
-            </span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Nu exista inregistrari de afisat</span>
           </div>
         )}
       </div>
@@ -565,46 +671,22 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
       {/* Modal: Asigneaza student la serie… */}
       <Transition appear show={assignOpen} as={Fragment}>
         <Dialog as="div" open={assignOpen} onClose={() => setAssignOpen(false)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
+          <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
             <div className="fixed inset-0 bg-[black]/60 z-[999]" />
           </Transition.Child>
           <div className="fixed inset-0 z-[999] overflow-y-auto">
             <div className="flex min-h-screen items-center justify-center px-4">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
+              <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
                 <Dialog.Panel className="panel my-8 w-full max-w-lg overflow-hidden rounded-lg border-0 bg-white p-0 text-black dark:bg-[#0e1726] dark:text-white-dark">
                   <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
                     <h5 className="text-lg font-semibold">Asigneaza student la serie</h5>
-                    <button
-                      type="button"
-                      className="text-white-dark hover:text-dark"
-                      onClick={() => setAssignOpen(false)}
-                    >
+                    <button type="button" className="text-white-dark hover:text-dark" onClick={() => setAssignOpen(false)}>
                       <IconX />
                     </button>
                   </div>
                   <div className="p-5 space-y-3">
                     <label className="text-sm">Alege seria</label>
-                    <select
-                      className="form-select w-full"
-                      value={assignSerieId}
-                      onChange={(e) => setAssignSerieId(e.target.value)}
-                    >
+                    <select className="form-select w-full" value={assignSerieId} onChange={(e) => setAssignSerieId(e.target.value)}>
                       <option value="">— Selecteaza —</option>
                       <option value="__none__">— fara serie —</option>
                       {series.map((s) => (
@@ -617,11 +699,55 @@ export default function StudentiInscrisiComponent( { baseFolder }: { baseFolder:
                       <button className="btn btn-outline-secondary" onClick={() => setAssignOpen(false)}>
                         Anuleaza
                       </button>
-                      <button
-                        className="btn btn-primary"
-                        onClick={saveAssign}
-                        disabled={!selectedRecords.length || assignSerieId === ''}
-                      >
+                      <button className="btn btn-primary" onClick={saveAssign} disabled={!selectedRecords.length || assignSerieId === ''}>
+                        Salveaza
+                      </button>
+                    </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Modal: Asigneaza tutore… */}
+      <Transition appear show={assignTutorOpen} as={Fragment}>
+        <Dialog as="div" open={assignTutorOpen} onClose={() => setAssignTutorOpen(false)}>
+          <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
+            <div className="fixed inset-0 bg-[black]/60 z-[999]" />
+          </Transition.Child>
+          <div className="fixed inset-0 z-[999] overflow-y-auto">
+            <div className="flex min-h-screen items-center justify-center px-4">
+              <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
+                <Dialog.Panel className="panel my-8 w-full max-w-lg overflow-hidden rounded-lg border-0 bg-white p-0 text-black dark:bg-[#0e1726] dark:text-white-dark">
+                  <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
+                    <h5 className="text-lg font-semibold">Asigneaza tutore</h5>
+                    <button type="button" className="text-white-dark hover:text-dark" onClick={() => setAssignTutorOpen(false)}>
+                      <IconX />
+                    </button>
+                  </div>
+                  <div className="p-5 space-y-3">
+                    <label className="text-sm">Alege tutorele</label>
+                    <select
+                      className="form-select w-full"
+                      value={assignTutorId}
+                      onChange={(e) => setAssignTutorId(e.target.value)}
+                      disabled={tutorsLoading}
+                    >
+                      <option value="">— Selecteaza —</option>
+                      <option value="__none__">— fara tutore —</option>
+                      {tutors.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="mt-6 flex justify-end gap-2">
+                      <button className="btn btn-outline-secondary" onClick={() => setAssignTutorOpen(false)}>
+                        Anuleaza
+                      </button>
+                      <button className="btn btn-success" onClick={saveAssignTutor} disabled={!selectedRecords.length || assignTutorId === ''}>
                         Salveaza
                       </button>
                     </div>

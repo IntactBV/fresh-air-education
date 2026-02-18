@@ -5,26 +5,24 @@ import Link from 'next/link';
 import CountUp from 'react-countup';
 
 // ICONS
-import IconBook from '@/components/icon/icon-book';
-import IconBell from '@/components/icon/icon-bell';
 import IconBarChart from '@/components/icon/icon-bar-chart';
 import IconArrowForward from '@faComponents/icon/icon-arrow-forward';
-import IconBookmark from '@/components/icon/icon-bookmark';
-import IconCalendar from '@/components/icon/icon-calendar';
 import IconArrowWaveLeftUp from '@/components/icon/icon-arrow-wave-left-up';
 import IconMenuDatatables from '@faComponents/icon/menu/icon-menu-datatables';
+import IconAward from '@faComponents/icon/icon-award';
 
 interface PanouPrincipalTutoreProps {
   userName?: string;
 
   enrolledStudentsCount?: number;
-  materialsCount?: number; // va fi "Materiale studenti"
-
+  graduatesCount?: number;
+  materialsCount?: number;
 }
 
 export default function PanouPrincipalTutoreComponent({
   userName = 'tutore@example.com',
   enrolledStudentsCount = 0,
+  graduatesCount = 0,
   materialsCount = 0,
 }: PanouPrincipalTutoreProps) {
   const [heroOpen] = useState(true);
@@ -85,17 +83,17 @@ export default function PanouPrincipalTutoreComponent({
           <div className="panel">
             <div className="mb-5 flex items-center justify-between">
               <h5 className="text-lg font-semibold dark:text-white-light flex items-center gap-2">
-                <span className="grid h-9 w-9 place-content-center rounded-full bg-success-light text-success dark:bg-success dark:text-success-light">
+                <span className="grid h-9 w-9 place-content-center rounded-full bg-warning-light text-warning dark:bg-warning dark:text-warning-light">
                   <IconBarChart />
                 </span>
                 Studenti inscrisi
               </h5>
-              <Link href="/tutore/studenti-inscrisi" className="btn btn-success">
+              <Link href="/tutore/studenti-inscrisi" className="btn btn-warning">
                 Deschide <IconArrowForward className="ml-2 h-4 w-4" />
               </Link>
             </div>
             <div className="flex items-center gap-4">
-              <div className="grid h-24 w-24 place-content-center rounded-full bg-gradient-to-r from-emerald-500/10 to-emerald-900/10 text-success dark:from-emerald-500/20 dark:to-emerald-900/20">
+              <div className="grid h-24 w-24 place-content-center rounded-full bg-gradient-to-r from-yellow-500/10 to-yellow-900/10 text-warning dark:from-yellow-500/20 dark:to-yellow-900/20">
                 <span className="text-4xl font-extrabold">
                   <CountUp start={0} end={enrolledStudentsCount} duration={1.1} />
                 </span>
@@ -103,6 +101,50 @@ export default function PanouPrincipalTutoreComponent({
               <div className="text-white-dark">
                 <div className="font-medium">Total studenti activi/absolventi.</div>
                 <div className="text-xs">Actualizat la reimprospatare.</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Absolventi */}
+          <div className="panel">
+            <div className="mb-5 flex items-center justify-between">
+              <h5 className="text-lg font-semibold dark:text-white-light flex items-center gap-2">
+                <span className="grid h-9 w-9 place-content-center rounded-full bg-success-light text-success dark:bg-success dark:text-success-light">
+                  <IconAward className="h-5 w-5" />
+                </span>
+                Absolventi
+              </h5>
+              <Link href="/tutore/studenti-inscrisi?tab=graduates" className="btn btn-success">
+                Deschide <IconArrowForward className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="grid h-24 w-24 place-content-center rounded-full bg-gradient-to-r from-emerald-500/10 to-emerald-900/10 text-success dark:from-emerald-500/20 dark:to-emerald-900/20">
+                <span className="text-4xl font-extrabold tabular-nums">
+                  <CountUp start={0} end={graduatesCount} duration={1.1} />
+                </span>
+              </div>
+
+              <div className="flex-1 text-white-dark">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="text-xs font-semibold tabular-nums text-success">
+                    <CountUp start={0} end={graduatesCount} duration={1.1} /> / 252
+                  </div>
+                </div>
+
+                <div className="mt-2 h-2 w-full rounded-full bg-success/10 dark:bg-success/15">
+                  <div
+                    className="h-2 rounded-full bg-success"
+                    style={{
+                      width: `${Math.min(100, Math.round((graduatesCount / 252) * 100))}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-2 text-xs">
+                  Target program: <span className="font-semibold tabular-nums">252</span>
+                </div>
               </div>
             </div>
           </div>

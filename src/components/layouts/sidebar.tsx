@@ -54,13 +54,24 @@ const Sidebar = ({ userRole = 'tutore' }: SidebarProps) => {
     exact ? pathname === fullHref : (pathname === fullHref || pathname.startsWith(fullHref + '/'));
 
   return (
-    <div className={semidark ? 'dark' : ''}>
-      <nav
-        className={`sidebar fixed bottom-0 z-50 min-h-screen w-[260px] shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-all duration-300 ${semidark ? 'text-white-dark' : ''
-          }`}
-        style={{top: '112px', height: 'calc(100vh - 112px)'}}
-      >
-        <div className="h-full bg-white dark:bg-black">
+    // <div className={semidark ? 'dark' : ''}>
+    //   <nav
+    //     className={`sidebar fixed bottom-0 z-50 min-h-screen w-[260px] shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-all duration-300 ${semidark ? 'text-white-dark' : ''
+    //       }`}
+    //     style={{top: '112px', height: 'calc(100vh - 112px)'}}
+    //   >
+    //     <div className="h-full bg-white dark:bg-black">
+  <div className={semidark ? 'dark' : ''}>
+    <nav
+      className={`sidebar fixed bottom-0 z-50 min-h-screen w-[260px] shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-all duration-300 ${
+        semidark ? 'text-white-dark' : ''
+      }`}
+      style={{
+        top: 'var(--master-header-h, 0px)',
+        height: 'calc(100vh - var(--master-header-h, 0px))',
+      }}
+    >
+    <div className="h-full bg-white dark:bg-black">    
           {/* Header + buton collapse */}
           <div className="flex items-center justify-between px-4 py-3">
             <Link href="/" className="main-logo flex shrink-0 items-center gap-2 group">

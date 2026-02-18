@@ -5,8 +5,9 @@ import { auth } from '@/utils/auth';
 
 const REQUIRED_DOC_TYPES = [
   'adeverinta_student',
-  'declaratie_semnata',
-  'adeverinta_finalizare',
+  'declaratie_evitare_dubla_finantare_semnata',
+  'declaratie_eligibilitate_membru_semnata',
+  'adeverinta_finalizare_stagiu',
 ];
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const student = studentRes.rows[0];
 
   // deja absolvent -> nu mai facem nimic
-  if (student.status === 'absolvent') {
+  if (student.status === 'absolvent' || student.status === 'graduate') {
     return NextResponse.json({ ok: true, message: 'Studentul este deja absolvent.' });
   }
 
