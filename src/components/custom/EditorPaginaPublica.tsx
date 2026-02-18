@@ -1,3 +1,4 @@
+// src/components/custom/EditorPaginaPublica.tsx
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
@@ -17,6 +18,7 @@ import { IconAlignJustify } from '@/components/icon/icon-align-justify';
 import { IconListBullets } from '@/components/icon/icon-list-bullets';
 import { IconListNumbered } from '@/components/icon/icon-list-numbered';
 import { IconQuote } from '@/components/icon/icon-quote';
+import { NodeSelection } from 'prosemirror-state';
 
 type EditorPaginaPublicaProps = {
   apiPath: string;
@@ -47,56 +49,121 @@ const CustomImage = TiptapImage.extend({
       ...parent,
       width: {
         default: null,
-        parseHTML: (element: HTMLElement) =>
-          element.getAttribute('data-width') || element.style.width || null,
+        parseHTML: (element: HTMLElement) => {
+          const fromSelf = element.getAttribute?.('data-width') || element.style?.width || null;
+          if (fromSelf) return fromSelf;
+
+          const fig = element.closest?.('figure');
+          return fig?.getAttribute?.('data-width') || fig?.style?.width || null;
+        },
         renderHTML: (attributes: Record<string, any>) => {
           if (!attributes.width) return {};
-          return {
-            'data-width': attributes.width,
-          };
+          return { 'data-width': attributes.width };
         },
       },
       alignment: {
         default: 'inline',
         parseHTML: (element: HTMLElement) => {
-          const fromData = element.getAttribute('data-alignment');
-          if (fromData === 'left' || fromData === 'right' || fromData === 'center' || fromData === 'inline') {
-            return fromData as ImageAlignment;
+          const fromSelf = element.getAttribute?.('data-alignment');
+          if (fromSelf === 'left' || fromSelf === 'right' || fromSelf === 'center' || fromSelf === 'inline') {
+            return fromSelf as ImageAlignment;
+          }
+
+          const fig = element.closest?.('figure');
+          const fromFig = fig?.getAttribute?.('data-alignment');
+          if (fromFig === 'left' || fromFig === 'right' || fromFig === 'center' || fromFig === 'inline') {
+            return fromFig as ImageAlignment;
           }
 
           const floatVal =
-            (element.style as any).float ||
-            (element.style as any).cssFloat ||
-            '';
+            (element.style as any).float || (element.style as any).cssFloat || '';
+          if (floatVal === 'left' || floatVal === 'right') return floatVal as ImageAlignment;
 
-          if (floatVal === 'left' || floatVal === 'right') {
-            return floatVal as ImageAlignment;
-          }
+          const figFloat =
+            (fig?.style as any)?.float || (fig?.style as any)?.cssFloat || '';
+          if (figFloat === 'left' || figFloat === 'right') return figFloat as ImageAlignment;
 
-          const textAlign = element.style.textAlign;
-          if (textAlign === 'center') {
-            return 'center';
-          }
+          const textAlign = element.style?.textAlign || fig?.style?.textAlign;
+          if (textAlign === 'center') return 'center';
 
           return 'inline';
         },
-  renderHTML: (attributes: Record<string, any>) => {
-    if (!attributes.alignment || attributes.alignment === 'inline') {
-      return {};
-    }
-    return {
-      'data-alignment': attributes.alignment,
+        renderHTML: (attributes: Record<string, any>) => {
+          if (!attributes.alignment || attributes.alignment === 'inline') return {};
+          return { 'data-alignment': attributes.alignment };
+        },
+      },
+      credit: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const direct = element.getAttribute?.('data-credit');
+          if (direct) return direct;
+
+          const fig = element.closest?.('figure');
+          const fromFigure = fig?.getAttribute?.('data-credit');
+          if (fromFigure) return fromFigure;
+
+          const caption = fig?.querySelector?.('figcaption');
+          const text = caption?.textContent?.trim();
+          return text || null;
+        },
+        renderHTML: (attributes: Record<string, any>) => {
+          if (!attributes.credit) return {};
+          return { 'data-credit': attributes.credit };
+        },
+      },
     };
   },
-},
 
-    };
+  parseHTML() {
+    return [
+      {
+        tag: 'figure[data-credit]',
+        getAttrs: (element: HTMLElement) => {
+          const figure = element as HTMLElement;
+          const img = figure.querySelector('img');
+
+          if (!img) return false;
+
+          const src = img.getAttribute('src');
+          if (!src) return false;
+
+          const credit =
+            figure.getAttribute('data-credit') ||
+            figure.querySelector('figcaption')?.textContent?.trim() ||
+            null;
+
+          const alignment =
+            (figure.getAttribute('data-alignment') as ImageAlignment | null) || null;
+
+          const width = figure.getAttribute('data-width') || figure.style.width || null;
+
+          const alt = img.getAttribute('alt') || null;
+          const title = img.getAttribute('title') || null;
+
+          return {
+            src,
+            alt,
+            title,
+            credit,
+            alignment: alignment || 'inline',
+            width,
+          };
+        },
+        getContent: () => [],
+      },
+      {
+        tag: 'img[src]',
+      },
+    ];
   },
 
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
     const attrs: Record<string, any> = { ...HTMLAttributes };
+
     const alignment = (attrs['data-alignment'] as ImageAlignment | undefined) || 'inline';
     const widthAttr = attrs['data-width'] as string | undefined;
+    const credit = (attrs['data-credit'] as string | undefined) || null;
 
     delete attrs['data-alignment'];
     delete attrs['data-width'];
@@ -112,8 +179,6 @@ const CustomImage = TiptapImage.extend({
       extraStyle =
         'display:block;margin-left:auto;margin-right:auto;margin-top:0.5rem;margin-bottom:0.5rem;';
     } else {
-      // alignment inline: imaginea ramane block by default,
-      // dar se comporta mai "compact"
       extraStyle = 'display:inline-block;margin-top:0.25rem;margin-bottom:0.25rem;';
     }
 
@@ -121,13 +186,59 @@ const CustomImage = TiptapImage.extend({
       extraStyle += `width:${widthAttr};`;
     }
 
-    const style = attrs.style
+    const imgStyle = attrs.style
       ? `${attrs.style};${baseStyle}${extraStyle}`
       : baseStyle + extraStyle;
 
-    return ['img', { ...attrs, style }];
+    if (!credit) {
+      return ['img', { ...attrs, style: imgStyle }];
+    }
+
+    let figureStyle = '';
+    if (alignment === 'left') {
+      figureStyle = 'float:left;margin:0 0.75rem 0.5rem 0;';
+    } else if (alignment === 'right') {
+      figureStyle = 'float:right;margin:0 0 0.5rem 0.75rem;';
+    } else if (alignment === 'center') {
+      figureStyle =
+        'display:block;margin-left:auto;margin-right:auto;margin-top:0.5rem;margin-bottom:0.5rem;';
+    } else {
+      figureStyle = 'display:inline-block;margin-top:0.25rem;margin-bottom:0.25rem;';
+    }
+
+    if (widthAttr) {
+      figureStyle += `width:${widthAttr};`;
+    }
+
+    const imgAttrs: Record<string, any> = { ...attrs };
+    delete imgAttrs['data-credit'];
+    imgAttrs.style = 'max-width:100%;height:auto;display:block;';
+
+    const figureAttrs: Record<string, any> = {
+      'data-credit': credit,
+      'data-alignment': alignment,
+      ...(widthAttr ? { 'data-width': widthAttr } : {}),
+      style: figureStyle,
+    };
+
+    return [
+      'figure',
+      figureAttrs,
+      ['img', imgAttrs],
+      [
+        'figcaption',
+        {
+          style:
+            'text-align:right;margin-top:0.2rem;padding-right:6px;' +
+            'font-size:10px;line-height:1.2;' +
+            'color:rgba(100,116,139,1);opacity:0.9;',
+        },
+        credit,
+      ],
+    ];
   },
 });
+
 
 export default function EditorPaginaPublica({
   apiPath,
@@ -159,6 +270,16 @@ export default function EditorPaginaPublica({
 
   const [showTitlePublic, setShowTitlePublic] = useState(true);
 
+  const lastImagePosRef = useRef<number | null>(null);
+
+  const [selectedImagePos, setSelectedImagePos] = useState<number | null>(null);
+  const selectedImagePosRef = useRef<number | null>(null);
+
+  const isEditingCreditRef = useRef(false);
+  const [creditDraft, setCreditDraft] = useState('');
+
+
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const pageSlug = useMemo(() => {
@@ -178,10 +299,13 @@ export default function EditorPaginaPublica({
     setImageModalError(null);
 
     try {
-      const res = await fetch(`/api/admin/public-pages/images?slug=${encodeURIComponent(pageSlug)}`, {
-        method: 'GET',
-        cache: 'no-store',
-      });
+      const res = await fetch(
+        `/api/admin/public-pages/images?slug=${encodeURIComponent(pageSlug)}`,
+        {
+          method: 'GET',
+          cache: 'no-store',
+        }
+      );
 
       if (!res.ok) {
         const err = await res.json().catch(() => null);
@@ -215,7 +339,43 @@ export default function EditorPaginaPublica({
         class:
           'page-editor-content min-h-[300px] prose dark:prose-invert max-w-none focus:outline-none',
       },
+
+      handleClickOn: (_view, pos, node) => {
+        if (node?.type?.name === 'image') {
+          selectedImagePosRef.current = pos;
+          setSelectedImagePos(pos);
+
+          const attrs = node.attrs as { alignment?: ImageAlignment; credit?: string };
+
+          setImageSelected(true);
+          setImageAlignment((attrs.alignment as ImageAlignment) || 'inline');
+
+          if (!isEditingCreditRef.current) {
+            setCreditDraft(attrs.credit || '');
+          }
+        }
+
+        return false;
+      },
+
+      handleClick: (_view, _pos, event) => {
+        if (isEditingCreditRef.current) return false;
+
+        const target = event.target as HTMLElement | null;
+
+        // If click is outside an image, clear selection state
+        if (!target?.closest('img')) {
+          selectedImagePosRef.current = null;
+          setSelectedImagePos(null);
+          setImageSelected(false);
+          setCreditDraft('');
+        }
+
+        return false;
+      },
     },
+
+
     immediatelyRender: false,
   });
 
@@ -235,13 +395,26 @@ export default function EditorPaginaPublica({
         setCurrentBlock('p');
       }
 
-      const imgActive = editor.isActive('image');
-      setImageSelected(imgActive);
+      const sel = editor.state.selection;
 
-      if (imgActive) {
-        const attrs = editor.getAttributes('image') as { alignment?: ImageAlignment };
-        setImageAlignment(attrs.alignment || 'inline');
+      if (isEditingCreditRef.current) return;
+
+      if (sel instanceof NodeSelection && sel.node?.type?.name === 'image') {
+        const pos = sel.from;
+        setSelectedImagePos(pos);
+        selectedImagePosRef.current = pos;
+
+        const attrs = sel.node.attrs as { alignment?: ImageAlignment; credit?: string };
+        setImageSelected(true);
+        setImageAlignment((attrs.alignment as ImageAlignment) || 'inline');
+        setCreditDraft(attrs.credit || '');
+      } else {
+        setImageSelected(false);
+        setSelectedImagePos(null);
+        selectedImagePosRef.current = null;
+        setCreditDraft('');
       }
+
     };
 
     editor.on('selectionUpdate', updateHeadingState);
@@ -268,11 +441,7 @@ export default function EditorPaginaPublica({
         setIsPublished(Boolean(data.isPublished));
         setUpdatedAt(data.updatedAt ?? data.updated_at ?? null);
         setUpdatedByName(data.updatedByName ?? data.updated_by_name ?? null);
-        setShowTitlePublic(
-          data.showTitlePublic ??
-          data.show_title_public ??
-          true
-        );
+        setShowTitlePublic(data.showTitlePublic ?? data.show_title_public ?? true);
 
         if (editor && data.contentHtml) {
           editor.commands.setContent(data.contentHtml);
@@ -289,8 +458,7 @@ export default function EditorPaginaPublica({
   const getContentHtml = () => (editor ? editor.getHTML() : '');
 
   const isValid =
-    title.trim().length > 2 &&
-    getContentHtml().replace(/<[^>]*>/g, '').trim().length > 5;
+    title.trim().length > 2 && getContentHtml().replace(/<[^>]*>/g, '').trim().length > 5;
 
   const formatDate = (iso: string | null) => {
     if (!iso) return '';
@@ -375,7 +543,7 @@ export default function EditorPaginaPublica({
           title: title.trim(),
           contentHtml: getContentHtml(),
           isPublished,
-          showTitlePublic
+          showTitlePublic,
         }),
       });
       if (!res.ok) {
@@ -399,11 +567,11 @@ export default function EditorPaginaPublica({
     }
   };
 
-  const Toolbar = () => {
+  const renderToolbar = () => {
     if (!editor) return null;
 
     const isActive = (name: string, attrs?: any) => editor.isActive(name, attrs);
-    const isImageActive = imageSelected;
+    const isImageActive = imageSelected && selectedImagePos !== null;
 
     const currentAlignment = imageAlignment;
 
@@ -424,12 +592,26 @@ export default function EditorPaginaPublica({
       let next = currentValue + delta;
       if (next < 10) next = 10;
       if (next > 200) next = 200;
-      editor
-        .chain()
-        .focus()
-        .updateAttributes('image', { width: `${next}%` })
-        .run();
+      editor.chain().focus().updateAttributes('image', { width: `${next}%` }).run();
     };
+
+  const setImageAttrsAtSelectedPos = (patch: Record<string, any>) => {
+    const pos = selectedImagePosRef.current;
+    if (pos === null) return;
+
+    const { state, view } = editor;
+    const node = state.doc.nodeAt(pos);
+    if (!node || node.type.name !== 'image') return;
+
+    const nextAttrs = { ...node.attrs, ...patch };
+    view.dispatch(state.tr.setNodeMarkup(pos, undefined, nextAttrs));
+  };
+
+  const applyCredit = (value: string) => {
+    if (!isImageActive) return;
+    const trimmed = value.trim();
+    setImageAttrsAtSelectedPos({ credit: trimmed.length ? trimmed : null });
+  };
 
     return (
       <div className="mb-3 flex flex-wrap gap-2 rounded border border-white-light bg-white px-2 py-2 dark:border-[#1b2e4b] dark:bg-[#0e1726]">
@@ -473,9 +655,7 @@ export default function EditorPaginaPublica({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`btn btn-sm ${
-            isActive('underline') ? 'btn-primary' : 'btn-outline-primary'
-          }`}
+          className={`btn btn-sm ${isActive('underline') ? 'btn-primary' : 'btn-outline-primary'}`}
           title="Underline"
         >
           <span className="underline">U</span>
@@ -501,9 +681,7 @@ export default function EditorPaginaPublica({
           <span className="text-[11px] text-slate-500 dark:text-slate-300">Fundal</span>
           <input
             type="color"
-            onChange={(e) =>
-              editor.chain().focus().setHighlight({ color: e.target.value }).run()
-            }
+            onChange={(e) => editor.chain().focus().setHighlight({ color: e.target.value }).run()}
             className="h-6 w-6 cursor-pointer border-0 bg-transparent p-0"
           />
           <button
@@ -560,9 +738,7 @@ export default function EditorPaginaPublica({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`btn btn-sm ${
-            isActive('bulletList') ? 'btn-primary' : 'btn-outline-primary'
-          }`}
+          className={`btn btn-sm ${isActive('bulletList') ? 'btn-primary' : 'btn-outline-primary'}`}
           title="Lista cu puncte"
         >
           <IconListBullets />
@@ -704,14 +880,10 @@ export default function EditorPaginaPublica({
 
           {/* dimensiune */}
           <div className="flex items-center gap-1">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">
-              Dimensiune:
-            </span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">Dimensiune:</span>
             <button
               type="button"
-              className={`btn btn-sm ${
-                isImageActive ? 'btn-outline-primary' : 'btn-outline-dark'
-              }`}
+              className={`btn btn-sm ${isImageActive ? 'btn-outline-primary' : 'btn-outline-dark'}`}
               disabled={!isImageActive}
               onClick={() => changeImageWidth(-10)}
             >
@@ -719,18 +891,58 @@ export default function EditorPaginaPublica({
             </button>
             <button
               type="button"
-              className={`btn btn-sm ${
-                isImageActive ? 'btn-outline-primary' : 'btn-outline-dark'
-              }`}
+              className={`btn btn-sm ${isImageActive ? 'btn-outline-primary' : 'btn-outline-dark'}`}
               disabled={!isImageActive}
               onClick={() => changeImageWidth(10)}
             >
               +
             </button>
           </div>
+
+          <span className="mx-1 h-4 w-px bg-slate-300 dark:bg-slate-600" />
+
+          {/* credits */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">Credits:</span>
+
+            <input
+              type="text"
+              value={creditDraft}
+              disabled={!isImageActive}
+              placeholder="ex: Image by Freepik"
+              className={`form-input h-8 w-56 text-xs ${!isImageActive ? 'opacity-60' : ''}`}
+              onMouseDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                  (e.currentTarget as HTMLInputElement).blur();
+                }
+              }}
+              onFocus={() => {
+                isEditingCreditRef.current = true;
+              }}
+              onBlur={(e) => {
+                isEditingCreditRef.current = false;
+                applyCredit(e.target.value);
+              }}
+              onChange={(e) => setCreditDraft(e.target.value)}
+            />
+
+            <button
+              type="button"
+              className={`btn btn-sm ${isImageActive ? 'btn-outline-primary' : 'btn-outline-dark'}`}
+              disabled={!isImageActive}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => {
+                setCreditDraft('');
+                applyCredit('');
+              }}
+              title="Sterge credits"
+            >
+              ✕
+            </button>
+          </div>
         </div>
-
-
       </div>
     );
   };
@@ -815,11 +1027,13 @@ export default function EditorPaginaPublica({
             Continut articol
           </label>
           <div className={loading ? 'pointer-events-none opacity-60' : ''}>
-            <Toolbar />
+            {renderToolbar()}
             <div className="rounded border border-white-light bg-white p-3 dark:border-[#1b2e4b] dark:bg-[#0e1726]">
               <EditorContent editor={editor} />
               <style>{`
-                .page-editor-content img.ProseMirror-selectednode {
+                .page-editor-content img.ProseMirror-selectednode,
+                .page-editor-content figure.ProseMirror-selectednode,
+                .page-editor-content figure.ProseMirror-selectednode img {
                   outline: 2px solid #3b82f6;
                   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
                   border-radius: 4px;
@@ -828,119 +1042,119 @@ export default function EditorPaginaPublica({
             </div>
 
             {imageModalOpen && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
-              <div className="panel w-full max-w-5xl rounded-xl border-0 bg-white p-0 text-black shadow-2xl dark:bg-[#0e1726] dark:text-white-dark">
-                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-                  <h3 className="text-base font-semibold">Imagini pentru pagina</h3>
-                  <button
-                    type="button"
-                    className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-100"
-                    onClick={() => setImageModalOpen(false)}
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="px-6 py-5 space-y-5">
-                  {imageModalError && (
-                    <div className="rounded-md border border-danger/20 bg-danger/10 px-4 py-3 text-xs text-danger dark:border-danger/30 dark:bg-danger/15">
-                      {imageModalError}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Selecteaza o imagine existenta sau incarca una noua.
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) {
-                            void handleUploadImage(f, { insertIntoEditor: false });
-                          }
-                          if (fileInputRef.current) fileInputRef.current.value = '';
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={imageUploadLoading}
-                      >
-                        {imageUploadLoading ? 'Se incarca...' : 'Incarca imagine noua'}
-                      </button>
-                    </div>
+              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+                <div className="panel w-full max-w-5xl rounded-xl border-0 bg-white p-0 text-black shadow-2xl dark:bg-[#0e1726] dark:text-white-dark">
+                  <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
+                    <h3 className="text-base font-semibold">Imagini pentru pagina</h3>
+                    <button
+                      type="button"
+                      className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-100"
+                      onClick={() => setImageModalOpen(false)}
+                    >
+                      ✕
+                    </button>
                   </div>
 
-                  <div className="max-h-[520px] overflow-auto rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                    {imageModalLoading ? (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Se incarca imaginile...
-                      </p>
-                    ) : pageImages.length === 0 ? (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Nu exista inca imagini pentru aceasta pagina.
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                        {pageImages.map((img) => (
-                          <button
-                            key={img.id}
-                            type="button"
-                            className="group flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-left text-xs hover:border-primary hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-primary/80"
-                            onClick={() => {
-                              if (!editor) return;
-                              editor
-                                .chain()
-                                .focus()
-                                .setImage({
-                                  src: img.url,
-                                  alt: img.filename,
-                                } as any)
-                                .updateAttributes('image', { alignment: 'inline' })
-                                .run();
-                              setImageModalOpen(false);
-                            }}
-                          >
-                            <div className="flex-1 overflow-hidden bg-white dark:bg-slate-900">
-                              <img
-                                src={img.url}
-                                alt={img.filename}
-                                className="h-40 w-full object-contain transition-transform group-hover:scale-[1.03]"
-                              />
-                            </div>
-                            <div className="border-t border-slate-200 px-3 py-2 text-[11px] leading-snug dark:border-slate-700">
-                              <div className="truncate font-medium">{img.filename}</div>
-                              <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                                {Math.round(img.byteSize / 1024)} kB
-                              </div>
-                            </div>
-                          </button>
-                        ))}
+                  <div className="space-y-5 px-6 py-5">
+                    {imageModalError && (
+                      <div className="rounded-md border border-danger/20 bg-danger/10 px-4 py-3 text-xs text-danger dark:border-danger/30 dark:bg-danger/15">
+                        {imageModalError}
                       </div>
                     )}
+
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Selecteaza o imagine existenta sau incarca una noua.
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) {
+                              void handleUploadImage(f, { insertIntoEditor: false });
+                            }
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={imageUploadLoading}
+                        >
+                          {imageUploadLoading ? 'Se incarca...' : 'Incarca imagine noua'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[520px] overflow-auto rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                      {imageModalLoading ? (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Se incarca imaginile...
+                        </p>
+                      ) : pageImages.length === 0 ? (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Nu exista inca imagini pentru aceasta pagina.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                          {pageImages.map((img) => (
+                            <button
+                              key={img.id}
+                              type="button"
+                              className="group flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-left text-xs hover:border-primary hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-primary/80"
+                              onClick={() => {
+                                if (!editor) return;
+                                editor
+                                  .chain()
+                                  .focus()
+                                  .setImage({
+                                    src: img.url,
+                                    alt: img.filename,
+                                  } as any)
+                                  .updateAttributes('image', { alignment: 'inline' })
+                                  .run();
+                                setImageModalOpen(false);
+                              }}
+                            >
+                              <div className="flex-1 overflow-hidden bg-white dark:bg-slate-900">
+                                <img
+                                  src={img.url}
+                                  alt={img.filename}
+                                  className="h-40 w-full object-contain transition-transform group-hover:scale-[1.03]"
+                                />
+                              </div>
+                              <div className="border-t border-slate-200 px-3 py-2 text-[11px] leading-snug dark:border-slate-700">
+                                <div className="truncate font-medium">{img.filename}</div>
+                                <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                                  {Math.round(img.byteSize / 1024)} kB
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end border-t border-slate-200 px-6 py-4 dark:border-slate-700">
+                    <button
+                      type="button"
+                      className="btn btn-outline-dark"
+                      onClick={() => setImageModalOpen(false)}
+                    >
+                      Inchide
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex justify-end border-t border-slate-200 px-6 py-4 dark:border-slate-700">
-                  <button
-                    type="button"
-                    className="btn btn-outline-dark"
-                    onClick={() => setImageModalOpen(false)}
-                  >
-                    Inchide
-                  </button>
-                </div>
               </div>
-            </div>
-          )}
-
+            )}
           </div>
+
           <p className="mt-2 text-xs text-gray-400">
             Poti formata textul, adauga titluri, liste, citate, linkuri si imagini.
           </p>

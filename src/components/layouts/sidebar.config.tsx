@@ -18,6 +18,7 @@ import IconClipboardText from '@faComponents/icon/icon-clipboard-text';
 import IconOpenBook from '@/components/icon/icon-open-book';
 import IconMenuContacts from '@faComponents/icon/menu/icon-menu-contacts';
 import IconUser from '@/components/icon/icon-user';
+import IconMenuTodo from '@faComponents/icon/menu/icon-menu-todo';
 
 export type UserRole = 'student' | 'tutore' | 'admin';
 
@@ -71,6 +72,12 @@ export const SIDEBAR_MENUS: Record<UserRole, RoleMenus> = {
         label: 'Materiale',
         href: '/materiale', // => /edu/materiale
         icon: IconMenuDatatables,
+      },
+      {
+        type: 'link',
+        label: 'Teme',
+        href: '/teme', // => /edu/teme
+        icon: IconMenuTodo,
       },
 
       // Titlu secțiune PROFIL STUDENT

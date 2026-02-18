@@ -60,6 +60,7 @@ export default async function Page() {
         // daca API-ul nu a reusit sa ia numele, il luam din session
         userName={data.currentUserName ?? session.user?.name ?? 'tutore'}
         enrolledStudentsCount={data.enrolledStudentsCount ?? 0}
+        graduatesCount={data.graduatesCount ?? 0}
         materialsCount={data.studentMaterialsCount ?? 0}
       />
     </div>

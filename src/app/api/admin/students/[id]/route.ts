@@ -16,12 +16,12 @@ function normalizeStatus(status: string | null): string {
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: req.headers });
-  // daca vrei sa limitezi:
-  // if (!session?.user?.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // if (!session || (session.user.role !== 'admin' && session.user.role !== 'tutore')) {
+  //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  // }
 
-  const { id } = await ctx.params; // uuid student
+  const { id } = await ctx.params;
 
-  // 1) student + cererea lui (join direct, pt ca application_id e mereu populat)
   const studentRes = await db.query<{
     s_id: string;
     s_application_id: string;
@@ -36,7 +36,6 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     s_updated_at: string;
     s_student_no: string | number | null;
 
-    // din student_applications:
     a_id: string;
     a_application_no: string | number | null;
     a_email: string;
@@ -104,7 +103,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     WHERE s.id = $1
     LIMIT 1
     `,
-    [id]
+    [id],
   );
 
   if (studentRes.rowCount === 0) {
@@ -113,7 +112,6 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
   const row = studentRes.rows[0];
 
-  // 2) seria studentului (daca exista)
   const seriesRes = await db.query<{
     series_id: string;
     series_name: string;
@@ -125,17 +123,43 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     WHERE ss.student_id = $1
     LIMIT 1
     `,
-    [id]
+    [id],
   );
 
   const series = seriesRes.rowCount
+    ? { id: seriesRes.rows[0].series_id, name: seriesRes.rows[0].series_name }
+    : null;
+
+  const tutorRes = await db.query<{
+    tutor_user_id: string;
+    tutor_name: string | null;
+    tutor_email: string | null;
+  }>(
+    `
+    SELECT
+      stt.tutor_user_id,
+      u.name AS tutor_name,
+      u.email AS tutor_email
+    FROM student_tutors stt
+    LEFT JOIN "user" u ON u.id = stt.tutor_user_id
+    WHERE stt.student_id = $1
+    LIMIT 1
+    `,
+    [id],
+  );
+
+  const tutor = tutorRes.rowCount
     ? {
-        id: seriesRes.rows[0].series_id,
-        name: seriesRes.rows[0].series_name,
+        id: tutorRes.rows[0].tutor_user_id,
+        name: tutorRes.rows[0].tutor_name ?? '',
+        email: tutorRes.rows[0].tutor_email ?? '',
+        label:
+          (tutorRes.rows[0].tutor_name ?? '').trim() ||
+          (tutorRes.rows[0].tutor_email ?? '').trim() ||
+          '',
       }
     : null;
 
-  // 3) documentele studentului (din student_documents + document_blobs)
   const docsRes = await db.query<{
     id: string;
     document_type: string;
@@ -165,7 +189,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     WHERE sd.student_id = $1
     ORDER BY sd.created_at DESC
     `,
-    [id]
+    [id],
   );
 
   const documents = docsRes.rows.map((d) => ({
@@ -183,13 +207,46 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     downloadUrl: `/api/admin/document-blobs/${d.blob_id}/download`,
   }));
 
-  // 4) copia de buletin din aplicatie (e in student_applications, nu in student_documents)
-  // luam si filename-ul pt copia de buletin
+  const homeworkRes = await db.query<{
+    id: string;
+    blob_id: string;
+    original_filename: string;
+    mime_type: string;
+    byte_size: number;
+    uploaded_at: string;
+  }>(
+    `
+    SELECT
+      id,
+      blob_id,
+      original_filename,
+      mime_type,
+      byte_size,
+      uploaded_at
+    FROM student_homework_files
+    WHERE student_id = $1
+      AND deleted_at IS NULL
+    ORDER BY uploaded_at DESC
+    `,
+    [id],
+  );
+
+  const homework = homeworkRes.rows.map((h) => ({
+    id: h.id,
+    blobId: h.blob_id,
+    filename: h.original_filename,
+    mimeType: h.mime_type,
+    byteSize: Number(h.byte_size ?? 0),
+    uploadedAt: h.uploaded_at,
+    viewUrl: `/api/admin/document-blobs/${h.blob_id}`,
+    downloadUrl: `/api/admin/document-blobs/${h.blob_id}/download`,
+  }));
+
   let copieBuletin: { blobId: string; downloadUrl: string; filename: string | null } | null = null;
   if (row.a_copie_buletin_blob_id) {
     const copieRes = await db.query<{ filename: string | null }>(
       `SELECT filename FROM document_blobs WHERE id = $1 LIMIT 1`,
-      [row.a_copie_buletin_blob_id]
+      [row.a_copie_buletin_blob_id],
     );
     copieBuletin = {
       blobId: row.a_copie_buletin_blob_id,
@@ -198,7 +255,6 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     };
   }
 
-  // raspuns final
   return NextResponse.json({
     student: {
       id: row.s_id,
@@ -237,9 +293,11 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       ciclu: row.a_ciclu,
       status: row.a_status,
       createdAt: row.a_created_at,
-      copieBuletin: copieBuletin,
+      copieBuletin,
     },
-    series,     // null sau { id, name }
-    documents,  // array din student_documents
+    series,
+    tutor,
+    documents,
+    homework,
   });
 }

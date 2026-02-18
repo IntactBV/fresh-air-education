@@ -1,27 +1,71 @@
 import { type Metadata } from 'next';
 import React from 'react';
+import { headers } from 'next/headers';
 import Link from 'next/link';
-import IconArrowWaveLeftUp from '@/components/icon/icon-arrow-wave-left-up';
 import PublicPageRenderer from './PublicPageRenderer';
+import TestimonialeComponent from './testimonialeComponent';
 import Image from 'next/image';
+import AbsolventiCounter from './absolventiCounter';
 
 export const metadata: Metadata = {
   title: 'FRESH TECH - Tehnologii si educatie pentru studenti',
 };
 
-const Home = () => {
+async function getGraduatesCount() {
+  try {
+    const h = await headers();
+
+    const proto = h.get('x-forwarded-proto') ?? 'http';
+    const host = h.get('x-forwarded-host') ?? h.get('host');
+    const origin = host ? `${proto}://${host}` : '';
+
+    const res = await fetch(`${origin}/api/public/graduates-count`, {
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) return 0;
+
+    const data: { graduatesCount?: number } = await res.json();
+    return Number(data.graduatesCount ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
+const Home = async () => {
+  const graduatesCount = await getGraduatesCount();
+
   return (
     <div>
 
-      <div className="relative overflow-hidden rounded-t-md bg-primary-light bg-[url('/assets/images/knowledge/pattern.png')] bg-[length:620px_auto] md:bg-[length:720px_auto] bg-left-top bg-no-repeat px-5 py-16 md:py-20 dark:bg-black md:px-10">
-      {/* decor subtil in dreapta jos */}
+      <div className="relative overflow-hidden rounded-t-md px-5 py-14 md:py-20 md:px-10">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/assets/images/fresh-air-cover-hero.jpg')" }}
+          aria-hidden="true"
+        />
+
         <div
           className="
-            absolute -bottom-4 -end-6 hidden
-            text-[#DBE7FF] rtl:rotate-y-180 dark:text-[#1B2E4B]
-            lg:block xl:end-0
-            opacity-80 dark:opacity-[0.02]
+            absolute inset-0
+            bg-gradient-to-r
+            from-black/55 via-black/10 to-black/45
+            md:from-black/45 md:via-black/5 md:to-black/40
+            dark:from-black/70 dark:via-black/25 dark:to-black/70
           "
+          aria-hidden="true"
+        />
+
+        <div
+          className="
+            absolute -bottom-6 -end-6 hidden
+            z-0
+            text-white
+            rtl:rotate-y-180
+            lg:block xl:end-0
+            opacity-15 dark:opacity-[0.03]
+          "
+          aria-hidden="true"
         >
           <svg
             width="375"
@@ -43,110 +87,99 @@ const Home = () => {
           </svg>
         </div>
 
-        {/* glow subtil jos-centru */}
-        <div className="pointer-events-none absolute bottom-0 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full  blur-3xl bg-white/10 dark:bg-slate-600/15" />
+        <div
+          className="
+            absolute bottom-3 right-4
+            z-10
+            text-[10px]
+            text-white/40
+            hover:text-white/70
+            transition
+          "
+        >
+          <a
+            href="https://www.freepik.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline-offset-2 hover:underline"
+          >
+            Image by Freepik
+          </a>
+        </div>
 
-        <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-10">
-          {/* TITLU + text si sageata in stanga */}
-          <div className="relative flex w-full justify-center mb-8">
-            {/* FRESH TECH centrat real */}
-            <span
-              className="
-                inline-block
-                align-middle
-                font-sans
-                text-4xl sm:text-5xl md:text-6xl
-                font-bold
-                tracking-tight
-                select-none
-                text-zinc-800 dark:text-zinc-100
-                text-center
-              "
-            >
-              <span className="inline-block align-baseline text-5xl sm:text-6xl md:text-7xl leading-none">
-                F
+
+        <div
+          className="pointer-events-none absolute bottom-0 left-1/2 z-0 h-80 w-80 -translate-x-1/2 rounded-full blur-3xl bg-white/10 dark:bg-slate-600/15"
+          aria-hidden="true"
+        />
+
+        <div className="relative z-10 mx-auto grid max-w-6xl items-start gap-8 md:grid-cols-12">
+          <div className="md:col-span-5">
+            <div className="rounded-2xl bg-white/12 p-8 shadow-sm ring-1 ring-white/20 backdrop-blur-md dark:bg-black/20 dark:ring-white/10 md:max-w-[560px]">
+              <span
+                className="
+                  inline-block select-none
+                  font-sans font-bold tracking-tight
+                  text-white
+                  text-4xl sm:text-5xl md:text-6xl
+                  leading-none
+                "
+              >
+                <span className="text-white">FRESH</span>{" "}
+                <span className="text-primary">TECH</span>
               </span>
-              RESH{" "}
-              <span className="inline-block align-baseline text-5xl sm:text-6xl md:text-7xl leading-none text-primary">
-                T
-              </span>
-              <span className="text-primary">ECH</span>
-            </span>
 
-            <div className="pointer-events-none absolute left-0 top-[89%] hidden -translate-y-1/2 md:flex lg:left-8 xl:left-10">
-              <div className="relative">
-                <div
-                  className="
-                    inline-flex flex-col items-start
-                    rounded-xl bg-white/85 px-4 py-2
-                    text-[11px] font-medium leading-snug text-slate-700
-                    shadow-sm ring-1 ring-white/60 backdrop-blur-sm
-                    dark:bg-slate-900/80 dark:text-slate-100 dark:ring-slate-700/60
-                  "
+              <p className="mt-5 max-w-md text-sm font-medium text-white/90 md:text-base">
+                Platforma de practica, proiecte reale si mentori din industrie pentru studentii pasionati de tehnologie.
+                Alatura-te programului <span className="font-semibold text-white">Fresh Tech</span> si construieste-ti portofoliul inca din facultate.
+              </p>
+
+            <div className="mt-7 grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <Link
+                href="/public/formular-de-inscriere-studenti"
+                className="
+                  inline-flex h-11 w-full items-center justify-center gap-2 rounded-full
+                  bg-white px-6 text-sm font-semibold text-slate-900
+                  shadow-md transition hover:bg-white/90 active:scale-[0.99]
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+                "
+                aria-label="Inscriere studenti"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 shrink-0"
+                  fill="currentColor"
+                  aria-hidden="true"
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-300">
-                    tehnologii si educatie
-                  </span>
+                  <path d="M12 3 1 8l11 5 8-3.636V15h2V8L12 3Zm0 13.343L6 13v3.5c0 1.657 2.686 3 6 3s6-1.343 6-3V13l-6 3.343Z" />
+                </svg>
+                <span>Inscriere studenti</span>
+              </Link>
 
-                  <span className="text-xs text-slate-600 dark:text-slate-200">
-                    pentru studenti
-                  </span>
+              <Link
+                href="#program-de-practica-section"
+                className="
+                  inline-flex h-11 w-full items-center justify-center
+                  rounded-full px-5 text-sm font-semibold
+                  text-white/90 ring-1 ring-white/25
+                  hover:bg-white/10 hover:text-white
+                  transition
+                "
+              >
+                Afla cum functioneaza
+              </Link>
 
-                  <div className="mt-2 h-[2px] w-8 rounded-full bg-gradient-to-r from-primary to-blue-500 opacity-70" />
-                </div>
+            </div>
 
-                {/* sageata */}
-                <div
-                  className="
-                    absolute
-                    right-[-90px]
-                    top-[55%] -translate-y-1/2
-                    text-[#0E1726] dark:text-white
-                  "
-                >
-                  <IconArrowWaveLeftUp className="w-12 md:w-16 xl:w-20 -rotate-6" />
-                </div>
-              </div>
 
             </div>
           </div>
 
-          {/* TEXT + CTA-URI JOS, CENTRAT */}
-          <div className="flex flex-col items-center text-center">
-            <p className="mb-4 max-w-xl text-sm font-medium text-slate-800 dark:text-slate-100 md:text-base">
-              Platforma de practica, proiecte reale si mentori din industrie pentru studentii pasionati de tehnologie.
-              Alatura-te programului <span className="font-semibold text-primary">Fresh Tech</span> si construieste-ti portofoliul inca din facultate.
-            </p>
+          <div className="hidden md:col-span-4 md:block" />
 
-            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              {/* CTA principal – Inscriere studenti */}
-              <Link
-                href="/public/formular-de-inscriere-studenti"
-                className="group inline-flex h-11 items-center gap-2 rounded-full 
-                          bg-gradient-to-r from-primary to-blue-500 px-6 text-sm font-semibold tracking-wide
-                          text-white shadow-md transition-all duration-150 hover:brightness-110 active:scale-[0.99] 
-                          focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-                aria-label="Inscriere Studenti"
-              >
-                <svg viewBox="0 0 24 24" className="h-4 w-4 opacity-95" fill="currentColor" aria-hidden="true">
-                  <path d="M12 3 1 8l11 5 8-3.636V15h2V8L12 3Zm0 13.343L6 13v3.5c0 1.657 2.686 3 6 3s6-1.343 6-3V13l-6 3.343Z" />
-                </svg>
-                <span className="relative z-10">Inscriere studenti</span>
-                <span
-                  className="translate-x-0 transition-transform duration-200 group-hover:translate-x-1"
-                  aria-hidden="true"
-                >
-                  →
-                </span>
-              </Link>
-
-              {/* buton secundar – afla mai multe */}
-              <Link
-                href="#program-de-practica-section"
-                className="inline-flex items-center text-xs font-medium text-slate-700 underline-offset-4 hover:text-primary hover:underline dark:text-slate-200"
-              >
-                Afla cum functioneaza programul de practica
-              </Link>
+          <div className="hidden md:col-span-3 md:block">
+            <div className="flex justify-end pt-2">
+              <AbsolventiCounter current={graduatesCount} total={252} />
             </div>
           </div>
         </div>
@@ -157,6 +190,8 @@ const Home = () => {
         className="scroll-mt-24 lg:scroll-mt-28 w-full rounded-md border border-slate-200/50 bg-white px-16 py-12 shadow-sm dark:border-slate-700/40 dark:bg-slate-900">
         <PublicPageRenderer slug="program-de-practica" />
       </div>
+
+      <TestimonialeComponent />
 
       {/* final CTA */}
       <div className="mt-16 flex flex-col items-center text-center">
@@ -230,8 +265,8 @@ const Home = () => {
                 <div
                   className="
                     inline-flex items-center justify-center
-                    bg-white/60 px-3 py-2 rounded-md
-                    dark:bg-white/80 dark:px-3 dark:py-2
+                    px-3 py-2 rounded-md
+                    dark:bg-white/70 dark:px-3 dark:py-2
                     transition-all
                   "
                 >

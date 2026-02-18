@@ -1,3 +1,5 @@
+// src/app/api/admin/dashboard/route.ts
+
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/utils/db';
@@ -15,6 +17,7 @@ export async function GET(req: NextRequest) {
     const [
       pendingApplicationsQ,
       enrolledStudentsQ,
+      graduatesQ,
       materialsQ,
       publicDocsQ,
       announcementsQ,
@@ -32,6 +35,13 @@ export async function GET(req: NextRequest) {
         SELECT COUNT(*) AS count
         FROM students
         WHERE status IN ('active', 'inactive', 'graduate')
+        `
+      ),
+      db.query<{ count: string }>(
+        `
+        SELECT COUNT(*) AS count
+        FROM students
+        WHERE status = 'graduate'
         `
       ),
       db.query<{ count: string }>(
@@ -83,8 +93,10 @@ export async function GET(req: NextRequest) {
       ),
     ]);
 
+
     const pendingRequestsCount = Number(pendingApplicationsQ.rows[0]?.count ?? 0);
     const enrolledStudentsCount = Number(enrolledStudentsQ.rows[0]?.count ?? 0);
+    const graduatesCount = Number(graduatesQ.rows[0]?.count ?? 0);
     const studentMaterialsCount = Number(materialsQ.rows[0]?.count ?? 0);
     const publicDocumentsCount = Number(publicDocsQ.rows[0]?.count ?? 0);
 
@@ -125,6 +137,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       pendingRequestsCount,
       enrolledStudentsCount,
+      graduatesCount,
       studentMaterialsCount,
       publicDocumentsCount,
       announcements,

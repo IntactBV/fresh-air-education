@@ -615,16 +615,3 @@ export default function DocumenteleMeleComponent() {
     </div>
   );
 }
-
-
-
-
-
-//           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-          //   <p className="mb-1">Nota:</p>
-          //   <ul className="list-disc pl-5 space-y-1">
-          //     <li>Formate acceptate: PDF, PNG, JPG. Dimensiune maxima: 10MB.</li>
-          //     <li>Documentele incarcate de tine pot fi sterse doar daca au fost incarcate de tine.</li>
-          //     <li>Daca datele sunt gresite, actualizeaza-le in pagina Datele mele.</li>
-          //   </ul>
-          // </div>

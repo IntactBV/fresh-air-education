@@ -1,4 +1,4 @@
-// src/app/api/admin/students/assign-series/route.ts
+// src/app/api/admin/students/assign-tutor/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -7,7 +7,7 @@ import { auth } from '@/utils/auth';
 
 const assignSchema = z.object({
   studentIds: z.array(z.string().min(1)).min(1),
-  seriesId: z.string().min(1).nullable(), // acum poate fi si null
+  tutorUserId: z.string().min(1).nullable(), // poate fi si null (deasignare)
 });
 
 export async function POST(req: NextRequest) {
@@ -20,33 +20,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { studentIds, seriesId } = parsed.data;
+  const { studentIds, tutorUserId } = parsed.data;
 
   // 1) stergem orice asignare existenta pentru acesti studenti
   await db.query(
-    `DELETE FROM student_series WHERE student_id = ANY($1::uuid[])`,
+    `DELETE FROM student_tutors WHERE student_id = ANY($1::uuid[])`,
     [studentIds]
   );
 
-  // 2) daca seriesId e null => ne oprim aici (deasignare)
-  if (seriesId === null) {
+  // 2) daca tutorUserId e null => ne oprim aici (deasignare)
+  if (tutorUserId === null) {
     return NextResponse.json({ ok: true });
   }
 
-  // 3) altfel inseram seria noua
+  // 3) altfel inseram tutorele nou (1 tutore per student => PK student_id)
   const assignedBy = session?.user?.id ?? null;
   const values: string[] = [];
   const params: any[] = [];
   let idx = 1;
 
   for (const studentId of studentIds) {
-    values.push(`($${idx++}::uuid, $${idx++}::uuid, NOW(), $${idx++}::text)`);
-    params.push(studentId, seriesId, assignedBy);
+    values.push(`($${idx++}::uuid, $${idx++}::text, NOW(), $${idx++}::text)`);
+    params.push(studentId, tutorUserId, assignedBy);
   }
 
   await db.query(
     `
-    INSERT INTO student_series (student_id, series_id, assigned_at, assigned_by)
+    INSERT INTO student_tutors (student_id, tutor_user_id, assigned_at, assigned_by)
     VALUES ${values.join(', ')}
     `,
     params

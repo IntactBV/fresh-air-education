@@ -61,6 +61,7 @@ export default async function Page() {
         userName={data.currentUserName ?? session.user?.name ?? 'admin'}
         pendingRequestsCount={data.pendingRequestsCount ?? 0}
         enrolledStudentsCount={data.enrolledStudentsCount ?? 0}
+        graduatesCount={data.graduatesCount ?? 0}
         materialsCount={data.studentMaterialsCount ?? 0}
         articlesCount={data.publicDocumentsCount ?? 0}
         announcements={data.announcements ?? []}
