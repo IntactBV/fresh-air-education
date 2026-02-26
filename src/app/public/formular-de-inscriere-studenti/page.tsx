@@ -19,7 +19,7 @@ const FormularInscriereStudenti = () => {
         telefon: Yup.string().matches(phoneRegex, 'Telefon invalid').required('Telefonul este obligatoriu'),
         nume: Yup.string().required('Numele este obligatoriu'),
         prenume: Yup.string().required('Prenumele este obligatoriu'),
-        gen: Yup.string().oneOf(['Masculin', 'Feminin'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
+        gen: Yup.string().oneOf(['Masculin', 'Feminin', 'Neutru'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
         mediuResedinta: Yup.string().oneOf(['Urban', 'Rural'], 'Selecteaza o optiune').required('Mediul de rezidenta este obligatoriu'),
 
         // 2) Date personale & adresa
@@ -46,7 +46,14 @@ const FormularInscriereStudenti = () => {
         institutie: Yup.string().required('Institutia este obligatorie'),
         facultate: Yup.string().required('Facultatea este obligatorie'),
         specializare: Yup.string().required('Domeniul/Specializarea este obligatorie'),
-        ciclu: Yup.string().oneOf(['Licenta', 'Masterat'], 'Selecteaza o optiune').required('Ciclul este obligatoriu'),
+        ciclu: Yup.string().oneOf([
+            'Licenta',
+            'Licenta2',
+            'Licenta3',
+            'Masterat',
+            'Masterat2',
+            'Doctorat'
+        ], 'Selecteaza o optiune').required('Ciclul este obligatoriu'),
 
         // 5) Consimtaminte
         agree: Yup.bool().oneOf([true], 'Trebuie sa fii de acord inainte de trimitere.'),
@@ -267,6 +274,7 @@ const FormularInscriereStudenti = () => {
                                                 <option value="">Selecteaza</option>
                                                 <option value="Masculin">Masculin</option>
                                                 <option value="Feminin">Feminin</option>
+                                                <option value="Neutru">Neutru</option>
                                             </Field>
                                             <Err name="gen" />
                                         </div>
@@ -382,17 +390,21 @@ const FormularInscriereStudenti = () => {
                                             <Err name="facultate" />
                                         </div>
                                         <div className={klass('specializare')}>
-                                            <label htmlFor="specializare">Domeniul / Specializarea</label>
+                                            <label htmlFor="specializare">Specializarea</label>
                                             <Field name="specializare" type="text" id="specializare" placeholder="ex: Informatica" className="form-input" />
                                             <Err name="specializare" />
                                         </div>
 
                                         <div className={klass('ciclu')}>
-                                            <label htmlFor="ciclu">Ciclul</label>
+                                            <label htmlFor="ciclu">Anul</label>
                                             <Field as="select" name="ciclu" id="ciclu" className="form-select">
                                                 <option value="">Selecteaza</option>
-                                                <option value="Licenta">Licenta</option>
-                                                <option value="Masterat">Masterat</option>
+                                                <option value="Licenta">Licenta 1</option>
+                                                <option value="Licenta2">Licenta 2</option>
+                                                <option value="Licenta3">Licenta 3</option>
+                                                <option value="Masterat">Masterat 1</option>
+                                                <option value="Masterat2">Masterat 2</option>
+                                                <option value="Doctorat">Doctorat</option>
                                             </Field>
                                             <Err name="ciclu" />
                                         </div>

@@ -20,7 +20,7 @@ const Schema = Yup.object().shape({
   telefon: Yup.string().matches(phoneRegex, 'Telefon invalid').required('Telefonul este obligatoriu'),
   nume: Yup.string().required('Numele este obligatoriu'),
   prenume: Yup.string().required('Prenumele este obligatoriu'),
-  gen: Yup.string().oneOf(['Masculin', 'Feminin'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
+  gen: Yup.string().oneOf(['Masculin', 'Feminin', 'Neutru'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
   mediuResedinta: Yup.string().oneOf(['Urban', 'Rural'], 'Selecteaza o optiune').required('Mediul de rezidenta este obligatoriu'),
 
   // 2) Date personale & adresa
@@ -220,9 +220,8 @@ export default function DateleMeleComponent() {
                   <button
                     type="button"
                     onClick={() => setTab('contact')}
-                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
-                      tab === 'contact' ? '!border-primary text-primary' : ''
-                    }`}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${tab === 'contact' ? '!border-primary text-primary' : ''
+                      }`}
                   >
                     <IconUser className="shrink-0 group-hover:!text-primary" />
                     Contact & Identificare
@@ -232,9 +231,8 @@ export default function DateleMeleComponent() {
                   <button
                     type="button"
                     onClick={() => setTab('adresa')}
-                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
-                      tab === 'adresa' ? '!border-primary text-primary' : ''
-                    }`}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${tab === 'adresa' ? '!border-primary text-primary' : ''
+                      }`}
                   >
                     <IconMapPin className="shrink-0 group-hover:!text-primary" />
                     Date personale & adresa
@@ -244,9 +242,8 @@ export default function DateleMeleComponent() {
                   <button
                     type="button"
                     onClick={() => setTab('ci')}
-                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
-                      tab === 'ci' ? '!border-primary text-primary' : ''
-                    }`}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${tab === 'ci' ? '!border-primary text-primary' : ''
+                      }`}
                   >
                     <IconCreditCard className="shrink-0 group-hover:!text-primary" />
                     Act de identitate (CI)
@@ -256,9 +253,8 @@ export default function DateleMeleComponent() {
                   <button
                     type="button"
                     onClick={() => setTab('studii')}
-                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
-                      tab === 'studii' ? '!border-primary text-primary' : ''
-                    }`}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${tab === 'studii' ? '!border-primary text-primary' : ''
+                      }`}
                   >
                     <IconBook className="shrink-0 group-hover:!text-primary" />
                     Studiile

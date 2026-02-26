@@ -134,42 +134,42 @@ const Home = async () => {
                 Alatura-te programului <span className="font-semibold text-white">Fresh Tech</span> si construieste-ti portofoliul inca din facultate.
               </p>
 
-            <div className="mt-7 grid grid-cols-1 gap-3 lg:grid-cols-2">
-              <Link
-                href="/public/formular-de-inscriere-studenti"
-                className="
+              <div className="mt-7 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <Link
+                  href="/public/formular-de-inscriere-studenti"
+                  className="
                   inline-flex h-11 w-full items-center justify-center gap-2 rounded-full
                   bg-white px-6 text-sm font-semibold text-slate-900
                   shadow-md transition hover:bg-white/90 active:scale-[0.99]
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50
                 "
-                aria-label="Inscriere studenti"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4 shrink-0"
-                  fill="currentColor"
-                  aria-hidden="true"
+                  aria-label="Inscriere studenti"
                 >
-                  <path d="M12 3 1 8l11 5 8-3.636V15h2V8L12 3Zm0 13.343L6 13v3.5c0 1.657 2.686 3 6 3s6-1.343 6-3V13l-6 3.343Z" />
-                </svg>
-                <span>Inscriere studenti</span>
-              </Link>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4 shrink-0"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 3 1 8l11 5 8-3.636V15h2V8L12 3Zm0 13.343L6 13v3.5c0 1.657 2.686 3 6 3s6-1.343 6-3V13l-6 3.343Z" />
+                  </svg>
+                  <span>Inscriere studenti</span>
+                </Link>
 
-              <Link
-                href="#program-de-practica-section"
-                className="
+                <Link
+                  href="#program-de-practica-section"
+                  className="
                   inline-flex h-11 w-full items-center justify-center
                   rounded-full px-5 text-sm font-semibold
                   text-white/90 ring-1 ring-white/25
                   hover:bg-white/10 hover:text-white
                   transition
                 "
-              >
-                Afla cum functioneaza
-              </Link>
+                >
+                  Afla cum functioneaza
+                </Link>
 
-            </div>
+              </div>
 
 
             </div>
@@ -237,6 +237,9 @@ const Home = async () => {
               </Link>
               <Link href="/public/politica-de-confidentialitate" className="hover:text-primary">
                 Politica de confidentialitate
+              </Link>
+              <Link href="mailto:freshtech@freshair.ro" className="hover:text-primary">
+                freshtech@freshair.ro
               </Link>
               {/* <Link href="/public/intrebari-frecvente" className="hover:text-primary">
                 Intrebari frecvente
