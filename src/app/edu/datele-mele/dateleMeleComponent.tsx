@@ -41,7 +41,7 @@ const Schema = Yup.object().shape({
   institutie: Yup.string().required('Institutia este obligatorie'),
   facultate: Yup.string().required('Facultatea este obligatorie'),
   specializare: Yup.string().required('Domeniul/Specializarea este obligatorie'),
-  ciclu: Yup.string().oneOf(['Licenta', 'Masterat'], 'Selecteaza o optiune').required('Ciclul este obligatoriu'),
+  ciclu: Yup.string().oneOf(['Licenta', 'Licenta2', 'Licenta3', 'Masterat', 'Masterat2', 'Doctorat'], 'Selecteaza o optiune').required('Anul este obligatoriu'),
 });
 
 // valori default (vor fi suprascrise dupa fetch)
@@ -51,7 +51,7 @@ const emptyValues = {
   telefon: '',
   nume: '',
   prenume: '',
-  gen: '' as 'Masculin' | 'Feminin' | '',
+  gen: '' as 'Masculin' | 'Feminin' | 'Neutru' | '',
   mediuResedinta: '' as 'Urban' | 'Rural' | '',
 
   // 2) Date personale & adresa
@@ -284,6 +284,7 @@ export default function DateleMeleComponent() {
                       <option value="">Selecteaza</option>
                       <option value="Masculin">Masculin</option>
                       <option value="Feminin">Feminin</option>
+                      <option value="Neutru">Neutru</option>
                     </Field>
                     <Err name="gen" />
                   </div>
@@ -443,11 +444,16 @@ export default function DateleMeleComponent() {
                   </div>
 
                   <div className={klass('ciclu')}>
-                    <label htmlFor="ciclu">Ciclul</label>
+                    <label htmlFor="ciclu">Anul</label>
                     <Field as="select" id="ciclu" name="ciclu" className="form-select">
                       <option value="">Selecteaza</option>
-                      <option value="Licenta">Licenta</option>
-                      <option value="Masterat">Masterat</option>
+                      <option value="Licenta">Licenta 1</option>
+                      <option value="Licenta2">Licenta 2</option>
+                      <option value="Licenta3">Licenta 3</option>
+                      <option value="Masterat">Masterat 1</option>
+                      <option value="Masterat2">Masterat 2</option>
+                      <option value="Doctorat">Doctorat</option>
+
                     </Field>
                     <Err name="ciclu" />
                   </div>

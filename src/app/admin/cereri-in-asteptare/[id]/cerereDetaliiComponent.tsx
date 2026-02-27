@@ -298,7 +298,7 @@ export default function CerereDetaliiComponent() {
                   <Row label="Institutie" value={request.institutie} />
                   <Row label="Facultate" value={request.facultate} />
                   <Row label="Specializare" value={request.specializare} />
-                  <Row label="Ciclu" value={request.ciclu} />
+                  <Row label="Anul" value={request.ciclu} />
                 </div>
               </div>
 

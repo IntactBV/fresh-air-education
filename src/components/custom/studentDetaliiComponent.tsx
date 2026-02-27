@@ -383,7 +383,7 @@ const documentsCount = REQUIRED_DOC_TYPES.reduce((acc, t) => acc + (documents.so
           <Row label="Institutie" value={application?.institutie} />
           <Row label="Facultate" value={application?.facultate} />
           <Row label="Specializare" value={application?.specializare} />
-          <Row label="Ciclu" value={application?.ciclu} />
+          <Row label="Anul" value={application?.ciclu} />
         </div>
       </div>
     </div>
