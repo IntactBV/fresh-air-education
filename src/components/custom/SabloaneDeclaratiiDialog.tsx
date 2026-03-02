@@ -1,3 +1,4 @@
+// src/components/custom/SabloaneDeclaratiiDialog.tsx
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -29,6 +30,9 @@ type Props = {
 
 const TEMPLATE_EVD = 'template_declaratie_evitare_dubla_finantare';
 const TEMPLATE_ELIG = 'template_declaratie_eligibilitate_membru';
+const TEMPLATE_CONVENTIE = 'template_conventie_cadru';
+const TEMPLATE_GDPR = 'template_acord_date_caracter_personal';
+const TEMPLATE_CAIET = 'template_caiet_de_practica';
 
 const API_URL = '/api/admin/acroform-templates';
 
@@ -41,10 +45,26 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
   const [loadingEvd, setLoadingEvd] = useState(false);
   const [loadingElig, setLoadingElig] = useState(false);
 
+  const [templateConventie, setTemplateConventie] = useState<TemplateInfo | null>(null);
+  const [templateGdpr, setTemplateGdpr] = useState<TemplateInfo | null>(null);
+  const [templateCaiet, setTemplateCaiet] = useState<TemplateInfo | null>(null);
+
+  const [loadingConventie, setLoadingConventie] = useState(false);
+  const [loadingGdpr, setLoadingGdpr] = useState(false);
+  const [loadingCaiet, setLoadingCaiet] = useState(false);
+  
   const evdFileInputRef = useRef<HTMLInputElement | null>(null);
   const eligFileInputRef = useRef<HTMLInputElement | null>(null);
+  const conventieFileInputRef = useRef<HTMLInputElement | null>(null);
+  const gdprFileInputRef = useRef<HTMLInputElement | null>(null);
+  const caietFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const disabledAll = loadingEvd || loadingElig;
+  const disabledAll =
+    loadingEvd ||
+    loadingElig ||
+    loadingConventie ||
+    loadingGdpr ||
+    loadingCaiet;
 
   const formatDateTime = (value?: string) => {
     if (!value) return null;
@@ -69,6 +89,26 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
   useEffect(() => {
     if (!isOpen) return;
 
+    const prevOverflow = document.body.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+
+    document.body.style.overflow = 'hidden';
+
+    // Optional: avoid layout shift when scrollbar disappears
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
     let mounted = true;
 
     (async () => {
@@ -76,10 +116,16 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
         setError(null);
         setLoadingEvd(true);
         setLoadingElig(true);
+        setLoadingConventie(true);
+        setLoadingGdpr(true);
+        setLoadingCaiet(true);
 
-        const [tplEvd, tplElig] = await Promise.allSettled([
+        const [tplEvd, tplElig, tplConventie, tplGdpr, tplCaiet] = await Promise.allSettled([
           fetchTemplate(TEMPLATE_EVD),
           fetchTemplate(TEMPLATE_ELIG),
+          fetchTemplate(TEMPLATE_CONVENTIE),
+          fetchTemplate(TEMPLATE_GDPR),
+          fetchTemplate(TEMPLATE_CAIET),
         ]);
 
         if (!mounted) return;
@@ -95,6 +141,24 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
         } else {
           setTemplateElig({ exists: false });
         }
+
+        if (tplConventie.status === 'fulfilled') {
+          setTemplateConventie(tplConventie.value);
+        } else {
+          setTemplateConventie({ exists: false });
+        }
+
+        if (tplGdpr.status === 'fulfilled') {
+          setTemplateGdpr(tplGdpr.value);
+        } else {
+          setTemplateGdpr({ exists: false });
+        }
+
+        if (tplCaiet.status === 'fulfilled') {
+          setTemplateCaiet(tplCaiet.value);
+        } else {
+          setTemplateCaiet({ exists: false });
+        }
       } catch (e: any) {
         if (mounted) {
           setError(e?.message || 'Eroare neasteptata.');
@@ -103,6 +167,9 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
         if (mounted) {
           setLoadingEvd(false);
           setLoadingElig(false);
+          setLoadingConventie(false);
+          setLoadingGdpr(false);
+          setLoadingCaiet(false);
         }
       }
     })();
@@ -111,15 +178,33 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
       mounted = false;
       setTemplateEvd(null);
       setTemplateElig(null);
+      setTemplateConventie(null);
+      setTemplateGdpr(null);
+      setTemplateCaiet(null);
       setError(null);
     };
   }, [isOpen]);
 
   const handleUploadTemplate = async (file: File, type: string) => {
+    const setLoadingForType = (value: boolean) => {
+      if (type === TEMPLATE_EVD) setLoadingEvd(value);
+      if (type === TEMPLATE_ELIG) setLoadingElig(value);
+      if (type === TEMPLATE_CONVENTIE) setLoadingConventie(value);
+      if (type === TEMPLATE_GDPR) setLoadingGdpr(value);
+      if (type === TEMPLATE_CAIET) setLoadingCaiet(value);
+    };
+
+    const setTemplateForType = (tpl: TemplateInfo) => {
+      if (type === TEMPLATE_EVD) setTemplateEvd(tpl);
+      if (type === TEMPLATE_ELIG) setTemplateElig(tpl);
+      if (type === TEMPLATE_CONVENTIE) setTemplateConventie(tpl);
+      if (type === TEMPLATE_GDPR) setTemplateGdpr(tpl);
+      if (type === TEMPLATE_CAIET) setTemplateCaiet(tpl);
+    };
+
     try {
       setError(null);
-      if (type === TEMPLATE_EVD) setLoadingEvd(true);
-      if (type === TEMPLATE_ELIG) setLoadingElig(true);
+      setLoadingForType(true);
 
       const formData = new FormData();
       formData.append('file', file);
@@ -141,93 +226,125 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
       }
 
       const data = (await res.json()) as { template: TemplateInfo };
-
-      if (type === TEMPLATE_EVD) {
-        setTemplateEvd(data.template);
-      } else {
-        setTemplateElig(data.template);
-      }
+      setTemplateForType(data.template);
     } catch (e: any) {
       setError(e?.message || 'Eroare la upload sablon.');
     } finally {
-      if (type === TEMPLATE_EVD) setLoadingEvd(false);
-      if (type === TEMPLATE_ELIG) setLoadingElig(false);
+      setLoadingForType(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-      {/* overlay */}
-      <div
-        className="fixed inset-0 bg-black/40"
-        onClick={() => {
-          if (!disabledAll) onClose();
-        }}
-      />
-      {/* dialog */}
-      <div className="relative z-10 flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-lg dark:bg-[#0e1726]">
-        {/* header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700/60">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Sabloane declaratii
-          </h2>
-          <button
-            type="button"
-            className="text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white"
-            onClick={() => (!disabledAll ? onClose() : null)}
+    <div
+        className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto px-4 py-4"
+        style={{ top: 'var(--master-header-h, 0px)' }}
+      >
+      <div className="min-h-full flex items-start justify-center">
+        {/* overlay */}
+        <div
+          className="fixed inset-x-0 bottom-0 bg-black/40"
+          style={{ top: 'var(--master-header-h, 0px)' }}
+          onClick={() => {
+            if (!disabledAll) onClose();
+          }}
+        />
+        {/* dialog */}
+          <div
+            className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-lg dark:bg-[#0e1726]"
+            style={{
+              maxHeight: 'calc(100vh - var(--master-header-h, 0px) - 2rem)',
+            }}
           >
-            <IconX />
-          </button>
-        </div>
-
-        {/* error */}
-        {error && (
-          <div className="px-6 pt-3">
-            <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/60 dark:text-rose-100">
-              {error}
-            </div>
+          {/* header */}
+          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700/60">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Sabloane declaratii
+            </h2>
+            <button
+              type="button"
+              className="text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white"
+              onClick={() => (!disabledAll ? onClose() : null)}
+            >
+              <IconX />
+            </button>
           </div>
-        )}
 
-        {/* body scrollable */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-          {/* Sablon declaratie evitare dubla finantare */}
-          <div className="panel p-4">
-            <h3 className="mb-2 text-base font-semibold">Sablon declaratie evitare dubla finantare</h3>
+          {/* error */}
+          {error && (
+            <div className="px-6 pt-3">
+              <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/60 dark:text-rose-100">
+                {error}
+              </div>
+            </div>
+          )}
 
-            {loadingEvd ? (
-              <div className="text-sm text-gray-500">Se incarca sablonul...</div>
-            ) : templateEvd?.exists ? (
-              <div className="flex items-center justify-between rounded border border-white-light p-2 text-sm dark:border-[#1b2e4b]">
-                <div className="space-y-0.5">
-                  <div className="font-medium">{templateEvd.filename}</div>
-                  {templateEvd.blobId && (
-                    <div className="text-xs text-gray-500">
-                      Blob ID: <span className="font-mono">{templateEvd.blobId}</span>
-                    </div>
-                  )}
-                  {templateEvd.uploadedAt && (
-                    <div className="text-[11px] text-gray-400">
-                      Ultima actualizare: {formatDateTime(templateEvd.uploadedAt)}
-                    </div>
-                  )}
+          {/* body scrollable */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 overscroll-contain">
+            {/* Sablon declaratie evitare dubla finantare */}
+            <div className="panel p-4">
+              <h3 className="mb-2 text-base font-semibold">Sablon declaratie evitare dubla finantare</h3>
+
+              {loadingEvd ? (
+                <div className="text-sm text-gray-500">Se incarca sablonul...</div>
+              ) : templateEvd?.exists ? (
+                <div className="flex items-center justify-between rounded border border-white-light p-2 text-sm dark:border-[#1b2e4b]">
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{templateEvd.filename}</div>
+                    {templateEvd.blobId && (
+                      <div className="text-xs text-gray-500">
+                        Blob ID: <span className="font-mono">{templateEvd.blobId}</span>
+                      </div>
+                    )}
+                    {templateEvd.uploadedAt && (
+                      <div className="text-[11px] text-gray-400">
+                        Ultima actualizare: {formatDateTime(templateEvd.uploadedAt)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {templateEvd.blobId && (
+                      <Tippy content="Vezi template PDF">
+                        <a
+                          href={`/api/admin/document-blobs/${templateEvd.blobId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-xs btn-primary gap-1"
+                        >
+                          <IconEye className="h-3 w-3" /> Vezi
+                        </a>
+                      </Tippy>
+                    )}
+
+                    <input
+                      ref={evdFileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadTemplate(f, TEMPLATE_EVD);
+                        if (evdFileInputRef.current) evdFileInputRef.current.value = '';
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-xs"
+                      onClick={() => evdFileInputRef.current?.click()}
+                      disabled={disabledAll}
+                    >
+                      Inlocuieste sablon
+                    </button>
+                  </div>
                 </div>
-
-                <div className="flex gap-2">
-                  {templateEvd.blobId && (
-                    <Tippy content="Vezi template PDF">
-                      <a
-                        href={`/api/admin/document-blobs/${templateEvd.blobId}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-xs btn-primary gap-1"
-                      >
-                        <IconEye className="h-3 w-3" /> Vezi
-                      </a>
-                    </Tippy>
-                  )}
+              ) : (
+                <div className="rounded border border-dashed border-white-light p-4 text-sm dark:border-[#1b2e4b]">
+                  <p className="mb-3">
+                    Nu exista sablon incarcat pentru aceasta declaratie.
+                  </p>
 
                   <input
                     ref={evdFileInputRef}
@@ -247,79 +364,81 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
                     onClick={() => evdFileInputRef.current?.click()}
                     disabled={disabledAll}
                   >
-                    Inlocuieste sablon
+                    Incarca sablon
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="rounded border border-dashed border-white-light p-4 text-sm dark:border-[#1b2e4b]">
-                <p className="mb-3">
-                  Nu exista sablon incarcat pentru aceasta declaratie.
-                </p>
+              )}
+            </div>
 
-                <input
-                  ref={evdFileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleUploadTemplate(f, TEMPLATE_EVD);
-                    if (evdFileInputRef.current) evdFileInputRef.current.value = '';
-                  }}
-                />
+            {/* Sablon declaratie eligibilitate membru */}
+            <div className="panel p-4">
+              <h3 className="mb-2 text-base font-semibold">Sablon declaratie eligibilitate membru</h3>
 
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-xs"
-                  onClick={() => evdFileInputRef.current?.click()}
-                  disabled={disabledAll}
-                >
-                  Incarca sablon
-                </button>
-              </div>
-            )}
-          </div>
+              {loadingElig ? (
+                <div className="text-sm text-gray-500">Se incarca sablonul...</div>
+              ) : templateElig?.exists ? (
+                <div className="flex items-center justify-between rounded border border-white-light p-2 text-sm dark:border-[#1b2e4b]">
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{templateElig.filename}</div>
 
-          {/* Sablon declaratie eligibilitate membru */}
-          <div className="panel p-4">
-            <h3 className="mb-2 text-base font-semibold">Sablon declaratie eligibilitate membru</h3>
+                    {templateElig.blobId && (
+                      <div className="text-xs text-gray-500">
+                        Blob ID: <span className="font-mono">{templateElig.blobId}</span>
+                      </div>
+                    )}
 
-            {loadingElig ? (
-              <div className="text-sm text-gray-500">Se incarca sablonul...</div>
-            ) : templateElig?.exists ? (
-              <div className="flex items-center justify-between rounded border border-white-light p-2 text-sm dark:border-[#1b2e4b]">
-                <div className="space-y-0.5">
-                  <div className="font-medium">{templateElig.filename}</div>
+                    {templateElig.uploadedAt && (
+                      <div className="text-[11px] text-gray-400">
+                        Ultima actualizare: {new Date(templateElig.uploadedAt).toLocaleString('ro-RO')}
+                      </div>
+                    )}
+                  </div>
 
-                  {templateElig.blobId && (
-                    <div className="text-xs text-gray-500">
-                      Blob ID: <span className="font-mono">{templateElig.blobId}</span>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    {templateElig.blobId && (
+                      <Tippy content="Vezi template PDF">
+                        <a
+                          href={`/api/admin/document-blobs/${templateElig.blobId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-xs btn-primary gap-1"
+                        >
+                          <IconEye className="h-3 w-3" /> Vezi
+                        </a>
+                      </Tippy>
+                    )}
 
-                  {templateElig.uploadedAt && (
-                    <div className="text-[11px] text-gray-400">
-                      Ultima actualizare: {new Date(templateElig.uploadedAt).toLocaleString('ro-RO')}
-                    </div>
-                  )}
+                    {/* input ascuns pentru upload */}
+                    <input
+                      ref={eligFileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadTemplate(f, TEMPLATE_ELIG);
+                        if (eligFileInputRef.current) eligFileInputRef.current.value = '';
+                      }}
+                    />
+
+                    {/* buton stilizat */}
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-xs"
+                      onClick={() => eligFileInputRef.current?.click()}
+                      disabled={disabledAll}
+                    >
+                      Inlocuieste sablon
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <div className="rounded border border-dashed border-white-light p-4 text-sm dark:border-[#1b2e4b]">
+                  <p className="mb-3">
+                    Nu exista sablon incarcat pentru aceasta declaratie.
+                  </p>
 
-                <div className="flex gap-2">
-                  {templateElig.blobId && (
-                    <Tippy content="Vezi template PDF">
-                      <a
-                        href={`/api/admin/document-blobs/${templateElig.blobId}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-xs btn-primary gap-1"
-                      >
-                        <IconEye className="h-3 w-3" /> Vezi
-                      </a>
-                    </Tippy>
-                  )}
-
-                  {/* input ascuns pentru upload */}
+                  {/* input ascuns */}
                   <input
                     ref={eligFileInputRef}
                     type="file"
@@ -332,66 +451,301 @@ export default function SabloaneDeclaratiiDialog({ isOpen, onClose }: Props) {
                     }}
                   />
 
-                  {/* buton stilizat */}
+                  {/* buton stylizat */}
                   <button
                     type="button"
                     className="btn btn-outline-primary btn-xs"
                     onClick={() => eligFileInputRef.current?.click()}
                     disabled={disabledAll}
                   >
-                    Inlocuieste sablon
+                    Incarca sablon
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="rounded border border-dashed border-white-light p-4 text-sm dark:border-[#1b2e4b]">
-                <p className="mb-3">
-                  Nu exista sablon incarcat pentru aceasta declaratie.
-                </p>
+              )}
+            </div>
 
-                {/* input ascuns */}
-                <input
-                  ref={eligFileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleUploadTemplate(f, TEMPLATE_ELIG);
-                    if (eligFileInputRef.current) eligFileInputRef.current.value = '';
-                  }}
-                />
+            {/* Sablon conventie-cadru */}
+            <div className="panel p-4">
+              <h3 className="mb-2 text-base font-semibold">Sablon conventie cadru</h3>
 
-                {/* buton stylizat */}
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-xs"
-                  onClick={() => eligFileInputRef.current?.click()}
-                  disabled={disabledAll}
-                >
-                  Incarca sablon
-                </button>
-              </div>
-            )}
+              {loadingConventie ? (
+                <div className="text-sm text-gray-500">Se incarca sablonul...</div>
+              ) : templateConventie?.exists ? (
+                <div className="flex items-center justify-between rounded border border-white-light p-2 text-sm dark:border-[#1b2e4b]">
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{templateConventie.filename}</div>
+
+                    {templateConventie.blobId && (
+                      <div className="text-xs text-gray-500">
+                        Blob ID: <span className="font-mono">{templateConventie.blobId}</span>
+                      </div>
+                    )}
+
+                    {templateConventie.uploadedAt && (
+                      <div className="text-[11px] text-gray-400">
+                        Ultima actualizare: {formatDateTime(templateConventie.uploadedAt)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {templateConventie.blobId && (
+                      <Tippy content="Vezi sablon">
+                        <a
+                          href={`/api/admin/document-blobs/${templateConventie.blobId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-xs btn-primary gap-1"
+                        >
+                          <IconEye className="h-3 w-3" /> Vezi
+                        </a>
+                      </Tippy>
+                    )}
+
+                    <input
+                      ref={conventieFileInputRef}
+                      type="file"
+                      accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadTemplate(f, TEMPLATE_CONVENTIE);
+                        if (conventieFileInputRef.current) conventieFileInputRef.current.value = '';
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-xs"
+                      onClick={() => conventieFileInputRef.current?.click()}
+                      disabled={disabledAll}
+                    >
+                      Inlocuieste sablon
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded border border-dashed border-white-light p-4 text-sm dark:border-[#1b2e4b]">
+                  <p className="mb-3">Nu exista sablon incarcat pentru acest document.</p>
+
+                  <input
+                    ref={conventieFileInputRef}
+                    type="file"
+                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleUploadTemplate(f, TEMPLATE_CONVENTIE);
+                      if (conventieFileInputRef.current) conventieFileInputRef.current.value = '';
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-xs"
+                    onClick={() => conventieFileInputRef.current?.click()}
+                    disabled={disabledAll}
+                  >
+                    Incarca sablon
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Sablon acord-date-caracter-personal */}
+            <div className="panel p-4">
+              <h3 className="mb-2 text-base font-semibold">Sablon acord date cu caracter personal</h3>
+
+              {loadingGdpr ? (
+                <div className="text-sm text-gray-500">Se incarca sablonul...</div>
+              ) : templateGdpr?.exists ? (
+                <div className="flex items-center justify-between rounded border border-white-light p-2 text-sm dark:border-[#1b2e4b]">
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{templateGdpr.filename}</div>
+
+                    {templateGdpr.blobId && (
+                      <div className="text-xs text-gray-500">
+                        Blob ID: <span className="font-mono">{templateGdpr.blobId}</span>
+                      </div>
+                    )}
+
+                    {templateGdpr.uploadedAt && (
+                      <div className="text-[11px] text-gray-400">
+                        Ultima actualizare: {formatDateTime(templateGdpr.uploadedAt)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {templateGdpr.blobId && (
+                      <Tippy content="Vezi sablon">
+                        <a
+                          href={`/api/admin/document-blobs/${templateGdpr.blobId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-xs btn-primary gap-1"
+                        >
+                          <IconEye className="h-3 w-3" /> Vezi
+                        </a>
+                      </Tippy>
+                    )}
+
+                    <input
+                      ref={gdprFileInputRef}
+                      type="file"
+                      accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadTemplate(f, TEMPLATE_GDPR);
+                        if (gdprFileInputRef.current) gdprFileInputRef.current.value = '';
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-xs"
+                      onClick={() => gdprFileInputRef.current?.click()}
+                      disabled={disabledAll}
+                    >
+                      Inlocuieste sablon
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded border border-dashed border-white-light p-4 text-sm dark:border-[#1b2e4b]">
+                  <p className="mb-3">Nu exista sablon incarcat pentru acest document.</p>
+
+                  <input
+                    ref={gdprFileInputRef}
+                    type="file"
+                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleUploadTemplate(f, TEMPLATE_GDPR);
+                      if (gdprFileInputRef.current) gdprFileInputRef.current.value = '';
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-xs"
+                    onClick={() => gdprFileInputRef.current?.click()}
+                    disabled={disabledAll}
+                  >
+                    Incarca sablon
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Sablon caiet-de-practica */}
+            <div className="panel p-4">
+              <h3 className="mb-2 text-base font-semibold">Sablon caiet de practica</h3>
+
+              {loadingCaiet ? (
+                <div className="text-sm text-gray-500">Se incarca sablonul...</div>
+              ) : templateCaiet?.exists ? (
+                <div className="flex items-center justify-between rounded border border-white-light p-2 text-sm dark:border-[#1b2e4b]">
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{templateCaiet.filename}</div>
+
+                    {templateCaiet.blobId && (
+                      <div className="text-xs text-gray-500">
+                        Blob ID: <span className="font-mono">{templateCaiet.blobId}</span>
+                      </div>
+                    )}
+
+                    {templateCaiet.uploadedAt && (
+                      <div className="text-[11px] text-gray-400">
+                        Ultima actualizare: {formatDateTime(templateCaiet.uploadedAt)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {templateCaiet.blobId && (
+                      <Tippy content="Vezi sablon">
+                        <a
+                          href={`/api/admin/document-blobs/${templateCaiet.blobId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-xs btn-primary gap-1"
+                        >
+                          <IconEye className="h-3 w-3" /> Vezi
+                        </a>
+                      </Tippy>
+                    )}
+
+                    <input
+                      ref={caietFileInputRef}
+                      type="file"
+                      accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadTemplate(f, TEMPLATE_CAIET);
+                        if (caietFileInputRef.current) caietFileInputRef.current.value = '';
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-xs"
+                      onClick={() => caietFileInputRef.current?.click()}
+                      disabled={disabledAll}
+                    >
+                      Inlocuieste sablon
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded border border-dashed border-white-light p-4 text-sm dark:border-[#1b2e4b]">
+                  <p className="mb-3">Nu exista sablon incarcat pentru acest document.</p>
+
+                  <input
+                    ref={caietFileInputRef}
+                    type="file"
+                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleUploadTemplate(f, TEMPLATE_CAIET);
+                      if (caietFileInputRef.current) caietFileInputRef.current.value = '';
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-xs"
+                    onClick={() => caietFileInputRef.current?.click()}
+                    disabled={disabledAll}
+                  >
+                    Incarca sablon
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          {/* footer simplu */}
+          <div className="flex items-center justify-between gap-2 border-t border-slate-200 px-6 py-4 text-xs text-slate-500 dark:border-slate-700/60 dark:text-slate-300">
+
+            <span>Aceste sabloane sunt valabile pentru toti studentii.</span>
+
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={onClose}
+              disabled={disabledAll}
+            >
+              Inchide
+            </button>
           </div>
 
         </div>
-
-        {/* footer simplu */}
-        <div className="flex items-center justify-between gap-2 border-t border-slate-200 px-6 py-4 text-xs text-slate-500 dark:border-slate-700/60 dark:text-slate-300">
-
-          <span>Aceste sabloane sunt valabile pentru toti studentii.</span>
-
-          <button
-            type="button"
-            className="btn btn-outline-secondary"
-            onClick={onClose}
-            disabled={disabledAll}
-          >
-            Inchide
-          </button>
-        </div>
-
       </div>
     </div>
   );

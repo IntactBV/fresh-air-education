@@ -3,10 +3,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { db } from '@/utils/db';
 import { auth } from '@/utils/auth';
 
-async function getStudentForUser(userId: string) {
-  const res = await db.query(
+type StudentRow = { id: string; application_id: string };
+
+async function getStudentForUser(userId: string): Promise<StudentRow | null> {
+  const res = await db.query<StudentRow>(
     `
-    SELECT id
+    SELECT id, application_id
     FROM students
     WHERE user_id = $1
     ORDER BY created_at DESC
@@ -25,7 +27,6 @@ export async function GET(req: NextRequest) {
 
   const student = await getStudentForUser(session.user.id);
 
-  // citim sabloanele globale (valabile pentru toti studentii)
   const resTemplates = await db.query(
     `
     SELECT
@@ -39,13 +40,18 @@ export async function GET(req: NextRequest) {
     JOIN document_blobs b ON b.id = t.blob_id
     WHERE t.document_type IN (
       'template_declaratie_evitare_dubla_finantare',
-      'template_declaratie_eligibilitate_membru'
+      'template_declaratie_eligibilitate_membru',
+      'template_conventie_cadru',
+      'template_acord_date_caracter_personal'
     )
-    `
+    `,
   );
 
   let declEvitareDublaFinantareTemplate: any = null;
   let declEligibilitateMembruTemplate: any = null;
+  let conventieCadruTemplate: any = null;
+
+  let acordPrelucrareDatePersonaleTemplate: any = null;
 
   for (const row of resTemplates.rows) {
     const tplDto = {
@@ -62,24 +68,98 @@ export async function GET(req: NextRequest) {
     if (row.document_type === 'template_declaratie_eligibilitate_membru') {
       declEligibilitateMembruTemplate = tplDto;
     }
+    if (row.document_type === 'template_conventie_cadru') {
+      conventieCadruTemplate = tplDto;
+    }
+    if (row.document_type === 'template_acord_date_caracter_personal') {
+      acordPrelucrareDatePersonaleTemplate = tplDto;
+    }
   }
 
-  // daca nu exista student, intoarcem sloturile de documente null + sabloane (daca exista)
   if (!student) {
     return NextResponse.json(
       {
         adeverintaStudent: null,
+        extrasCont: null,
+        conventieSemnata: null,
+        acordPrelucrareDatePersonaleSemnat: null,
+
         declEvitareDublaFinantareSemnata: null,
         declEligibilitateMembruSemnata: null,
         adeverintaFinalizareStagiu: null,
+
         declEvitareDublaFinantareTemplate,
         declEligibilitateMembruTemplate,
+        conventieCadruTemplate,
+        acordPrelucrareDatePersonaleTemplate,
       },
       { status: 200 },
     );
   }
 
-  // luam toate documentele relevante, indiferent cine le-a incarcat (student / admin / system)
+  // ---- app docs (single source of truth) ----
+  const resAppDocs = await db.query(
+    `
+    SELECT
+      sad.id,
+      sad.document_type,
+      sad.blob_id,
+      sad.status,
+      sad.is_visible_to_student,
+      sad.created_at,
+      sad.uploaded_by_role,
+      db.filename,
+      db.mime_type,
+      db.byte_size
+    FROM student_application_documents sad
+    JOIN document_blobs db ON db.id = sad.blob_id
+    WHERE sad.student_application_id = $1
+      AND sad.document_type IN (
+        'adeverinta_student',
+        'conventie_semnata',
+        'extras_cont',
+        'acord_prelucrare_date_personale_semnat'
+      )
+    ORDER BY sad.created_at DESC
+    `,
+    [student.application_id],
+  );
+
+  let adeverintaStudent: any = null;
+  let conventieSemnata: any = null;
+  let extrasCont: any = null;
+  let acordPrelucrareDatePersonaleSemnat: any = null;
+
+  for (const row of resAppDocs.rows) {
+    if (row.is_visible_to_student === false) continue;
+
+    const docDto = {
+      id: row.id,
+      blobId: row.blob_id,
+      name: row.filename,
+      mimeType: row.mime_type,
+      sizeBytes: row.byte_size,
+      uploadedAt: row.created_at,
+      status: row.status,
+      uploadedByRole: row.uploaded_by_role,
+      url: `/api/edu/my-documents/${row.id}`,
+    };
+
+    if (row.document_type === 'adeverinta_student' && !adeverintaStudent) {
+      adeverintaStudent = docDto;
+    }
+    if (row.document_type === 'conventie_semnata' && !conventieSemnata) {
+      conventieSemnata = docDto;
+    }
+    if (row.document_type === 'extras_cont' && !extrasCont) {
+      extrasCont = docDto;
+    }
+    if (row.document_type === 'acord_prelucrare_date_personale_semnat' && !acordPrelucrareDatePersonaleSemnat) {
+      acordPrelucrareDatePersonaleSemnat = docDto;
+    }
+  }
+
+  // ---- student docs ----
   const resDocs = await db.query(
     `
     SELECT
@@ -97,7 +177,6 @@ export async function GET(req: NextRequest) {
     JOIN document_blobs db ON db.id = sd.blob_id
     WHERE sd.student_id = $1
       AND sd.document_type IN (
-        'adeverinta_student',
         'declaratie_evitare_dubla_finantare_semnata',
         'declaratie_eligibilitate_membru_semnata',
         'adeverinta_finalizare_stagiu'
@@ -107,7 +186,6 @@ export async function GET(req: NextRequest) {
     [student.id],
   );
 
-  let adeverintaStudent: any = null;
   let declEvitareDublaFinantareSemnata: any = null;
   let declEligibilitateMembruSemnata: any = null;
   let adeverintaFinalizareStagiu: any = null;
@@ -127,9 +205,6 @@ export async function GET(req: NextRequest) {
       url: `/api/edu/my-documents/${row.id}`,
     };
 
-    if (row.document_type === 'adeverinta_student' && !adeverintaStudent) {
-      adeverintaStudent = docDto;
-    }
     if (row.document_type === 'declaratie_evitare_dubla_finantare_semnata' && !declEvitareDublaFinantareSemnata) {
       declEvitareDublaFinantareSemnata = docDto;
     }
@@ -144,11 +219,18 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(
     {
       adeverintaStudent,
+      extrasCont,
+      conventieSemnata,
+      acordPrelucrareDatePersonaleSemnat,
+
       declEvitareDublaFinantareSemnata,
       declEligibilitateMembruSemnata,
       adeverintaFinalizareStagiu,
+
       declEvitareDublaFinantareTemplate,
       declEligibilitateMembruTemplate,
+      conventieCadruTemplate,
+      acordPrelucrareDatePersonaleTemplate,
     },
     { status: 200 },
   );

@@ -1,4 +1,4 @@
-// src/app/api/admin/documents/acroform/template/route.ts
+// src/app/api/admin/acroform-templates/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/utils/db';
@@ -8,6 +8,11 @@ const ALLOWED_TYPES = [
   'template_acroform_adeverinta_finalizare',
   'template_declaratie_evitare_dubla_finantare',
   'template_declaratie_eligibilitate_membru',
+
+  // new global templates (.docx)
+  'template_conventie_cadru',
+  'template_acord_date_caracter_personal',
+  'template_caiet_de_practica',
 ] as const;
 
 type AllowedType = (typeof ALLOWED_TYPES)[number];
@@ -16,10 +21,38 @@ function isAllowedType(type: string | null): type is AllowedType {
   return !!type && ALLOWED_TYPES.includes(type as AllowedType);
 }
 
+const DOCX_MIME =
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+function getExt(filename: string) {
+  const i = filename.lastIndexOf('.');
+  if (i === -1) return '';
+  return filename.slice(i + 1).toLowerCase();
+}
+
+function isAllowedUpload(file: File) {
+  const filename = file.name || '';
+  const ext = getExt(filename);
+
+  const mime = (file.type || '').toLowerCase();
+
+  // Keep current behavior: PDF is allowed
+  if (mime === 'application/pdf' || ext === 'pdf') {
+    return { ok: true as const, mimeType: 'application/pdf', filename };
+  }
+
+  // New: allow docx (some browsers send correct mime, some may send octet-stream)
+  if (mime === DOCX_MIME || ext === 'docx') {
+    return { ok: true as const, mimeType: DOCX_MIME, filename };
+  }
+
+  return { ok: false as const };
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: req.headers });
-  const isAuthorized = session?.user && 
-    (session.user.role === 'admin' || session.user.role === 'tutore');
+  const isAuthorized =
+    session?.user && (session.user.role === 'admin' || session.user.role === 'tutore');
 
   if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -29,7 +62,10 @@ export async function GET(req: NextRequest) {
   const type = searchParams.get('type');
 
   if (!isAllowedType(type)) {
-    return NextResponse.json({ error: 'Invalid or missing template type.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid or missing template type.' },
+      { status: 400 }
+    );
   }
 
   const result = await db.query(
@@ -84,8 +120,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: req.headers });
-  const isAuthorized = session?.user && 
-    (session.user.role === 'admin' || session.user.role === 'tutore');
+  const isAuthorized =
+    session?.user && (session.user.role === 'admin' || session.user.role === 'tutore');
 
   if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -95,24 +131,35 @@ export async function POST(req: NextRequest) {
   const type = searchParams.get('type');
 
   if (!isAllowedType(type)) {
-    return NextResponse.json({ error: 'Invalid or missing template type.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid or missing template type.' },
+      { status: 400 }
+    );
   }
 
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
 
   if (!file) {
-    return NextResponse.json({ error: 'Missing file field in multipart form data.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Missing file field in multipart form data.' },
+      { status: 400 }
+    );
   }
 
-  if (file.type !== 'application/pdf') {
-    return NextResponse.json({ error: 'Template must be a PDF file.' }, { status: 400 });
+  const allowed = isAllowedUpload(file);
+  if (!allowed.ok) {
+    return NextResponse.json(
+      { error: 'Template must be a PDF or DOCX file.' },
+      { status: 400 }
+    );
   }
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  const filename = file.name || 'template.pdf';
-  const mimeType = file.type || 'application/pdf';
+
+  const filename = file.name || (allowed.mimeType === 'application/pdf' ? 'template.pdf' : 'template.docx');
+  const mimeType = allowed.mimeType;
   const byteSize = buffer.byteLength;
 
   // 1) insert blob

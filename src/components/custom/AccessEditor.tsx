@@ -24,18 +24,15 @@ export function AccessEditor({
   series: string[];
   students: Student[];
 }) {
-  // mode intern ca sa stim ce sa aratam jos
+
   const [mode, setMode] = useState<'private' | 'public' | 'restricted'>('private');
 
-  // sincronizam cand vine o valoare noua din afara
   useEffect(() => {
     if (value.all) {
       setMode('public');
     } else if (value.seriesIds.length > 0 || value.studentIds.length > 0) {
       setMode('restricted');
     } else {
-      // aici sunt goale si all=false
-      // daca user-ul tocmai a ales restrictionat, nu il intoarcem la privat
       setMode((prev) => (prev === 'restricted' ? 'restricted' : 'private'));
     }
   }, [value.all, value.seriesIds, value.studentIds]);
@@ -72,7 +69,6 @@ export function AccessEditor({
     });
   };
 
-  // filtrari
   const filteredSeries = useMemo(() => {
     const q = seriesQuery.trim().toLowerCase();
     if (!q) return series;
@@ -87,7 +83,6 @@ export function AccessEditor({
 
   const visibleStudents = filteredStudents.slice(0, studentLimit);
 
-  // select all visible series
   const allSeriesVisibleSelected =
     filteredSeries.length > 0 && filteredSeries.every((s) => value.seriesIds.includes(s));
 
@@ -105,7 +100,6 @@ export function AccessEditor({
     }
   };
 
-  // select all visible students
   const allStudentsVisibleSelected =
     visibleStudents.length > 0 && visibleStudents.every((st) => value.studentIds.includes(st.id));
 
@@ -143,7 +137,6 @@ export function AccessEditor({
         </p>
       </div>
 
-      {/* cele 3 optiuni */}
       <div className="grid gap-2 md:grid-cols-3">
         {/* Privat */}
         <label

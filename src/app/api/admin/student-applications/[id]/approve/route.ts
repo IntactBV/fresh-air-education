@@ -1,10 +1,18 @@
 // src/app/api/admin/student-applications/[id]/approve/route.ts
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { db } from "@/utils/db";
-import { auth } from "@/utils/auth";
-import { generateStudentUser } from "@/utils/auth-helpers";
-import { sendApplicationStatusEmail } from "@/utils/email";
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { db } from '@/utils/db';
+import { auth } from '@/utils/auth';
+import { generateStudentUser } from '@/utils/auth-helpers';
+import { sendApplicationStatusEmail } from '@/utils/email';
+
+const approveBodySchema = z
+  .object({
+    serieId: z.string().uuid().nullable().optional(),
+    tutorUserId: z.string().min(1).nullable().optional(),
+  })
+  .optional();
 
 export async function POST(
   req: NextRequest,
@@ -12,14 +20,28 @@ export async function POST(
 ) {
   const { id } = await params;
 
-  // cine aproba
   const session = await auth.api.getSession({ headers: req.headers });
-  if (!session || session.user.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!session || session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   const reviewerId = session.user.id;
 
-  // luam aplicatia in afara tranzactiei
+  let serieId: string | null = null;
+  let tutorUserId: string | null = null;
+
+  try {
+    const json = await req.json().catch(() => undefined);
+    const parsed = approveBodySchema?.safeParse(json);
+    if (parsed && parsed.success) {
+      serieId = parsed.data?.serieId ?? null;
+      tutorUserId = parsed.data?.tutorUserId ?? null;
+    } else if (parsed && !parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+  } catch {
+    //
+  }
+
   const appRes = await db.query(
     `
       SELECT
@@ -36,10 +58,7 @@ export async function POST(
   );
 
   if ((appRes.rowCount ?? 0) === 0) {
-    return NextResponse.json(
-      { error: "Cererea nu a fost gasita." },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: 'Cererea nu a fost gasita.' }, { status: 404 });
   }
 
   const app = appRes.rows[0] as {
@@ -55,16 +74,15 @@ export async function POST(
   // aici se trimite si mail-ul de reset (pentru user nou)
   const studentAuthUser = await generateStudentUser({
     email: app.email,
-    name: [app.nume, app.prenume].filter(Boolean).join(" "),
+    name: [app.nume, app.prenume].filter(Boolean).join(' '),
     headers: req.headers,
   });
 
   const client = await db.connect();
 
   try {
-    await client.query("BEGIN");
+    await client.query('BEGIN');
 
-    // marcam aplicatia ca approved
     await client.query(
       `
         UPDATE student_applications
@@ -76,7 +94,6 @@ export async function POST(
       [id, reviewerId]
     );
 
-    // vedem daca exista deja student pentru aceasta aplicatie
     const existingStudent = await client.query(
       `
         SELECT id
@@ -90,8 +107,8 @@ export async function POST(
     let studentId: string;
 
     if ((existingStudent.rowCount ?? 0) > 0) {
-      const row = existingStudent.rows[0];
-      // facem doar update cu user_id si restul datelor
+      const row = existingStudent.rows[0] as { id: string };
+
       const upd = await client.query(
         `
           UPDATE students
@@ -102,20 +119,14 @@ export async function POST(
             nume = $5,
             prenume = $6,
             cnp = $7,
-            status = 'active'
+            status = 'active',
+            updated_at = now()
           WHERE id = $1
           RETURNING id
         `,
-        [
-          row.id,
-          studentAuthUser.id,
-          app.email,
-          app.telefon,
-          app.nume,
-          app.prenume,
-          app.cnp,
-        ]
+        [row.id, studentAuthUser.id, app.email, app.telefon, app.nume, app.prenume, app.cnp]
       );
+
       studentId = upd.rows[0].id;
     } else {
       const studentRes = await client.query(
@@ -133,35 +144,57 @@ export async function POST(
           VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
           RETURNING id
         `,
-        [
-          app.id,
-          studentAuthUser.id,
-          app.email,
-          app.telefon,
-          app.nume,
-          app.prenume,
-          app.cnp,
-        ]
+        [app.id, studentAuthUser.id, app.email, app.telefon, app.nume, app.prenume, app.cnp]
       );
+
       studentId = studentRes.rows[0].id;
     }
 
-    await client.query("COMMIT");
+    // =========================
+    // Asignari (dupa ce exista studentId)
+    // =========================
+
+    // Serie: 1 serie / student (pe modelul assign-series)
+    await client.query(`DELETE FROM student_series WHERE student_id = $1`, [studentId]);
+    if (serieId) {
+      await client.query(
+        `
+          INSERT INTO student_series (student_id, series_id, assigned_at, assigned_by)
+          VALUES ($1::uuid, $2::uuid, NOW(), $3::text)
+          ON CONFLICT DO NOTHING
+        `,
+        [studentId, serieId, reviewerId]
+      );
+    }
+
+    // Tutore: 1 tutore / student (pe modelul assign-tutor)
+    await client.query(`DELETE FROM student_tutors WHERE student_id = $1`, [studentId]);
+    if (tutorUserId) {
+      await client.query(
+        `
+          INSERT INTO student_tutors (student_id, tutor_user_id, assigned_at, assigned_by)
+          VALUES ($1::uuid, $2::text, NOW(), $3::text)
+          ON CONFLICT (student_id) DO UPDATE
+          SET tutor_user_id = EXCLUDED.tutor_user_id,
+              assigned_at = EXCLUDED.assigned_at,
+              assigned_by = EXCLUDED.assigned_by
+        `,
+        [studentId, tutorUserId, reviewerId]
+      );
+    }
+
+    await client.query('COMMIT');
 
     // trimitem mailul de "aplicatia a fost aprobata"
     // dupa ce tranzactia a reusit
     try {
       await sendApplicationStatusEmail({
         email: app.email,
-        status: "approved",
-        studentName: [app.nume, app.prenume].filter(Boolean).join(" ") || null,
+        status: 'approved',
+        studentName: [app.nume, app.prenume].filter(Boolean).join(' ') || null,
       });
     } catch (emailErr) {
-      console.error(
-        "failed to send application approved email:",
-        emailErr
-      );
-      // nu mai dam rollback aici; tranzactia e deja commit
+      console.error('failed to send application approved email:', emailErr);
     }
 
     return NextResponse.json(
@@ -173,12 +206,9 @@ export async function POST(
       { status: 200 }
     );
   } catch (err) {
-    console.error("error approving application:", err);
-    await client.query("ROLLBACK");
-    return NextResponse.json(
-      { error: "Eroare la aprobarea cererii." },
-      { status: 500 }
-    );
+    console.error('error approving application:', err);
+    await client.query('ROLLBACK');
+    return NextResponse.json({ error: 'Eroare la aprobarea cererii.' }, { status: 500 });
   } finally {
     client.release();
   }

@@ -20,7 +20,7 @@ const Schema = Yup.object().shape({
   telefon: Yup.string().matches(phoneRegex, 'Telefon invalid').required('Telefonul este obligatoriu'),
   nume: Yup.string().required('Numele este obligatoriu'),
   prenume: Yup.string().required('Prenumele este obligatoriu'),
-  gen: Yup.string().oneOf(['Masculin', 'Feminin'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
+  gen: Yup.string().oneOf(['Masculin', 'Feminin', 'Neutru'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
   mediuResedinta: Yup.string().oneOf(['Urban', 'Rural'], 'Selecteaza o optiune').required('Mediul de rezidenta este obligatoriu'),
 
   // 2) Date personale & adresa
@@ -40,8 +40,8 @@ const Schema = Yup.object().shape({
   // 4) Studiile
   institutie: Yup.string().required('Institutia este obligatorie'),
   facultate: Yup.string().required('Facultatea este obligatorie'),
-  specializare: Yup.string().required('Domeniul/Specializarea este obligatorie'),
-  ciclu: Yup.string().oneOf(['Licenta', 'Masterat'], 'Selecteaza o optiune').required('Ciclul este obligatoriu'),
+  specializare: Yup.string().required('Specializarea este obligatorie'),
+  ciclu: Yup.string().oneOf(['Licenta', 'Licenta2', 'Licenta3', 'Masterat', 'Masterat2', 'Doctorat'], 'Selecteaza o optiune').required('Anul este obligatoriu'),
 });
 
 // valori default (vor fi suprascrise dupa fetch)
@@ -51,7 +51,7 @@ const emptyValues = {
   telefon: '',
   nume: '',
   prenume: '',
-  gen: '' as 'Masculin' | 'Feminin' | '',
+  gen: '' as 'Masculin' | 'Feminin' | 'Neutru' | '',
   mediuResedinta: '' as 'Urban' | 'Rural' | '',
 
   // 2) Date personale & adresa
@@ -87,7 +87,6 @@ export default function DateleMeleComponent() {
       try {
         const res = await fetch('/api/edu/my-data', { cache: 'no-store' });
         if (!res.ok) {
-          // daca nu are application sau e eroare, lasam form-ul gol
           setLoading(false);
           return;
         }
@@ -156,7 +155,6 @@ export default function DateleMeleComponent() {
               facultate: vals.facultate,
               specializare: vals.specializare,
               ciclu: vals.ciclu,
-              // daca am urcat fișierul anterior, in vals avem copieBuletinBlobId
               copieBuletinBlobId: vals.copieBuletinBlobId || null,
             }),
           });
@@ -164,7 +162,7 @@ export default function DateleMeleComponent() {
           if (!res.ok) {
             alert('Nu s-au putut salva datele.');
           } else {
-            // poti pune un toast aici
+            //
           }
         } catch (err) {
           console.error(err);
@@ -220,9 +218,8 @@ export default function DateleMeleComponent() {
                   <button
                     type="button"
                     onClick={() => setTab('contact')}
-                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
-                      tab === 'contact' ? '!border-primary text-primary' : ''
-                    }`}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${tab === 'contact' ? '!border-primary text-primary' : ''
+                      }`}
                   >
                     <IconUser className="shrink-0 group-hover:!text-primary" />
                     Contact & Identificare
@@ -232,9 +229,8 @@ export default function DateleMeleComponent() {
                   <button
                     type="button"
                     onClick={() => setTab('adresa')}
-                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
-                      tab === 'adresa' ? '!border-primary text-primary' : ''
-                    }`}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${tab === 'adresa' ? '!border-primary text-primary' : ''
+                      }`}
                   >
                     <IconMapPin className="shrink-0 group-hover:!text-primary" />
                     Date personale & adresa
@@ -244,9 +240,8 @@ export default function DateleMeleComponent() {
                   <button
                     type="button"
                     onClick={() => setTab('ci')}
-                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
-                      tab === 'ci' ? '!border-primary text-primary' : ''
-                    }`}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${tab === 'ci' ? '!border-primary text-primary' : ''
+                      }`}
                   >
                     <IconCreditCard className="shrink-0 group-hover:!text-primary" />
                     Act de identitate (CI)
@@ -256,9 +251,8 @@ export default function DateleMeleComponent() {
                   <button
                     type="button"
                     onClick={() => setTab('studii')}
-                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
-                      tab === 'studii' ? '!border-primary text-primary' : ''
-                    }`}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${tab === 'studii' ? '!border-primary text-primary' : ''
+                      }`}
                   >
                     <IconBook className="shrink-0 group-hover:!text-primary" />
                     Studiile
@@ -288,6 +282,7 @@ export default function DateleMeleComponent() {
                       <option value="">Selecteaza</option>
                       <option value="Masculin">Masculin</option>
                       <option value="Feminin">Feminin</option>
+                      <option value="Neutru">Neutru</option>
                     </Field>
                     <Err name="gen" />
                   </div>
@@ -441,17 +436,22 @@ export default function DateleMeleComponent() {
                     <Err name="facultate" />
                   </div>
                   <div className={klass('specializare')}>
-                    <label htmlFor="specializare">Domeniul / Specializarea</label>
+                    <label htmlFor="specializare">Specializarea</label>
                     <Field id="specializare" name="specializare" type="text" placeholder="ex: Informatica" className="form-input" />
                     <Err name="specializare" />
                   </div>
 
                   <div className={klass('ciclu')}>
-                    <label htmlFor="ciclu">Ciclul</label>
+                    <label htmlFor="ciclu">Anul</label>
                     <Field as="select" id="ciclu" name="ciclu" className="form-select">
                       <option value="">Selecteaza</option>
-                      <option value="Licenta">Licenta</option>
-                      <option value="Masterat">Masterat</option>
+                      <option value="Licenta">Licenta 1</option>
+                      <option value="Licenta2">Licenta 2</option>
+                      <option value="Licenta3">Licenta 3</option>
+                      <option value="Masterat">Masterat 1</option>
+                      <option value="Masterat2">Masterat 2</option>
+                      <option value="Doctorat">Doctorat</option>
+
                     </Field>
                     <Err name="ciclu" />
                   </div>

@@ -160,6 +160,54 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       }
     : null;
 
+  const appDocsRes = await db.query<{
+    id: string;
+    document_type: string;
+    blob_id: string;
+    uploaded_by_role: string;
+    uploaded_by_user: string | null;
+    is_visible_to_student: boolean;
+    status: string;
+    created_at: string;
+    filename: string;
+    mime_type: string;
+  }>(
+    `
+    SELECT
+      sad.id,
+      sad.document_type,
+      sad.blob_id,
+      sad.uploaded_by_role,
+      sad.uploaded_by_user,
+      sad.is_visible_to_student,
+      sad.status,
+      sad.created_at,
+      db.filename,
+      db.mime_type
+    FROM student_application_documents sad
+    INNER JOIN document_blobs db ON db.id = sad.blob_id
+    WHERE sad.student_application_id = $1
+      AND sad.document_type IN ('adeverinta_student', 'conventie_semnata', 'extras_cont', 'acord_prelucrare_date_personale_semnat')
+    ORDER BY sad.created_at DESC
+    `,
+    [row.s_application_id],
+  );
+
+  const appDocuments = appDocsRes.rows.map((d) => ({
+    id: d.id,
+    type: d.document_type,
+    blobId: d.blob_id,
+    filename: d.filename,
+    mimeType: d.mime_type,
+    uploadedAt: d.created_at,
+    uploadedByRole: d.uploaded_by_role,
+    uploadedByUser: d.uploaded_by_user,
+    isVisibleToStudent: d.is_visible_to_student,
+    status: d.status,
+    viewUrl: `/api/admin/document-blobs/${d.blob_id}`,
+    downloadUrl: `/api/admin/document-blobs/${d.blob_id}/download`,
+  }));
+
   const docsRes = await db.query<{
     id: string;
     document_type: string;
@@ -187,12 +235,13 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     FROM student_documents sd
     INNER JOIN document_blobs db ON db.id = sd.blob_id
     WHERE sd.student_id = $1
+      AND sd.document_type <> 'adeverinta_student'
     ORDER BY sd.created_at DESC
     `,
     [id],
   );
 
-  const documents = docsRes.rows.map((d) => ({
+  const studentDocuments = docsRes.rows.map((d) => ({
     id: d.id,
     type: d.document_type,
     blobId: d.blob_id,
@@ -206,6 +255,14 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     viewUrl: `/api/admin/document-blobs/${d.blob_id}`,
     downloadUrl: `/api/admin/document-blobs/${d.blob_id}/download`,
   }));
+
+  // const mergedByType = new Map<string, (typeof studentDocuments)[number]>();
+  // for (const d of appDocuments) mergedByType.set(d.type, d);
+  // for (const d of studentDocuments) mergedByType.set(d.type, d);
+
+  // const documents = [...appDocuments, ...studentDocuments].sort(
+  //   (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+  // );
 
   const homeworkRes = await db.query<{
     id: string;
@@ -297,7 +354,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     },
     series,
     tutor,
-    documents,
+    documents: studentDocuments,
+    applicationDocuments: appDocuments,
     homework,
   });
 }

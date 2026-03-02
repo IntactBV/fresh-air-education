@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  // 1) extragem ce poate fi in radacina
   const {
     blob_id,
     title,
@@ -72,7 +71,6 @@ export async function POST(req: NextRequest) {
     all?: boolean;
   };
 
-  // 2) extragem si din body.access daca exista
   const access = (body as any).access as
     | {
         all?: boolean;
@@ -85,14 +83,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'blob_id required' }, { status: 400 });
   }
 
-  // normalizam accesul
   const normalizedAll = typeof all === 'boolean' ? all : access?.all ?? false;
   const normalizedSeriesIds =
     Array.isArray(series_ids) ? series_ids : Array.isArray(access?.seriesIds) ? access?.seriesIds : [];
   const normalizedStudentIds =
     Array.isArray(student_ids) ? student_ids : Array.isArray(access?.studentIds) ? access?.studentIds : [];
 
-  // deducem visibility
   let visibility: 'public' | 'restricted' | 'private';
   if (normalizedAll) {
     visibility = 'public';
@@ -147,7 +143,6 @@ export async function POST(req: NextRequest) {
 
   const materialId = insertMaterial.rows[0].id;
 
-  // doar pentru restricted scriem accesul
   if (visibility === 'restricted') {
     if (normalizedSeriesIds.length) {
       await db.query(

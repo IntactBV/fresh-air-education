@@ -1,3 +1,4 @@
+// src/app/edu/documentele-mele/documenteleMeleComponent.tsx
 'use client';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -56,6 +57,10 @@ export default function DocumenteleMeleComponent() {
   const [error, setError] = useState<string | null>(null);
 
   const [studentCert, setStudentCert] = useState<ApiDoc | null>(null);
+  const [extrasCont, setExtrasCont] = useState<ApiDoc | null>(null);
+  const [conventieSemnata, setConventieSemnata] = useState<ApiDoc | null>(null);
+  const [acordPrelucrareSemnat, setAcordPrelucrareSemnat] = useState<ApiDoc | null>(null);
+
   const [declEvitareSigned, setDeclEvitareSigned] = useState<ApiDoc | null>(null);
   const [declEligibilitateSigned, setDeclEligibilitateSigned] = useState<ApiDoc | null>(null);
   const [finalCert, setFinalCert] = useState<ApiDoc | null>(null);
@@ -63,9 +68,23 @@ export default function DocumenteleMeleComponent() {
   const [declEvitareTemplate, setDeclEvitareTemplate] = useState<TemplateDoc | null>(null);
   const [declEligibilitateTemplate, setDeclEligibilitateTemplate] = useState<TemplateDoc | null>(null);
 
-  const [uploading, setUploading] = useState<'student' | 'declEvitare' | 'declEligibilitate' | null>(null);
+  const [conventieTemplate, setConventieTemplate] = useState<TemplateDoc | null>(null);
+  const [acordPrelucrareTemplate, setAcordPrelucrareTemplate] = useState<TemplateDoc | null>(null);
+
+  const [uploading, setUploading] = useState<
+    | 'student'
+    | 'extrasCont'
+    | 'conventieSemnata'
+    | 'acordPrelucrareSemnat'
+    | 'declEvitare'
+    | 'declEligibilitate'
+    | null
+  >(null);
 
   const inputStudentRef = useRef<HTMLInputElement>(null);
+  const inputExtrasContRef = useRef<HTMLInputElement>(null);
+  const inputConventieRef = useRef<HTMLInputElement>(null);
+  const inputAcordRef = useRef<HTMLInputElement>(null);
   const inputDeclEvitareRef = useRef<HTMLInputElement>(null);
   const inputDeclEligibilitateRef = useRef<HTMLInputElement>(null);
 
@@ -86,6 +105,50 @@ export default function DocumenteleMeleComponent() {
             status: data.adeverintaStudent.status,
             uploadedByRole: data.adeverintaStudent.uploadedByRole,
           });
+        } else {
+          setStudentCert(null);
+        }
+
+        if (data.extrasCont) {
+          setExtrasCont({
+            id: data.extrasCont.id,
+            name: data.extrasCont.name,
+            url: data.extrasCont.url,
+            uploadedAt: data.extrasCont.uploadedAt,
+            sizeBytes: data.extrasCont.sizeBytes,
+            status: data.extrasCont.status,
+            uploadedByRole: data.extrasCont.uploadedByRole,
+          });
+        } else {
+          setExtrasCont(null);
+        }
+
+        if (data.conventieSemnata) {
+          setConventieSemnata({
+            id: data.conventieSemnata.id,
+            name: data.conventieSemnata.name,
+            url: data.conventieSemnata.url,
+            uploadedAt: data.conventieSemnata.uploadedAt,
+            sizeBytes: data.conventieSemnata.sizeBytes,
+            status: data.conventieSemnata.status,
+            uploadedByRole: data.conventieSemnata.uploadedByRole,
+          });
+        } else {
+          setConventieSemnata(null);
+        }
+
+        if (data.acordPrelucrareDatePersonaleSemnat) {
+          setAcordPrelucrareSemnat({
+            id: data.acordPrelucrareDatePersonaleSemnat.id,
+            name: data.acordPrelucrareDatePersonaleSemnat.name,
+            url: data.acordPrelucrareDatePersonaleSemnat.url,
+            uploadedAt: data.acordPrelucrareDatePersonaleSemnat.uploadedAt,
+            sizeBytes: data.acordPrelucrareDatePersonaleSemnat.sizeBytes,
+            status: data.acordPrelucrareDatePersonaleSemnat.status,
+            uploadedByRole: data.acordPrelucrareDatePersonaleSemnat.uploadedByRole,
+          });
+        } else {
+          setAcordPrelucrareSemnat(null);
         }
 
         if (data.declEvitareDublaFinantareSemnata) {
@@ -98,6 +161,8 @@ export default function DocumenteleMeleComponent() {
             status: data.declEvitareDublaFinantareSemnata.status,
             uploadedByRole: data.declEvitareDublaFinantareSemnata.uploadedByRole,
           });
+        } else {
+          setDeclEvitareSigned(null);
         }
 
         if (data.declEligibilitateMembruSemnata) {
@@ -110,6 +175,8 @@ export default function DocumenteleMeleComponent() {
             status: data.declEligibilitateMembruSemnata.status,
             uploadedByRole: data.declEligibilitateMembruSemnata.uploadedByRole,
           });
+        } else {
+          setDeclEligibilitateSigned(null);
         }
 
         if (data.adeverintaFinalizareStagiu) {
@@ -122,6 +189,8 @@ export default function DocumenteleMeleComponent() {
             status: data.adeverintaFinalizareStagiu.status,
             uploadedByRole: data.adeverintaFinalizareStagiu.uploadedByRole,
           });
+        } else {
+          setFinalCert(null);
         }
 
         if (data.declEvitareDublaFinantareTemplate) {
@@ -132,6 +201,8 @@ export default function DocumenteleMeleComponent() {
             sizeBytes: data.declEvitareDublaFinantareTemplate.sizeBytes,
             uploadedAt: data.declEvitareDublaFinantareTemplate.uploadedAt,
           });
+        } else {
+          setDeclEvitareTemplate(null);
         }
 
         if (data.declEligibilitateMembruTemplate) {
@@ -142,6 +213,32 @@ export default function DocumenteleMeleComponent() {
             sizeBytes: data.declEligibilitateMembruTemplate.sizeBytes,
             uploadedAt: data.declEligibilitateMembruTemplate.uploadedAt,
           });
+        } else {
+          setDeclEligibilitateTemplate(null);
+        }
+
+        if (data.conventieCadruTemplate) {
+          setConventieTemplate({
+            blobId: data.conventieCadruTemplate.blobId,
+            name: data.conventieCadruTemplate.name,
+            mimeType: data.conventieCadruTemplate.mimeType,
+            sizeBytes: data.conventieCadruTemplate.sizeBytes,
+            uploadedAt: data.conventieCadruTemplate.uploadedAt,
+          });
+        } else {
+          setConventieTemplate(null);
+        }
+
+        if (data.acordPrelucrareDatePersonaleTemplate) {
+          setAcordPrelucrareTemplate({
+            blobId: data.acordPrelucrareDatePersonaleTemplate.blobId,
+            name: data.acordPrelucrareDatePersonaleTemplate.name,
+            mimeType: data.acordPrelucrareDatePersonaleTemplate.mimeType,
+            sizeBytes: data.acordPrelucrareDatePersonaleTemplate.sizeBytes,
+            uploadedAt: data.acordPrelucrareDatePersonaleTemplate.uploadedAt,
+          });
+        } else {
+          setAcordPrelucrareTemplate(null);
         }
 
         setError(null);
@@ -183,7 +280,13 @@ export default function DocumenteleMeleComponent() {
   }
 
   async function handleUpload(
-    section: 'student' | 'declEvitare' | 'declEligibilitate',
+    section:
+      | 'student'
+      | 'extrasCont'
+      | 'conventieSemnata'
+      | 'acordPrelucrareSemnat'
+      | 'declEvitare'
+      | 'declEligibilitate',
     file?: File | null,
   ) {
     setError(null);
@@ -192,6 +295,7 @@ export default function DocumenteleMeleComponent() {
       setError(problem);
       return;
     }
+
     try {
       if (!file) return;
       setUploading(section);
@@ -202,6 +306,12 @@ export default function DocumenteleMeleComponent() {
       const documentType =
         section === 'student'
           ? 'adeverinta_student'
+          : section === 'extrasCont'
+          ? 'extras_cont'
+          : section === 'conventieSemnata'
+          ? 'conventie_semnata'
+          : section === 'acordPrelucrareSemnat'
+          ? 'acord_prelucrare_date_personale_semnat'
           : section === 'declEvitare'
           ? 'declaratie_evitare_dubla_finantare_semnata'
           : 'declaratie_eligibilitate_membru_semnata';
@@ -212,10 +322,12 @@ export default function DocumenteleMeleComponent() {
         method: 'POST',
         body: fd,
       });
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || 'Upload esuat.');
       }
+
       const data = await res.json();
       const doc: ApiDoc = {
         id: data.id,
@@ -223,9 +335,14 @@ export default function DocumenteleMeleComponent() {
         url: data.url,
         uploadedAt: data.uploadedAt,
         sizeBytes: data.sizeBytes,
+        status: data.status,
+        uploadedByRole: data.uploadedByRole,
       };
 
       if (section === 'student') setStudentCert(doc);
+      if (section === 'extrasCont') setExtrasCont(doc);
+      if (section === 'conventieSemnata') setConventieSemnata(doc);
+      if (section === 'acordPrelucrareSemnat') setAcordPrelucrareSemnat(doc);
       if (section === 'declEvitare') setDeclEvitareSigned(doc);
       if (section === 'declEligibilitate') setDeclEligibilitateSigned(doc);
     } catch (e: any) {
@@ -238,23 +355,60 @@ export default function DocumenteleMeleComponent() {
   const lastUpdate = useMemo(() => {
     const dates = [
       studentCert?.uploadedAt,
+      extrasCont?.uploadedAt,
+      conventieSemnata?.uploadedAt,
+      acordPrelucrareSemnat?.uploadedAt,
       declEvitareSigned?.uploadedAt,
       declEligibilitateSigned?.uploadedAt,
       finalCert?.uploadedAt,
       declEvitareTemplate?.uploadedAt,
       declEligibilitateTemplate?.uploadedAt,
+      conventieTemplate?.uploadedAt,
+      acordPrelucrareTemplate?.uploadedAt,
     ].filter(Boolean) as string[];
+
     if (!dates.length) return null;
     dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
     return dates[0];
   }, [
     studentCert,
+    extrasCont,
+    conventieSemnata,
+    acordPrelucrareSemnat,
     declEvitareSigned,
     declEligibilitateSigned,
     finalCert,
     declEvitareTemplate,
     declEligibilitateTemplate,
+    conventieTemplate,
+    acordPrelucrareTemplate,
   ]);
+
+  const summaryItems = useMemo(
+    () => [
+      { key: 'adeverinta_student', label: 'Adeverinta student', ok: !!studentCert },
+      { key: 'extras_cont', label: 'Extras cont', ok: !!extrasCont },
+      { key: 'conventie_semnata', label: 'Conventie semnata', ok: !!conventieSemnata },
+      { key: 'acord_semnat', label: 'Acord prelucrare date personale semnat', ok: !!acordPrelucrareSemnat },
+      { key: 'decl_evitare', label: 'Declaratie evitare dubla finantare semnata', ok: !!declEvitareSigned },
+      { key: 'decl_elig', label: 'Declaratie eligibilitate membru semnata', ok: !!declEligibilitateSigned },
+      { key: 'finalizare', label: 'Adeverinta finalizare stagiu', ok: !!finalCert },
+    ],
+    [
+      studentCert,
+      extrasCont,
+      conventieSemnata,
+      acordPrelucrareSemnat,
+      declEvitareSigned,
+      declEligibilitateSigned,
+      finalCert,
+    ],
+  );
+
+  const docsOk = summaryItems.filter((x) => x.ok).length;
+  const docsTotal = summaryItems.length;
+  const docsMissing = summaryItems.filter((x) => !x.ok).map((x) => x.label);
+  const docsPct = docsTotal ? Math.round((docsOk / docsTotal) * 100) : 0;
 
   return (
     <div className="space-y-10">
@@ -273,6 +427,37 @@ export default function DocumenteleMeleComponent() {
           <span>Ultima actualizare: {lastUpdate ? formatDate(lastUpdate) : '-'}</span>
         </div>
       </div>
+
+      {!loading && (
+        <div className="panel">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold">
+                Documente disponibile: {docsOk} / {docsTotal}
+              </div>
+
+              {docsMissing.length ? (
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Lipsesc: {docsMissing.join(', ')}
+                </div>
+              ) : (
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Toate documentele sunt incarcate.
+                </div>
+              )}
+            </div>
+
+            <div className="shrink-0 text-right">
+              <div className="text-sm font-semibold">{docsPct}%</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">complet</div>
+            </div>
+          </div>
+
+          <div className="mt-3 h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div className="h-full bg-primary transition-all" style={{ width: `${docsPct}%` }} />
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="alert alert-danger">
@@ -308,21 +493,19 @@ export default function DocumenteleMeleComponent() {
             </div>
 
             <div className="panel-heading">
-              <PanelHeader
-                icon={<IconBook />}
-                title="Adeverinta de student"
-                subtitle="Document emis de facultate."
-              />
+              <PanelHeader icon={<IconBook />} title="Adeverinta de student" subtitle="Document emis de facultate." />
             </div>
+
             <div className="panel-body flex flex-col gap-5 pt-2 md:pt-4">
               {studentCert ? (
-                <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm">
+                <div
+                  className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-medium truncate"
+                  title={studentCert.name}
+                >
                   {studentCert.name}
                 </div>
               ) : (
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Nu exista un fisier incarcat.
-                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Nu exista un fisier incarcat.</div>
               )}
 
               <div className="flex justify-end">
@@ -334,6 +517,7 @@ export default function DocumenteleMeleComponent() {
                   <IconUpload className="h-4 w-4" />
                   {uploading === 'student' ? 'Se incarca...' : 'Incarca adeverinta'}
                 </button>
+
                 <input
                   ref={inputStudentRef}
                   type="file"
@@ -349,22 +533,258 @@ export default function DocumenteleMeleComponent() {
             </div>
           </div>
 
-          {/* 2. Declaratie evitare dubla finantare */}
+          {/* 2. Extras de cont */}
           <div className="panel w-full relative">
-            {/* status pe baza declaratiei semnate */}
             <div className="absolute right-4 top-4">
-              {declEvitareSigned ? (
+              {extrasCont ? (
                 <span
                   className="inline-flex items-center justify-center rounded-full bg-success/10 p-1.5 text-success"
-                  title="Declaratie semnata incarcata"
+                  title="Document incarcat"
                 >
                   <IconCircleCheck className="h-4 w-4" />
                 </span>
               ) : (
                 <span
                   className="inline-flex items-center justify-center rounded-full bg-warning/10 p-1.5 text-warning"
-                  title="Declaratie lipsa"
+                  title="Document lipsa"
                 >
+                  <IconInfoCircle className="h-4 w-4" />
+                </span>
+              )}
+            </div>
+
+            <div className="panel-heading">
+              <PanelHeader icon={<IconBook />} title="Extras de cont" subtitle="Incarca extrasul de cont (IBAN vizibil)." />
+            </div>
+
+            <div className="panel-body flex flex-col gap-5 pt-2 md:pt-4">
+              {extrasCont ? (
+                <div
+                  className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-medium truncate"
+                  title={extrasCont.name}
+                >
+                  {extrasCont.name}
+                </div>
+              ) : (
+                <div className="text-xs text-slate-500 dark:text-slate-400">Nu exista un fisier incarcat.</div>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  className="btn btn-primary gap-1"
+                  onClick={() => inputExtrasContRef.current?.click()}
+                  disabled={uploading === 'extrasCont'}
+                >
+                  <IconUpload className="h-4 w-4" />
+                  {uploading === 'extrasCont' ? 'Se incarca...' : 'Incarca extras'}
+                </button>
+
+                <input
+                  ref={inputExtrasContRef}
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    await handleUpload('extrasCont', file || null);
+                    e.currentTarget.value = '';
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Conventie cadru */}
+          <div className="panel w-full relative">
+            <div className="absolute right-4 top-4">
+              {conventieSemnata ? (
+                <span
+                  className="inline-flex items-center justify-center rounded-full bg-success/10 p-1.5 text-success"
+                  title="Conventie semnata incarcata"
+                >
+                  <IconCircleCheck className="h-4 w-4" />
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center justify-center rounded-full bg-warning/10 p-1.5 text-warning"
+                  title="Conventie semnata lipsa"
+                >
+                  <IconInfoCircle className="h-4 w-4" />
+                </span>
+              )}
+            </div>
+
+            <div className="panel-heading">
+              <PanelHeader
+                icon={<IconEdit />}
+                title="Conventie cadru"
+                subtitle="Descarca modelul si incarca varianta semnata."
+              />
+            </div>
+
+            <div className="panel-body flex flex-col gap-5 pt-2 md:pt-4">
+              {conventieSemnata ? (
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm">
+                  Conventie semnata incarcata: {conventieSemnata.name}
+                </div>
+              ) : (
+                <div className="text-xs text-slate-500 dark:text-slate-400">Nu exista conventie semnata incarcata.</div>
+              )}
+
+              <div className="flex flex-wrap gap-3 justify-end items-center">
+                <button
+                  className="btn btn-xs btn-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
+                  onClick={() =>
+                    conventieTemplate
+                      ? window.open(buildTemplateUrl(conventieTemplate.blobId), '_blank', 'noreferrer')
+                      : undefined
+                  }
+                  disabled={!conventieTemplate}
+                  title="Vezi model"
+                >
+                  <IconEye className="h-3 w-3" /> Vezi model
+                </button>
+
+                <button
+                  className="btn btn-xs btn-outline-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
+                  onClick={() =>
+                    conventieTemplate
+                      ? window.open(`${buildTemplateUrl(conventieTemplate.blobId)}?download=1`, '_blank', 'noreferrer')
+                      : undefined
+                  }
+                  disabled={!conventieTemplate}
+                  title="Descarca model"
+                >
+                  <IconDownload className="h-3 w-3" /> Descarca model
+                </button>
+
+                <span className="h-5 w-px bg-slate-200 dark:bg-slate-700" aria-hidden />
+
+                <button
+                  className="btn btn-xs btn-primary gap-1"
+                  onClick={() => inputConventieRef.current?.click()}
+                  disabled={uploading === 'conventieSemnata'}
+                  title="Incarca conventia semnata"
+                >
+                  <IconUpload className="h-3 w-3" />
+                  {uploading === 'conventieSemnata' ? 'Se incarca...' : 'Incarca conventia semnata'}
+                </button>
+
+                <input
+                  ref={inputConventieRef}
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    await handleUpload('conventieSemnata', file || null);
+                    e.currentTarget.value = '';
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Acord prelucrare date personale */}
+          <div className="panel w-full relative">
+            <div className="absolute right-4 top-4">
+              {acordPrelucrareSemnat ? (
+                <span
+                  className="inline-flex items-center justify-center rounded-full bg-success/10 p-1.5 text-success"
+                  title="Acord semnat incarcat"
+                >
+                  <IconCircleCheck className="h-4 w-4" />
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center justify-center rounded-full bg-warning/10 p-1.5 text-warning"
+                  title="Acord semnat lipsa"
+                >
+                  <IconInfoCircle className="h-4 w-4" />
+                </span>
+              )}
+            </div>
+
+            <div className="panel-heading">
+              <PanelHeader
+                icon={<IconEdit />}
+                title="Acord prelucrare date personale"
+                subtitle="Descarca modelul si incarca varianta semnata."
+              />
+            </div>
+
+            <div className="panel-body flex flex-col gap-5 pt-2 md:pt-4">
+              {acordPrelucrareSemnat ? (
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm">
+                  Acord semnat incarcat: {acordPrelucrareSemnat.name}
+                </div>
+              ) : (
+                <div className="text-xs text-slate-500 dark:text-slate-400">Nu exista acord semnat incarcat.</div>
+              )}
+
+              <div className="flex flex-wrap gap-3 justify-end items-center">
+                <button
+                  className="btn btn-xs btn-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
+                  onClick={() =>
+                    acordPrelucrareTemplate
+                      ? window.open(buildTemplateUrl(acordPrelucrareTemplate.blobId), '_blank', 'noreferrer')
+                      : undefined
+                  }
+                  disabled={!acordPrelucrareTemplate}
+                  title="Vezi model"
+                >
+                  <IconEye className="h-3 w-3" /> Vezi model
+                </button>
+
+                <button
+                  className="btn btn-xs btn-outline-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
+                  onClick={() =>
+                    acordPrelucrareTemplate
+                      ? window.open(`${buildTemplateUrl(acordPrelucrareTemplate.blobId)}?download=1`, '_blank', 'noreferrer')
+                      : undefined
+                  }
+                  disabled={!acordPrelucrareTemplate}
+                  title="Descarca model"
+                >
+                  <IconDownload className="h-3 w-3" /> Descarca model
+                </button>
+
+                <span className="h-5 w-px bg-slate-200 dark:bg-slate-700" aria-hidden />
+
+                <button
+                  className="btn btn-xs btn-primary gap-1"
+                  onClick={() => inputAcordRef.current?.click()}
+                  disabled={uploading === 'acordPrelucrareSemnat'}
+                  title="Incarca acordul semnat"
+                >
+                  <IconUpload className="h-3 w-3" />
+                  {uploading === 'acordPrelucrareSemnat' ? 'Se incarca...' : 'Incarca acord semnat'}
+                </button>
+
+                <input
+                  ref={inputAcordRef}
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    await handleUpload('acordPrelucrareSemnat', file || null);
+                    e.currentTarget.value = '';
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 5. Declaratie evitare dubla finantare */}
+          <div className="panel w-full relative">
+            <div className="absolute right-4 top-4">
+              {declEvitareSigned ? (
+                <span className="inline-flex items-center justify-center rounded-full bg-success/10 p-1.5 text-success">
+                  <IconCircleCheck className="h-4 w-4" />
+                </span>
+              ) : (
+                <span className="inline-flex items-center justify-center rounded-full bg-warning/10 p-1.5 text-warning">
                   <IconInfoCircle className="h-4 w-4" />
                 </span>
               )}
@@ -377,19 +797,17 @@ export default function DocumenteleMeleComponent() {
                 subtitle="Vizualizeaza sau descarca declaratia. Poti incarca si varianta semnata."
               />
             </div>
+
             <div className="panel-body flex flex-col gap-5 pt-2 md:pt-4">
               {declEvitareSigned ? (
                 <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm">
                   Declaratie semnata incarcata: {declEvitareSigned.name}
                 </div>
               ) : (
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Nu exista declaratie semnata incarcata.
-                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Nu exista declaratie semnata incarcata.</div>
               )}
 
               <div className="flex flex-wrap gap-3 justify-end items-center">
-                {/* actiuni pentru sablon (template) */}
                 <button
                   className="btn btn-xs btn-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
                   onClick={() =>
@@ -398,9 +816,8 @@ export default function DocumenteleMeleComponent() {
                       : undefined
                   }
                   disabled={!declEvitareTemplate}
-                  title="Vezi declaratia tip"
                 >
-                  <IconEye className="h-3 w-3" /> Vezi
+                  <IconEye className="h-3 w-3" /> Vezi model
                 </button>
 
                 <button
@@ -411,19 +828,16 @@ export default function DocumenteleMeleComponent() {
                       : undefined
                   }
                   disabled={!declEvitareTemplate}
-                  title="Descarca declaratia tip"
                 >
-                  <IconDownload className="h-3 w-3" /> Descarca
+                  <IconDownload className="h-3 w-3" /> Descarca model
                 </button>
 
                 <span className="h-5 w-px bg-slate-200 dark:bg-slate-700" aria-hidden />
 
-                {/* upload varianta semnata */}
                 <button
                   className="btn btn-xs btn-primary gap-1"
                   onClick={() => inputDeclEvitareRef.current?.click()}
                   disabled={uploading === 'declEvitare'}
-                  title="Incarca declaratia semnata"
                 >
                   <IconUpload className="h-3 w-3" />
                   {uploading === 'declEvitare' ? 'Se incarca...' : 'Incarca declaratia semnata'}
@@ -444,21 +858,15 @@ export default function DocumenteleMeleComponent() {
             </div>
           </div>
 
-          {/* 3. Declaratie eligibilitate membru */}
+          {/* 6. Declaratie eligibilitate membru */}
           <div className="panel w-full relative">
             <div className="absolute right-4 top-4">
               {declEligibilitateSigned ? (
-                <span
-                  className="inline-flex items-center justify-center rounded-full bg-success/10 p-1.5 text-success"
-                  title="Declaratie semnata incarcata"
-                >
+                <span className="inline-flex items-center justify-center rounded-full bg-success/10 p-1.5 text-success">
                   <IconCircleCheck className="h-4 w-4" />
                 </span>
               ) : (
-                <span
-                  className="inline-flex items-center justify-center rounded-full bg-warning/10 p-1.5 text-warning"
-                  title="Declaratie lipsa"
-                >
+                <span className="inline-flex items-center justify-center rounded-full bg-warning/10 p-1.5 text-warning">
                   <IconInfoCircle className="h-4 w-4" />
                 </span>
               )}
@@ -471,19 +879,17 @@ export default function DocumenteleMeleComponent() {
                 subtitle="Vizualizeaza sau descarca declaratia. Poti incarca si varianta semnata."
               />
             </div>
+
             <div className="panel-body flex flex-col gap-5 pt-2 md:pt-4">
               {declEligibilitateSigned ? (
                 <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm">
                   Declaratie semnata incarcata: {declEligibilitateSigned.name}
                 </div>
               ) : (
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Nu exista declaratie semnata incarcata.
-                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Nu exista declaratie semnata incarcata.</div>
               )}
 
               <div className="flex flex-wrap gap-3 justify-end items-center">
-                {/* sablon declaratie eligibilitate */}
                 <button
                   className="btn btn-xs btn-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
                   onClick={() =>
@@ -492,36 +898,28 @@ export default function DocumenteleMeleComponent() {
                       : undefined
                   }
                   disabled={!declEligibilitateTemplate}
-                  title="Vezi declaratia tip"
                 >
-                  <IconEye className="h-3 w-3" /> Vezi
+                  <IconEye className="h-3 w-3" /> Vezi model
                 </button>
 
                 <button
                   className="btn btn-xs btn-outline-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
                   onClick={() =>
                     declEligibilitateTemplate
-                      ? window.open(
-                          `${buildTemplateUrl(declEligibilitateTemplate.blobId)}?download=1`,
-                          '_blank',
-                          'noreferrer',
-                        )
+                      ? window.open(`${buildTemplateUrl(declEligibilitateTemplate.blobId)}?download=1`, '_blank', 'noreferrer')
                       : undefined
                   }
                   disabled={!declEligibilitateTemplate}
-                  title="Descarca declaratia tip"
                 >
-                  <IconDownload className="h-3 w-3" /> Descarca
+                  <IconDownload className="h-3 w-3" /> Descarca model
                 </button>
 
                 <span className="h-5 w-px bg-slate-200 dark:bg-slate-700" aria-hidden />
 
-                {/* upload varianta semnata */}
                 <button
                   className="btn btn-xs btn-primary gap-1"
                   onClick={() => inputDeclEligibilitateRef.current?.click()}
                   disabled={uploading === 'declEligibilitate'}
-                  title="Incarca declaratia semnata"
                 >
                   <IconUpload className="h-3 w-3" />
                   {uploading === 'declEligibilitate' ? 'Se incarca...' : 'Incarca declaratia semnata'}
@@ -542,41 +940,29 @@ export default function DocumenteleMeleComponent() {
             </div>
           </div>
 
-          {/* 4. Adeverinta de finalizare a stagiului */}
+          {/* 7. Adeverinta finalizare stagiu */}
           <div className="panel w-full relative">
             <div className="absolute right-4 top-4">
               {finalCert ? (
-                <span
-                  className="inline-flex items-center justify-center rounded-full bg-success/10 p-1.5 text-success"
-                  title="Adeverinta disponibila"
-                >
+                <span className="inline-flex items-center justify-center rounded-full bg-success/10 p-1.5 text-success">
                   <IconCircleCheck className="h-4 w-4" />
                 </span>
               ) : (
-                <span
-                  className="inline-flex items-center justify-center rounded-full bg-warning/10 p-1.5 text-warning"
-                  title="Adeverinta lipsa"
-                >
+                <span className="inline-flex items-center justify-center rounded-full bg-warning/10 p-1.5 text-warning">
                   <IconInfoCircle className="h-4 w-4" />
                 </span>
               )}
             </div>
 
             <div className="panel-heading">
-              <PanelHeader
-                icon={<IconAward />}
-                title="Adeverinta de finalizare a stagiului"
-                subtitle="Disponibila dupa validare."
-              />
+              <PanelHeader icon={<IconAward />} title="Adeverinta de finalizare a stagiului" subtitle="Disponibila dupa validare." />
             </div>
 
             <div className="panel-body flex flex-col gap-5 pt-2 md:pt-4">
               {finalCert ? (
                 <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                   <div className="text-sm font-medium">{finalCert.name}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {formatDate(finalCert.uploadedAt)}
-                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{formatDate(finalCert.uploadedAt)}</div>
                 </div>
               ) : (
                 <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -587,23 +973,16 @@ export default function DocumenteleMeleComponent() {
               <div className="flex justify-end gap-3">
                 <button
                   className="btn btn-xs btn-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
-                  onClick={() =>
-                    finalCert ? window.open(finalCert.url, '_blank', 'noreferrer') : undefined
-                  }
+                  onClick={() => (finalCert ? window.open(finalCert.url, '_blank', 'noreferrer') : undefined)}
                   disabled={!finalCert}
-                  title="Vezi adeverinta"
                 >
                   <IconEye className="h-3 w-3" /> Vezi
                 </button>
+
                 <button
                   className="btn btn-xs btn-outline-primary gap-1 disabled:opacity-50 disabled:pointer-events-none"
-                  onClick={() =>
-                    finalCert
-                      ? window.open(`${finalCert.url}?download=1`, '_blank', 'noreferrer')
-                      : undefined
-                  }
+                  onClick={() => (finalCert ? window.open(`${finalCert.url}?download=1`, '_blank', 'noreferrer') : undefined)}
                   disabled={!finalCert}
-                  title="Descarca adeverinta"
                 >
                   <IconDownload className="h-3 w-3" /> Descarca
                 </button>

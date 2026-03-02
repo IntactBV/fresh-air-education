@@ -172,14 +172,14 @@ const CustomImage = TiptapImage.extend({
     let extraStyle = '';
 
     if (alignment === 'left') {
-      extraStyle = 'float:left;margin-right:0.75rem;margin-bottom:0.5rem;';
+      extraStyle = 'float:left;margin-right:2.5rem;margin-bottom:1.75rem;margin-top:1.25rem;';
     } else if (alignment === 'right') {
-      extraStyle = 'float:right;margin-left:0.75rem;margin-bottom:0.5rem;';
+      extraStyle = 'float:right;margin-left:2.5rem;margin-bottom:1.75rem;margin-top:1.25rem;';
     } else if (alignment === 'center') {
       extraStyle =
-        'display:block;margin-left:auto;margin-right:auto;margin-top:0.5rem;margin-bottom:0.5rem;';
+        'display:block;margin-left:auto;margin-right:auto;margin-top:2rem;margin-bottom:2rem;';
     } else {
-      extraStyle = 'display:inline-block;margin-top:0.25rem;margin-bottom:0.25rem;';
+      extraStyle = 'display:inline-block;margin-top:1.5rem;margin-bottom:1.5rem;';
     }
 
     if (widthAttr) {
@@ -196,14 +196,14 @@ const CustomImage = TiptapImage.extend({
 
     let figureStyle = '';
     if (alignment === 'left') {
-      figureStyle = 'float:left;margin:0 0.75rem 0.5rem 0;';
+      figureStyle = 'float:left;margin:1.25rem 2.5rem 1.75rem 0;';
     } else if (alignment === 'right') {
-      figureStyle = 'float:right;margin:0 0 0.5rem 0.75rem;';
+      figureStyle = 'float:right;margin:1.25rem 0 1.75rem 2.5rem;';
     } else if (alignment === 'center') {
       figureStyle =
-        'display:block;margin-left:auto;margin-right:auto;margin-top:0.5rem;margin-bottom:0.5rem;';
+        'display:block;margin-left:auto;margin-right:auto;margin-top:2rem;margin-bottom:2rem;';
     } else {
-      figureStyle = 'display:inline-block;margin-top:0.25rem;margin-bottom:0.25rem;';
+      figureStyle = 'display:inline-block;margin-top:1.5rem;margin-bottom:1.5rem;';
     }
 
     if (widthAttr) {

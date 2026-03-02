@@ -1,3 +1,4 @@
+// src/app/admin/cereri-in-asteptare/[id]/cerereDetaliiComponent.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -9,8 +10,22 @@ import IconEye from '@/components/icon/icon-eye';
 import IconDownload from '@/components/icon/icon-download';
 import IconX from '@/components/icon/icon-x';
 import IconChecks from '@/components/icon/icon-checks';
+import IconBook from '@/components/icon/icon-book';
+import IconEdit from '@/components/icon/icon-edit';
 
 type RequestStatus = 'pending' | 'approved' | 'rejected';
+
+type TabKey = 'personal' | 'documents';
+
+type ApplicationDoc = {
+  id: string;
+  type: string;
+  blobId: string;
+  filename: string | null;
+  viewUrl: string;
+  downloadUrl: string;
+  uploadedAt?: string | null;
+};
 
 type StudentApplication = {
   id: string;
@@ -40,7 +55,15 @@ type StudentApplication = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   created_at: string;
+  student_id?: string | null;
+  serie_id?: string | null;
+  serie_name?: string | null;
+  tutor_user_id?: string | null;
+  documents?: ApplicationDoc[];
 };
+
+type Serie = { id: string; name: string };
+type Tutor = { id: string; name: string };
 
 const API_BASE = '/api/admin/student-applications';
 
@@ -74,8 +97,25 @@ async function fetchApplicationById(id: string): Promise<StudentApplication | nu
   }
 }
 
-async function approveApplication(id: string): Promise<{ studentId?: string }> {
-  const res = await fetch(`${API_BASE}/${id}/approve`, { method: 'POST' });
+// async function approveApplication(id: string): Promise<{ studentId?: string }> {
+//   const res = await fetch(`${API_BASE}/${id}/approve`, { method: 'POST' });
+//   if (!res.ok) throw new Error('Nu s-a putut aproba cererea.');
+//   try {
+//     return await res.json();
+//   } catch {
+//     return {};
+//   }
+// }
+
+async function approveApplication(
+  id: string,
+  payload: { serieId: string | null; tutorUserId: string | null }
+): Promise<{ studentId?: string }> {
+  const res = await fetch(`${API_BASE}/${id}/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
   if (!res.ok) throw new Error('Nu s-a putut aproba cererea.');
   try {
     return await res.json();
@@ -95,6 +135,7 @@ async function rejectApplication(id: string, reason?: string): Promise<void> {
 
 export default function CerereDetaliiComponent() {
   const { id } = useParams<{ id: string }>();
+  const [tab, setTab] = useState<TabKey>('personal');
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -103,28 +144,84 @@ export default function CerereDetaliiComponent() {
   const [error, setError] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  const [series, setSeries] = useState<Serie[]>([]);
+  const [seriesLoading, setSeriesLoading] = useState(true);
+
+  const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [tutorsLoading, setTutorsLoading] = useState(true);
+
+  const [assignSerieId, setAssignSerieId] = useState<string>(''); 
+  const [assignTutorId, setAssignTutorId] = useState<string>(''); 
+
   useEffect(() => {
     let mounted = true;
+
+    setLoading(true);
+    setError(null);
+
     (async () => {
-      setLoading(true);
-      setError(null);
+      try {
+        // 1) load cererea
+        const data = await fetchApplicationById(id);
+        if (!mounted) return;
 
-      const data = await fetchApplicationById(id);
-      if (!mounted) return;
-      if (!data) {
-        setRequest(null);
+        if (!data) {
+          setRequest(null);
+          setLoading(false);
+          return;
+        }
+
+        setRequest(data);
+        setAssignSerieId(data.serie_id ?? '');
+        setAssignTutorId(data.tutor_user_id ?? '');
+        setStatus(data.status);
+
+        if (data.status === 'rejected' && data.admin_note) {
+          setRejectReason(data.admin_note);
+        }
+
+        // 2) load series
+        (async () => {
+          try {
+            const res = await fetch('/api/admin/series', { cache: 'no-store' });
+            const list: any[] = await res.json();
+            if (!mounted) return;
+            setSeries(list.map((s) => ({ id: s.id, name: s.name })));
+          } catch (e) {
+            console.error(e);
+          } finally {
+            if (mounted) setSeriesLoading(false);
+          }
+        })();
+
+        // 3) load tutors
+        (async () => {
+          try {
+            const res = await fetch('/api/admin/tutors', { cache: 'no-store' });
+            const list: any[] = await res.json();
+            if (!mounted) return;
+            setTutors(
+              list.map((u) => ({
+                id: u.id,
+                name: (u.name || u.email || '').toString(),
+              }))
+            );
+          } catch (e) {
+            console.error(e);
+          } finally {
+            if (mounted) setTutorsLoading(false);
+          }
+        })();
+
         setLoading(false);
-        return;
+      } catch (e) {
+        console.error(e);
+        if (!mounted) return;
+        setError('Eroare la incarcarea cererii.');
+        setLoading(false);
       }
-      setRequest(data);
-      setStatus(data.status);
-
-      if (data.status === 'rejected' && data.admin_note) {
-        setRejectReason(data.admin_note);
-      }
-
-      setLoading(false);
     })();
+
     return () => {
       mounted = false;
     };
@@ -138,14 +235,14 @@ export default function CerereDetaliiComponent() {
     if (!request) return;
     setError(null);
 
-    try {
-      await approveApplication(request.id);
+    const serieId = assignSerieId || null;
+    const tutorUserId = assignTutorId || null;
 
-      // update local UI
+    try {
+      await approveApplication(request.id, { serieId, tutorUserId });
+
       setStatus('approved');
       setRequest((old) => (old ? { ...old, status: 'approved' } : old));
-
-      // optional: daca era respinsa si avea motiv, il golim
       setRejectReason('');
     } catch (e: any) {
       setError(e?.message || 'Eroare la aprobare.');
@@ -222,6 +319,144 @@ export default function CerereDetaliiComponent() {
     );
   };
 
+  const renderDocRow = (label: string, doc?: ApplicationDoc | null) => {
+    if (!doc?.blobId) {
+      return (
+        <div className="grid grid-cols-3 gap-3 py-2">
+          <div className="text-gray-500 dark:text-gray-400">{label}</div>
+          <div className="col-span-2">
+            <span className="text-sm text-gray-500">Niciun fisier incarcat.</span>
+          </div>
+        </div>
+      );
+    }
+
+    const filename = doc.filename || 'fisier';
+    const parts = filename.split('.');
+    const ext = parts.length > 1 ? `.${parts.pop()}` : '';
+    const base = parts.join('.');
+    const shortBase = base.length > 18 ? base.slice(0, 15).trimEnd() + '…' : base;
+
+    return (
+      <div className="grid grid-cols-3 gap-3 py-2">
+        <div className="text-gray-500 dark:text-gray-400">{label}</div>
+        <div className="col-span-2">
+          <div className="flex items-center justify-between rounded border border-white-light p-2 text-sm dark:border-[#1b2e4b]">
+            <span className="font-medium truncate max-w-[180px]" title={filename}>
+              {shortBase}
+              <span className="opacity-70">{ext}</span>
+            </span>
+            <div className="flex gap-2">
+              <Tippy content="Vezi">
+                <a
+                  href={doc.viewUrl}
+                  className="btn btn-xs btn-primary gap-1"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <IconEye className="h-3 w-3" /> Vezi
+                </a>
+              </Tippy>
+              <Tippy content="Descarca">
+                <a href={doc.downloadUrl} download className="btn btn-xs btn-secondary gap-1">
+                  <IconDownload className="h-3 w-3" /> Descarca
+                </a>
+              </Tippy>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const docs = request?.documents ?? [];
+
+  const docAdeverintaStudent = docs.find((d) => d.type === 'adeverinta_student') ?? null;
+  const docConventieSemnata = docs.find((d) => d.type === 'conventie_semnata') ?? null;
+  const docExtrasCont = docs.find((d) => d.type === 'extras_cont') ?? null;
+
+  const documentsCount =
+    (docAdeverintaStudent ? 1 : 0) + (docConventieSemnata ? 1 : 0) + (docExtrasCont ? 1 : 0);
+
+  const PersonalTab = () => (
+    <div className="space-y-8">
+      <div className="panel p-4">
+        <h2 className="mb-1 text-lg font-semibold">Contact & Identificare</h2>
+        <div className="divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
+          <Row label="Email" value={request?.email} />
+          <Row label="Telefon" value={request?.telefon} />
+          <Row label="Prenume" value={request?.prenume} />
+          <Row label="Nume" value={request?.nume} />
+          <Row label="Gen" value={request?.gen} />
+          <Row label="Mediu resedinta" value={request?.mediu_resedinta} />
+        </div>
+      </div>
+
+      <div className="panel p-4">
+        <h2 className="mb-1 text-lg font-semibold">Date personale & adresa</h2>
+        <div className="divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
+          <Row label="CNP" value={request?.cnp} />
+          <Row label="Judet" value={request?.judet} />
+          <Row label="Localitate" value={request?.localitate} />
+          <Row label="Strada" value={request?.strada} />
+        </div>
+      </div>
+
+      <div className="panel p-4">
+        <h2 className="mb-1 text-lg font-semibold">Act de identitate (CI)</h2>
+        <div className="divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
+          <Row label="Serie CI" value={request?.serie_ci} />
+          <Row label="Numar CI" value={request?.numar_ci} />
+          <Row label="Eliberat de" value={request?.eliberat_de} />
+          <Row
+            label="Data eliberarii"
+            value={request?.data_eliberarii ? formatRoDateTime(request.data_eliberarii) : ''}
+          />
+
+          <div className="grid grid-cols-3 gap-3 py-2">
+            <div className="text-gray-500 dark:text-gray-400">Copie buletin</div>
+            <div className="col-span-2 flex flex-col gap-2">
+              {renderCopieBuletin(request?.copie_buletin_blob_id ?? null, request?.copie_buletin_filename)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel p-4">
+        <h2 className="mb-1 text-lg font-semibold">Studiile</h2>
+        <div className="divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
+          <Row label="Institutie" value={request?.institutie} />
+          <Row label="Facultate" value={request?.facultate} />
+          <Row label="Specializare" value={request?.specializare} />
+          <Row label="Anul" value={request?.ciclu} />
+        </div>
+      </div>
+    </div>
+  );
+
+  const DocumentsTab = () => (
+    <div className="space-y-8">
+      <div className="panel p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Documente din cerere</h2>
+          <span className="badge bg-primary/10 text-primary">{documentsCount}</span>
+        </div>
+
+        <div className="mt-3 divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
+          {renderDocRow('Adeverinta student', docAdeverintaStudent)}
+          {renderDocRow('Conventie-cadru semnata', docConventieSemnata)}
+          {renderDocRow('Extras de cont', docExtrasCont)}
+        </div>
+      </div>
+
+      {documentsCount === 0 ? (
+        <div className="text-sm text-gray-500">
+          Nu exista documente suplimentare incarcate in cerere.
+        </div>
+      ) : null}
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-2.5 xl:flex-row">
       {/* left */}
@@ -246,67 +481,48 @@ export default function CerereDetaliiComponent() {
           <div className="px-4 py-8 text-sm text-gray-500">Se incarca...</div>
         ) : (
           request && (
-            <div className="px-4 space-y-8">
-              {/* Contact & Identificare */}
-              <div className="panel p-4">
-                <h2 className="mb-1 text-lg font-semibold">1) Contact & Identificare</h2>
-                <div className="divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
-                  <Row label="Email" value={request.email} />
-                  <Row label="Telefon" value={request.telefon} />
-                  <Row label="Prenume" value={request.prenume} />
-                  <Row label="Nume" value={request.nume} />
-                  <Row label="Gen" value={request.gen} />
-                  <Row label="Mediu resedinta" value={request.mediu_resedinta} />
-                </div>
-              </div>
+            <div className="px-4">
+              <ul className="mb-5 overflow-y-auto whitespace-nowrap border-b border-[#ebedf2] font-semibold dark:border-[#191e3a] sm:flex">
+                <li className="inline-block">
+                  <button
+                    type="button"
+                    onClick={() => setTab('personal')}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
+                      tab === 'personal' ? '!border-primary text-primary' : ''
+                    }`}
+                  >
+                    <IconBook className="h-4 w-4 shrink-0 group-hover:!text-primary" />
+                    Date student
+                  </button>
+                </li>
 
-              {/* Date personale & adresa */}
-              <div className="panel p-4">
-                <h2 className="mb-1 text-lg font-semibold">2) Date personale & adresa</h2>
-                <div className="divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
-                  <Row label="CNP" value={request.cnp} />
-                  <Row label="Judet" value={request.judet} />
-                  <Row label="Localitate" value={request.localitate} />
-                  <Row label="Strada" value={request.strada} />
-                </div>
-              </div>
+                <li className="inline-block">
+                  <button
+                    type="button"
+                    onClick={() => setTab('documents')}
+                    className={`group flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
+                      tab === 'documents' ? '!border-primary text-primary' : ''
+                    }`}
+                  >
+                    <IconEdit className="h-4 w-4 shrink-0 group-hover:!text-primary" />
+                    Documente
+                    <span className="flex h-5 min-w-[22px] items-center justify-center rounded-full bg-primary/10 px-2 text-xs font-medium text-primary">
+                      {documentsCount}
+                    </span>
+                  </button>
+                </li>
+              </ul>
 
-              {/* CI */}
-              <div className="panel p-4">
-                <h2 className="mb-1 text-lg font-semibold">3) Act de identitate (CI)</h2>
-                <div className="divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
-                  <Row label="Serie CI" value={request.serie_ci} />
-                  <Row label="Numar CI" value={request.numar_ci} />
-                  <Row label="Eliberat de" value={request.eliberat_de} />
-                  <Row
-                    label="Data eliberarii"
-                    value={request.data_eliberarii ? formatRoDateTime(request.data_eliberarii) : ''}
-                  />
-                  <div className="grid grid-cols-3 gap-3 py-2">
-                    <div className="text-gray-500 dark:text-gray-400">Copie buletin</div>
-                    <div className="col-span-2 flex flex-col gap-2">
-                      {renderCopieBuletin(request.copie_buletin_blob_id, request.copie_buletin_filename)}
-                    </div>
+              <div className="space-y-8">
+                {tab === 'personal' ? <PersonalTab /> : null}
+                {tab === 'documents' ? <DocumentsTab /> : null}
+
+                {error && (
+                  <div className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-300">
+                    {error}
                   </div>
-                </div>
+                )}
               </div>
-
-              {/* Studiile */}
-              <div className="panel p-4">
-                <h2 className="mb-1 text-lg font-semibold">4) Studiile</h2>
-                <div className="divide-y divide-white-light/70 dark:divide-[#1b2e4b]">
-                  <Row label="Institutie" value={request.institutie} />
-                  <Row label="Facultate" value={request.facultate} />
-                  <Row label="Specializare" value={request.specializare} />
-                  <Row label="Ciclu" value={request.ciclu} />
-                </div>
-              </div>
-
-              {error && (
-                <div className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-300">
-                  {error}
-                </div>
-              )}
             </div>
           )
         )}
@@ -346,6 +562,50 @@ export default function CerereDetaliiComponent() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="panel mb-5">
+          <h3 className="mb-3 text-base font-semibold">Asignari</h3>
+
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-sm text-gray-600 dark:text-gray-300">Serie</label>
+              <select
+                className="form-select w-full"
+                value={assignSerieId}
+                onChange={(e) => setAssignSerieId(e.target.value)}
+                disabled={seriesLoading || status === 'approved'}
+              >
+                <option value="">Fara serie</option>
+                {series.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm text-gray-600 dark:text-gray-300">Tutore</label>
+              <select
+                className="form-select w-full"
+                value={assignTutorId}
+                onChange={(e) => setAssignTutorId(e.target.value)}
+                disabled={tutorsLoading || status === 'approved'}
+              >
+                <option value="">Fara tutore</option>
+                {tutors.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Aceste asignari se aplica in momentul aprobarii cererii.
+            </p>
+          </div>
         </div>
 
           {/* actiuni */}

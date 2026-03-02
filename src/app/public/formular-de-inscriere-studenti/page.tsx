@@ -3,7 +3,7 @@
 import IconHome from '@faComponents/icon/icon-home';
 import { Formik, Form, Field } from 'formik';
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import * as Yup from 'yup';
 
@@ -19,7 +19,7 @@ const FormularInscriereStudenti = () => {
         telefon: Yup.string().matches(phoneRegex, 'Telefon invalid').required('Telefonul este obligatoriu'),
         nume: Yup.string().required('Numele este obligatoriu'),
         prenume: Yup.string().required('Prenumele este obligatoriu'),
-        gen: Yup.string().oneOf(['Masculin', 'Feminin'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
+        gen: Yup.string().oneOf(['Masculin', 'Feminin', 'Neutru'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
         mediuResedinta: Yup.string().oneOf(['Urban', 'Rural'], 'Selecteaza o optiune').required('Mediul de rezidenta este obligatoriu'),
 
         // 2) Date personale & adresa
@@ -45,13 +45,75 @@ const FormularInscriereStudenti = () => {
         // 4) Studiile
         institutie: Yup.string().required('Institutia este obligatorie'),
         facultate: Yup.string().required('Facultatea este obligatorie'),
-        specializare: Yup.string().required('Domeniul/Specializarea este obligatorie'),
-        ciclu: Yup.string().oneOf(['Licenta', 'Masterat'], 'Selecteaza o optiune').required('Ciclul este obligatoriu'),
+        specializare: Yup.string().required('Specializarea este obligatorie'),
+        ciclu: Yup.string().oneOf([
+            'Licenta',
+            'Licenta2',
+            'Licenta3',
+            'Masterat',
+            'Masterat2',
+            'Doctorat'
+        ], 'Selecteaza o optiune').required('Ciclul este obligatoriu'),
+
+        adeverintaStudent: Yup.mixed()
+            .nullable()
+            .test('fileType', 'Format acceptat: PDF/JPG/PNG', (value: any) => {
+                if (!value) return true; // optional
+                const file = Array.isArray(value) ? value[0] : value;
+                const types = ['application/pdf', 'image/jpeg', 'image/png'];
+                return file && types.includes(file.type);
+            }),
+
+        conventieSemnata: Yup.mixed()
+            .nullable()
+            .test('fileType', 'Format acceptat: PDF/JPG/PNG', (value: any) => {
+                if (!value) return true; // optional
+                const file = Array.isArray(value) ? value[0] : value;
+                const types = ['application/pdf', 'image/jpeg', 'image/png'];
+                return file && types.includes(file.type);
+            }),
+
+        extrasCont: Yup.mixed()
+            .nullable()
+            .test('fileType', 'Format acceptat: PDF/JPG/PNG', (value: any) => {
+                if (!value) return true; // optional
+                const file = Array.isArray(value) ? value[0] : value;
+                const types = ['application/pdf', 'image/jpeg', 'image/png'];
+                return file && types.includes(file.type);
+            }),
 
         // 5) Consimtaminte
         agree: Yup.bool().oneOf([true], 'Trebuie sa fii de acord inainte de trimitere.'),
         terms: Yup.bool().oneOf([true], 'Trebuie sa accepti Termenii si Conditiile.'),
     });
+
+    const [conventieTemplate, setConventieTemplate] = useState<{ blobId?: string; filename?: string } | null>(null);
+
+    useEffect(() => {
+        let mounted = true;
+
+        (async () => {
+            try {
+                const res = await fetch('/api/public/templates?type=template_conventie_cadru', { cache: 'no-store' });
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const tpl = data?.template;
+
+                if (!mounted) return;
+
+                if (tpl?.exists && tpl?.blobId) {
+                    setConventieTemplate({ blobId: tpl.blobId, filename: tpl.filename });
+                }
+            } catch {
+                // silent
+            }
+        })();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     return (
         <div>
@@ -107,6 +169,10 @@ const FormularInscriereStudenti = () => {
                         specializare: '',
                         ciclu: '',
 
+                        adeverintaStudent: null as any,
+                        conventieSemnata: null as any,
+                        extrasCont: null as any,
+
                         // 5) Consimtaminte
                         agree: false,
                         terms: false,
@@ -118,7 +184,6 @@ const FormularInscriereStudenti = () => {
                         try {
                             const formData = new FormData();
 
-                            // mapam la denumirile din backend (snake_case)
                             formData.append('email', values.email);
                             formData.append('telefon', values.telefon);
                             formData.append('nume', values.nume);
@@ -148,6 +213,10 @@ const FormularInscriereStudenti = () => {
                                 formData.append('copie_buletin', values.copieBuletin);
                             }
 
+                            if (values.adeverintaStudent) formData.append('adeverinta_student', values.adeverintaStudent);
+                            if (values.conventieSemnata) formData.append('conventie_semnata', values.conventieSemnata);
+                            if (values.extrasCont) formData.append('extras_cont', values.extrasCont);
+
                             const res = await fetch('/api/student-applications', {
                                 method: 'POST',
                                 body: formData,
@@ -168,7 +237,6 @@ const FormularInscriereStudenti = () => {
                                     text: 'Un administrator va verifica inscrierea ta.',
                                     timer: 3000,
                                 });
-                                // daca vrei sa cureti formularul:
                                 resetForm();
                             }
                         } catch (err) {
@@ -189,12 +257,16 @@ const FormularInscriereStudenti = () => {
                             2: ['cnp', 'judet', 'localitate', 'strada'],
                             3: ['serieCI', 'numarCI', 'eliberatDe', 'dataEliberarii', 'copieBuletin'],
                             4: ['institutie', 'facultate', 'specializare', 'ciclu'],
-                            5: ['agree', 'terms'],
+                            5: ['adeverintaStudent', 'conventieSemnata', 'extrasCont'],
+                            6: ['agree', 'terms'],
                         };
 
                         const isFilled = (name: string) => {
                             const v: any = (values as any)[name];
                             if (name === 'copieBuletin') return !!v;
+                            if (name === 'adeverintaStudent') return !!v;
+                            if (name === 'conventieSemnata') return !!v;
+                            if (name === 'extrasCont') return !!v;
                             if (typeof v === 'boolean') return v === true;
                             return v !== undefined && v !== null && String(v).trim() !== '';
                         };
@@ -267,6 +339,7 @@ const FormularInscriereStudenti = () => {
                                                 <option value="">Selecteaza</option>
                                                 <option value="Masculin">Masculin</option>
                                                 <option value="Feminin">Feminin</option>
+                                                <option value="Neutru">Neutru</option>
                                             </Field>
                                             <Err name="gen" />
                                         </div>
@@ -382,27 +455,140 @@ const FormularInscriereStudenti = () => {
                                             <Err name="facultate" />
                                         </div>
                                         <div className={klass('specializare')}>
-                                            <label htmlFor="specializare">Domeniul / Specializarea</label>
+                                            <label htmlFor="specializare">Specializarea</label>
                                             <Field name="specializare" type="text" id="specializare" placeholder="ex: Informatica" className="form-input" />
                                             <Err name="specializare" />
                                         </div>
 
                                         <div className={klass('ciclu')}>
-                                            <label htmlFor="ciclu">Ciclul</label>
+                                            <label htmlFor="ciclu">Anul</label>
                                             <Field as="select" name="ciclu" id="ciclu" className="form-select">
                                                 <option value="">Selecteaza</option>
-                                                <option value="Licenta">Licenta</option>
-                                                <option value="Masterat">Masterat</option>
+                                                <option value="Licenta">Licenta 1</option>
+                                                <option value="Licenta2">Licenta 2</option>
+                                                <option value="Licenta3">Licenta 3</option>
+                                                <option value="Masterat">Masterat 1</option>
+                                                <option value="Masterat2">Masterat 2</option>
+                                                <option value="Doctorat">Doctorat</option>
                                             </Field>
                                             <Err name="ciclu" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* 5) Consimtaminte & trimitere */}
+
+                                {/* 5) Documente suplimentare */}
+                                <div className="rounded-xl border border-white/10 panel p-10 shadow-sm ring-1 ring-black/5 dark:border-[#1b2e4b]">
+                                    <div className="mb-2 text-base font-semibold">Documente suplimentare</div>
+                                    <SectionProgress idx={5} />
+
+                                    <div className="space-y-4">
+                                        {/* Adeverinta student */}
+                                        <div className="rounded-lg border border-white-light bg-white/60 p-4 dark:border-[#1b2e4b] dark:bg-[#0e1726]/40">
+                                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_460px] md:items-center">
+                                            <div className="min-w-0">
+                                            <div className="font-medium">Adeverinta de student</div>
+                                            <div className="mt-1 max-w-[60ch] text-xs text-gray-500 dark:text-gray-400">
+                                                Incarca adeverinta de student (PDF/JPG/PNG).
+                                            </div>
+                                            <Err name="adeverintaStudent" />
+                                            </div>
+
+                                            <div className="grid w-full gap-2 md:grid-cols-[140px_1fr] md:items-center">
+                                            <div className="hidden md:block" aria-hidden="true" />
+                                            <input
+                                                id="adeverintaStudent"
+                                                name="adeverintaStudent"
+                                                type="file"
+                                                className="form-input w-full file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:font-semibold"
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                onChange={(e) => {
+                                                const file = e.currentTarget.files ? e.currentTarget.files[0] : null;
+                                                setFieldValue('adeverintaStudent', file);
+                                                }}
+                                            />
+                                            </div>
+                                        </div>
+                                        </div>
+
+                                        {/* Conventie cadru */}
+                                        <div className="rounded-lg border border-white-light bg-white/60 p-4 dark:border-[#1b2e4b] dark:bg-[#0e1726]/40">
+                                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_460px] md:items-center">
+                                            <div className="min-w-0">
+                                            <div className="font-medium">Conventie-cadru (optional)</div>
+                                            <div className="mt-1 max-w-[60ch] text-xs text-gray-500 dark:text-gray-400">
+                                                Descarca sablonul, completeaza si semneaza. Trimiterea este optionala acum — poate fi transmisa in termen de 5 zile dupa inscriere.
+                                            </div>
+                                            <Err name="conventieSemnata" />
+                                            </div>
+
+                                            <div className="grid w-full gap-2 md:grid-cols-[140px_1fr] md:items-center">
+                                            <div className="md:justify-self-end">
+                                                {conventieTemplate?.blobId ? (
+                                                <a
+                                                    className="btn btn-outline-primary btn-sm w-full md:w-auto"
+                                                    href={`/api/public/document-blobs/${conventieTemplate.blobId}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    Descarca sablon
+                                                </a>
+                                                ) : (
+                                                <button type="button" className="btn btn-outline-dark btn-sm w-full md:w-auto" disabled>
+                                                    Sablon indisponibil
+                                                </button>
+                                                )}
+                                            </div>
+
+                                            <input
+                                                id="conventieSemnata"
+                                                name="conventieSemnata"
+                                                type="file"
+                                                className="form-input w-full file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:font-semibold"
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                onChange={(e) => {
+                                                const file = e.currentTarget.files ? e.currentTarget.files[0] : null;
+                                                setFieldValue('conventieSemnata', file);
+                                                }}
+                                            />
+                                            </div>
+                                        </div>
+                                        </div>
+
+                                        {/* Extras cont */}
+                                        <div className="rounded-lg border border-white-light bg-white/60 p-4 dark:border-[#1b2e4b] dark:bg-[#0e1726]/40">
+                                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_460px] md:items-center">
+                                            <div className="min-w-0">
+                                            <div className="font-medium">Extras de cont (optional)</div>
+                                            <div className="mt-1 max-w-[60ch] text-xs text-gray-500 dark:text-gray-400">
+                                                Incarca un extras de cont (PDF/JPG/PNG).
+                                            </div>
+                                            <Err name="extrasCont" />
+                                            </div>
+
+                                            <div className="grid w-full gap-2 md:grid-cols-[140px_1fr] md:items-center">
+                                            <div className="hidden md:block" aria-hidden="true" />
+                                            <input
+                                                id="extrasCont"
+                                                name="extrasCont"
+                                                type="file"
+                                                className="form-input w-full file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:font-semibold"
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                onChange={(e) => {
+                                                const file = e.currentTarget.files ? e.currentTarget.files[0] : null;
+                                                setFieldValue('extrasCont', file);
+                                                }}
+                                            />
+                                            </div>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 6) Consimtaminte & trimitere */}
                                 <div className="rounded-xl border border-white/10 panel p-10 shadow-sm ring-1 ring-black/5 dark:border-[#1b2e4b]">
                                     <div className="mb-2 text-base font-semibold">Consimtaminte & trimitere</div>
-                                    <SectionProgress idx={5} />
+                                    <SectionProgress idx={6} />
                                     <div className="flex flex-col gap-5">
                                         <div className={klass('agree')}>
                                             <label htmlFor="agree" className="flex items-center gap-3 cursor-pointer">

@@ -114,8 +114,6 @@ export default function CereriInAsteptareComponent() {
   }, []);
 
   useEffect(() => {
-    // daca deja avem items pentru tab-ul curent din fetch-ul initial (doar pentru pending),
-    // nu e musai sa refacem fetch-ul, dar ca sa fie proaspat il refacem
     const loadTab = async () => {
       setLoading(true);
       try {
@@ -134,7 +132,6 @@ export default function CereriInAsteptareComponent() {
       }
     };
 
-    // dupa primul mount, o sa ajungem si aici, e ok
     loadTab();
   }, [tab]);
 
@@ -147,7 +144,6 @@ export default function CereriInAsteptareComponent() {
     }));
   }, [items]);
 
-  // filtrare dupa search
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return base;
@@ -162,9 +158,7 @@ export default function CereriInAsteptareComponent() {
     });
   }, [search, base]);
 
-  // sortare
   const sorted = useMemo(() => {
-    // daca se sorteaza dupa data
     if (sortStatus.columnAccessor === 'dateDisplay') {
       const data = [...filtered].sort((a, b) => {
         const da = new Date(a.created_at).getTime();
@@ -178,13 +172,11 @@ export default function CereriInAsteptareComponent() {
     return sortStatus.direction === 'desc' ? data.reverse() : data;
   }, [filtered, sortStatus]);
 
-  // pagination
   useEffect(() => setPage(1), [pageSize, search, sortStatus, tab]);
   const from = (page - 1) * pageSize;
   const to = from + pageSize;
   const pageRecords = sorted.slice(from, to);
 
-  // badge de status in coloana
   const renderStatusBadge = (status: string) => {
     const label = STATUS_LABEL[status] || status;
     let cls = 'badge bg-primary/10 text-primary';

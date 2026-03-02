@@ -17,10 +17,13 @@ async function getStudentForUser(userId: string) {
   return res.rows[0] ?? null;
 }
 
-// doar sabloanele permise pot fi servite prin aceasta ruta
 const ALLOWED_TEMPLATE_TYPES = [
   'template_declaratie_evitare_dubla_finantare',
   'template_declaratie_eligibilitate_membru',
+  'template_conventie_cadru',
+  'template_acord_date_caracter_personal',
+  'template_caiet_de_practica',
+  // add more here if needed to be exposed in /edu
 ] as const;
 
 export async function GET(
@@ -32,7 +35,6 @@ export async function GET(
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  // verificam ca userul este macar asociat cu un student
   const student = await getStudentForUser(session.user.id);
   if (!student) {
     return new NextResponse('Not found', { status: 404 });
@@ -40,7 +42,6 @@ export async function GET(
 
   const { blobId } = await params;
 
-  // verificam ca blobId-ul este legat de un sablon valid (si nu de altceva)
   const res = await db.query(
     `
     SELECT
