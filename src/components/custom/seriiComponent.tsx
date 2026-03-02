@@ -201,6 +201,16 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
                 accessor: 'name',
                 title: 'Nume serie',
                 sortable: true,
+                render: (row) => (
+                  <Tippy content="Vezi studentii din aceasta serie">
+                    <Link
+                      href={`/${baseFolder}/studenti-inscrisi?serieId=${row.id}`}
+                      className="inline-flex items-center gap-2"
+                    >
+                      <span className="badge bg-primary/10 text-primary">{row.name}</span>
+                    </Link>
+                  </Tippy>
+                )
               },
               {
                 accessor: 'description',
