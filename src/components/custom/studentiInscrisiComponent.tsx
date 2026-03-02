@@ -397,7 +397,19 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
       width: 72,
       render: (row: Row) => row.studentNo ?? '—',
     },
-    { accessor: 'fullName', title: 'Nume', sortable: true },
+    { accessor: 'fullName',
+      title: 'Nume',
+      sortable: true,
+      render: (row: Row) => (
+        <Tippy content="Vezi detalii">
+          <Link
+            href={`/${baseFolder}/studenti-inscrisi/${row.id}`}
+            className="flex items-center gap-2 text-primary"
+          >
+            <span>{row.fullName}</span>
+          </Link>
+        </Tippy>
+        ),},
     { accessor: 'email', title: 'E-mail', sortable: true },
 
     {
