@@ -24,8 +24,6 @@ export async function GET(req: NextRequest) {
   }
 
   if (tutorId) {
-    // daca vrei si suport pt "__none__", poti trece tutorId="__none__" si sa tratezi aici:
-    // where.push(`stt.tutor_user_id IS NULL`)
     where.push(`stt.tutor_user_id = $${idx++}`);
     params.push(tutorId);
   }

@@ -22,18 +22,15 @@ export async function POST(req: NextRequest) {
 
   const { studentIds, tutorUserId } = parsed.data;
 
-  // 1) stergem orice asignare existenta pentru acesti studenti
   await db.query(
     `DELETE FROM student_tutors WHERE student_id = ANY($1::uuid[])`,
     [studentIds]
   );
 
-  // 2) daca tutorUserId e null => ne oprim aici (deasignare)
   if (tutorUserId === null) {
     return NextResponse.json({ ok: true });
   }
 
-  // 3) altfel inseram tutorele nou (1 tutore per student => PK student_id)
   const assignedBy = session?.user?.id ?? null;
   const values: string[] = [];
   const params: any[] = [];

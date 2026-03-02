@@ -13,7 +13,6 @@ export async function GET(req: NextRequest) {
   // }
 
   try {
-    // le rulam in paralel
     const [
       pendingApplicationsQ,
       enrolledStudentsQ,
@@ -112,13 +111,11 @@ export async function GET(req: NextRequest) {
       badge: 'Info' as const,
     }));
 
-    // daca ai deja paginile in DB si sunt published, le luam de acolo
     const dbPages = publicPagesQ.rows.map((row) => ({
       title: row.title,
       href: `/admin/${row.slug}`,
     }));
 
-    // fallback daca nu sunt publicate inca
     const fallbackPages = [
       {
         title: 'Program de practica',

@@ -19,6 +19,8 @@ import IconClipboardText from '@faComponents/icon/icon-clipboard-text';
 import IconMenuTodo from '@faComponents/icon/menu/icon-menu-todo';
 import IconBook from '@/components/icon/icon-book';
 import IconEdit from '@/components/icon/icon-edit';
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 
 const MySwal = withReactContent(Swal);
 
@@ -78,6 +80,20 @@ type FetchStudentResponse = {
     viewUrl: string;
     downloadUrl: string;
   }>;
+  applicationDocuments: Array<{
+    id: string;
+    type: string;
+    blobId: string;
+    filename: string;
+    mimeType: string;
+    uploadedAt: string;
+    uploadedByRole: string;
+    uploadedByUser: string | null;
+    isVisibleToStudent: boolean;
+    status: string;
+    viewUrl: string;
+    downloadUrl: string;
+  }>;  
   homework: Array<{
     id: string;
     blobId: string;
@@ -91,6 +107,9 @@ type FetchStudentResponse = {
 };
 
 type TabKey = 'personal' | 'documents' | 'homework';
+
+type SerieOption = { id: string; name: string };
+type TutorOption = { id: string; name: string };
 
 function formatRoDateTime(iso: string) {
   if (!iso) return '';
@@ -188,6 +207,28 @@ export default function StudentDetaliiComponent({ baseFolder }: { baseFolder: 'a
 
   const [sabloaneDeclaratiiDialogOpen, setSabloaneDeclaratiiDialogOpen] = useState(false);
 
+  const [seriesOptions, setSeriesOptions] = useState<SerieOption[]>([]);
+  const [tutorOptions, setTutorOptions] = useState<TutorOption[]>([]);
+  const [seriesLoading, setSeriesLoading] = useState(true);
+  const [tutorsLoading, setTutorsLoading] = useState(true);
+
+  const [assignSerieOpen, setAssignSerieOpen] = useState(false);
+  const [assignSerieId, setAssignSerieId] = useState<string>(''); // '' = fara serie
+  const [assignSerieSaving, setAssignSerieSaving] = useState(false);
+
+  const [assignTutorOpen, setAssignTutorOpen] = useState(false);
+  const [assignTutorId, setAssignTutorId] = useState<string>(''); // '' = fara tutore
+  const [assignTutorSaving, setAssignTutorSaving] = useState(false);
+
+  const [applicationDocuments, setApplicationDocuments] =
+  useState<FetchStudentResponse['applicationDocuments']>([]);
+
+  const refetchStudent = async () => {
+    const res = await fetch(`/api/admin/students/${studentId}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Nu am putut incarca datele studentului.');
+    return (await res.json()) as FetchStudentResponse;
+  };
+
   const homeworkLastUpload = useMemo(() => {
     if (!homework.length) return null;
     const dates = homework.map((h) => h.uploadedAt).filter(Boolean) as string[];
@@ -196,26 +237,39 @@ export default function StudentDetaliiComponent({ baseFolder }: { baseFolder: 'a
   }, [homework]);
 
 
-  const REQUIRED_DOC_TYPES = [
+  const REQUIRED_APP_DOC_TYPES = [
     'adeverinta_student',
+    'conventie_semnata',
+    'extras_cont',
+    'acord_prelucrare_date_personale_semnat',
+  ] as const;
+
+  const REQUIRED_STUDENT_DOC_TYPES = [
     'declaratie_evitare_dubla_finantare_semnata',
     'declaratie_eligibilitate_membru_semnata',
     'adeverinta_finalizare_stagiu',
   ] as const;
 
-const documentsCount = REQUIRED_DOC_TYPES.reduce((acc, t) => acc + (documents.some((d) => d.type === t) ? 1 : 0), 0);
+  const documentsCount =
+    REQUIRED_APP_DOC_TYPES.reduce(
+      (acc, t) => acc + (applicationDocuments.some((d) => d.type === t) ? 1 : 0),
+      0
+    ) +
+    REQUIRED_STUDENT_DOC_TYPES.reduce(
+      (acc, t) => acc + (documents.some((d) => d.type === t) ? 1 : 0),
+      0
+    );
 
   const homeworkCount = homework.length;
 
   const hasRequiredDocs = (() => {
-    const types = documents.map((d) => d.type);
-    const required = [
-      'adeverinta_student',
-      'declaratie_evitare_dubla_finantare_semnata',
-      'declaratie_eligibilitate_membru_semnata',
-      'adeverinta_finalizare_stagiu',
-    ];
-    return required.every((r) => types.includes(r));
+    const appTypes = new Set(applicationDocuments.map((d) => d.type));
+    const studentTypes = new Set(documents.map((d) => d.type));
+
+    return (
+      REQUIRED_APP_DOC_TYPES.every((t) => appTypes.has(t)) &&
+      REQUIRED_STUDENT_DOC_TYPES.every((t) => studentTypes.has(t))
+    );
   })();
 
   const canGraduate = student && status === 'activ' && !!student.userId && hasRequiredDocs;
@@ -240,6 +294,7 @@ const documentsCount = REQUIRED_DOC_TYPES.reduce((acc, t) => acc + (documents.so
         setSeries(data.series);
         setTutor(data.tutor ?? null);
         setDocuments(data.documents ?? []);
+        setApplicationDocuments(data.applicationDocuments ?? []);
         setHomework(data.homework ?? []);
         setStatus(data.student.status);
       } catch (e) {
@@ -254,10 +309,144 @@ const documentsCount = REQUIRED_DOC_TYPES.reduce((acc, t) => acc + (documents.so
     };
   }, [studentId]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/series', { cache: 'no-store' });
+        const data: any[] = await res.json();
+        if (!mounted) return;
+        setSeriesOptions(data.map((s) => ({ id: s.id, name: s.name })));
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (mounted) setSeriesLoading(false);
+      }
+    })();
+
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/tutors', { cache: 'no-store' });
+        const data: any[] = await res.json();
+        if (!mounted) return;
+        setTutorOptions(
+          data.map((u) => ({
+            id: u.id,
+            name: (u.name || u.email || '').toString(),
+          }))
+        );
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (mounted) setTutorsLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const openAssignSerie = () => {
+    setAssignSerieId(series?.id ?? ''); // '' = fara serie
+    setAssignSerieOpen(true);
+  };
+
+  const openAssignTutor = () => {
+    setAssignTutorId(tutor?.id ?? ''); // '' = fara tutore
+    setAssignTutorOpen(true);
+  };
+
+  const saveAssignSerie = async () => {
+    if (!student) return;
+    setActionError(null);
+    setAssignSerieSaving(true);
+
+    try {
+      const res = await fetch('/api/admin/students/assign-series', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentIds: [student.id],
+          seriesId: assignSerieId ? assignSerieId : null,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        setActionError(err?.error?.message || 'Nu am putut asigna/deasigna seria.');
+        return;
+      }
+
+      setAssignSerieOpen(false);
+
+      const data = await refetchStudent();
+      setStudent(data.student);
+      setApplication(data.application);
+      setSeries(data.series);
+      setTutor(data.tutor ?? null);
+      setDocuments(data.documents ?? []);
+      setApplicationDocuments(data.applicationDocuments ?? []);
+      setHomework(data.homework ?? []);
+      setStatus(data.student.status);
+    } catch (e: any) {
+      console.error(e);
+      setActionError(e?.message || 'Eroare la comunicarea cu serverul.');
+    } finally {
+      setAssignSerieSaving(false);
+    }
+  };
+
+  const saveAssignTutor = async () => {
+    if (!student) return;
+    setActionError(null);
+    setAssignTutorSaving(true);
+
+    try {
+      const res = await fetch('/api/admin/students/assign-tutor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentIds: [student.id],
+          tutorUserId: assignTutorId ? assignTutorId : null,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        setActionError(err?.error?.message || 'Nu am putut asigna/deasigna tutorele.');
+        return;
+      }
+
+      setAssignTutorOpen(false);
+
+      const data = await refetchStudent();
+      setStudent(data.student);
+      setApplication(data.application);
+      setSeries(data.series);
+      setTutor(data.tutor ?? null);
+      setDocuments(data.documents ?? []);
+      setApplicationDocuments(data.applicationDocuments ?? []);
+      setHomework(data.homework ?? []);
+      setStatus(data.student.status);
+    } catch (e: any) {
+      console.error(e);
+      setActionError(e?.message || 'Eroare la comunicarea cu serverul.');
+    } finally {
+      setAssignTutorSaving(false);
+    }
+  };
+
   if (!studentId) return notFound();
   if (!loading && !student) return notFound();
 
-  const docAdeverintaStudent = documents.find((d) => d.type === 'adeverinta_student');
+  const docAdeverintaStudent = applicationDocuments.find((d) => d.type === 'adeverinta_student');
+  const docConventieSemnata = applicationDocuments.find((d) => d.type === 'conventie_semnata');
+  const docExtrasCont = applicationDocuments.find((d) => d.type === 'extras_cont');
+  const docAcordPrelucrareDatePersonaleSemnat = applicationDocuments.find(
+    (d) => d.type === 'acord_prelucrare_date_personale_semnat',
+  );
   const docDeclaratieEvitareDublaFinantareSemnata = documents.find(
     (d) => d.type === 'declaratie_evitare_dubla_finantare_semnata',
   );
@@ -401,6 +590,39 @@ const documentsCount = REQUIRED_DOC_TYPES.reduce((acc, t) => acc + (documents.so
               docAdeverintaStudent?.viewUrl || null,
               docAdeverintaStudent?.downloadUrl || null,
               docAdeverintaStudent?.filename,
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 py-2">
+          <div className="text-gray-500 dark:text-gray-400">Conventie semnata</div>
+          <div className="col-span-2 flex flex-col gap-2">
+            {renderBlobFile(
+              docConventieSemnata?.viewUrl || null,
+              docConventieSemnata?.downloadUrl || null,
+              docConventieSemnata?.filename,
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 py-2">
+          <div className="text-gray-500 dark:text-gray-400">Extras de cont</div>
+          <div className="col-span-2 flex flex-col gap-2">
+            {renderBlobFile(
+              docExtrasCont?.viewUrl || null,
+              docExtrasCont?.downloadUrl || null,
+              docExtrasCont?.filename,
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 py-2">
+          <div className="text-gray-500 dark:text-gray-400">Acord prelucrare date personale (GDPR)</div>
+          <div className="col-span-2 flex flex-col gap-2">
+            {renderBlobFile(
+              docAcordPrelucrareDatePersonaleSemnat?.viewUrl || null,
+              docAcordPrelucrareDatePersonaleSemnat?.downloadUrl || null,
+              docAcordPrelucrareDatePersonaleSemnat?.filename,
             )}
           </div>
         </div>
@@ -583,22 +805,68 @@ const documentsCount = REQUIRED_DOC_TYPES.reduce((acc, t) => acc + (documents.so
         {student && (
           <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
             <div className="space-y-2">
-              <div className="flex justify-between gap-3">
-                <span>Serie</span>
-                {series?.name ? (
-                  <span className="font-medium">{series.name}</span>
-                ) : (
-                  <span className="text-xs text-gray-400 italic">— fara serie —</span>
-                )}
+
+              <div className="flex items-center gap-3">
+                  <span className="shrink-0 text-gray-600 dark:text-gray-300">
+                    Serie
+                  </span>
+
+                  <div className="flex-1 min-w-0 text-right pr-2">
+                    {series?.name ? (
+                      <span
+                        className="block font-medium truncate"
+                        title={series.name ?? undefined}
+                      >
+                        {series.name}
+                      </span>
+                    ) : (
+                      <span className="block text-xs text-gray-400 italic">
+                        Fara serie
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 opacity-90"
+                    onClick={openAssignSerie}
+                    disabled={loading || !student || seriesLoading}
+                    title="Editeaza seria"
+                  >
+                    <IconEdit className="h-4 w-4" />
+                  </button>
               </div>
 
-              <div className="flex justify-between gap-3">
-                <span>Tutore</span>
-                {tutor?.label ? (
-                  <span className="font-medium">{tutor.label}</span>
-                ) : (
-                  <span className="text-xs text-gray-400 italic">— fara tutore —</span>
-                )}
+
+              <div className="flex items-center gap-3">
+                <span className="shrink-0 text-gray-600 dark:text-gray-300">
+                  Tutore
+                </span>
+
+                <div className="flex-1 min-w-0 text-right pr-2">
+                  {tutor?.label ? (
+                    <span
+                      className="block font-medium truncate"
+                      title={tutor.label}
+                    >
+                      {tutor.label}
+                    </span>
+                  ) : (
+                    <span className="block text-xs text-gray-400 italic">
+                      Fara tutore
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 opacity-90"
+                  onClick={openAssignTutor}
+                  disabled={loading || !student || tutorsLoading}
+                  title="Editeaza tutorele"
+                >
+                  <IconEdit className="h-4 w-4" />
+                </button>
               </div>
 
               <div className="flex justify-between gap-3">
@@ -724,6 +992,7 @@ const documentsCount = REQUIRED_DOC_TYPES.reduce((acc, t) => acc + (documents.so
               if (res.ok) {
                 const data = await res.json();
                 setDocuments(data.documents ?? []);
+                setApplicationDocuments(data.applicationDocuments ?? []);
                 setHomework(data.homework ?? []);
                 setTutor(data.tutor ?? null);
               }
@@ -736,6 +1005,148 @@ const documentsCount = REQUIRED_DOC_TYPES.reduce((acc, t) => acc + (documents.so
       )}
 
       <SabloaneDeclaratiiDialog isOpen={sabloaneDeclaratiiDialogOpen} onClose={() => setSabloaneDeclaratiiDialogOpen(false)} />
+
+      <Transition appear show={assignSerieOpen} as={Fragment}>
+        <Dialog as="div" open={assignSerieOpen} onClose={() => setAssignSerieOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-[black]/60 z-[999]" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-[999] overflow-y-auto">
+            <div className="flex min-h-screen items-center justify-center px-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="panel my-8 w-full max-w-lg overflow-hidden rounded-lg border-0 bg-white p-0 text-black dark:bg-[#0e1726] dark:text-white-dark">
+                  <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
+                    <h5 className="text-lg font-semibold">Asigneaza serie</h5>
+                    <button type="button" className="text-white-dark hover:text-dark" onClick={() => setAssignSerieOpen(false)}>
+                      <IconX />
+                    </button>
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <label className="text-sm">Alege seria</label>
+                    <select
+                      className="form-select w-full"
+                      value={assignSerieId}
+                      onChange={(e) => setAssignSerieId(e.target.value)}
+                      disabled={seriesLoading || assignSerieSaving}
+                    >
+                      <option value="">Fara serie</option>
+                      {seriesOptions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="mt-6 flex justify-end gap-2">
+                      <button className="btn btn-outline-secondary" onClick={() => setAssignSerieOpen(false)} disabled={assignSerieSaving}>
+                        Anuleaza
+                      </button>
+                      <button className="btn btn-primary" onClick={saveAssignSerie} disabled={!student || assignSerieSaving}>
+                        {assignSerieSaving ? 'Se salveaza…' : 'Salveaza'}
+                      </button>
+                    </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      <Transition appear show={assignTutorOpen} as={Fragment}>
+        <Dialog as="div" open={assignTutorOpen} onClose={() => setAssignTutorOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-[black]/60 z-[999]" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-[999] overflow-y-auto">
+            <div className="flex min-h-screen items-center justify-center px-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="panel my-8 w-full max-w-lg overflow-hidden rounded-lg border-0 bg-white p-0 text-black dark:bg-[#0e1726] dark:text-white-dark">
+                  <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
+                    <h5 className="text-lg font-semibold">Asigneaza tutore</h5>
+                    <button
+                      type="button"
+                      className="text-white-dark hover:text-dark"
+                      onClick={() => setAssignTutorOpen(false)}
+                    >
+                      <IconX />
+                    </button>
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <label className="text-sm">Alege tutorele</label>
+                    <select
+                      className="form-select w-full"
+                      value={assignTutorId}
+                      onChange={(e) => setAssignTutorId(e.target.value)}
+                      disabled={tutorsLoading || assignTutorSaving}
+                    >
+                      <option value="">Fara tutore</option>
+                      {tutorOptions.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="mt-6 flex justify-end gap-2">
+                      <button
+                        className="btn btn-outline-secondary"
+                        onClick={() => setAssignTutorOpen(false)}
+                        disabled={assignTutorSaving}
+                      >
+                        Anuleaza
+                      </button>
+                      <button
+                        className="btn btn-success"
+                        onClick={saveAssignTutor}
+                        disabled={!student || assignTutorSaving}
+                      >
+                        {assignTutorSaving ? 'Se salveaza…' : 'Salveaza'}
+                      </button>
+                    </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>      
     </div>
   );
 }

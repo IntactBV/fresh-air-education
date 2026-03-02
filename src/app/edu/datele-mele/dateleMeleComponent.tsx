@@ -40,7 +40,7 @@ const Schema = Yup.object().shape({
   // 4) Studiile
   institutie: Yup.string().required('Institutia este obligatorie'),
   facultate: Yup.string().required('Facultatea este obligatorie'),
-  specializare: Yup.string().required('Domeniul/Specializarea este obligatorie'),
+  specializare: Yup.string().required('Specializarea este obligatorie'),
   ciclu: Yup.string().oneOf(['Licenta', 'Licenta2', 'Licenta3', 'Masterat', 'Masterat2', 'Doctorat'], 'Selecteaza o optiune').required('Anul este obligatoriu'),
 });
 
@@ -87,7 +87,6 @@ export default function DateleMeleComponent() {
       try {
         const res = await fetch('/api/edu/my-data', { cache: 'no-store' });
         if (!res.ok) {
-          // daca nu are application sau e eroare, lasam form-ul gol
           setLoading(false);
           return;
         }
@@ -156,7 +155,6 @@ export default function DateleMeleComponent() {
               facultate: vals.facultate,
               specializare: vals.specializare,
               ciclu: vals.ciclu,
-              // daca am urcat fișierul anterior, in vals avem copieBuletinBlobId
               copieBuletinBlobId: vals.copieBuletinBlobId || null,
             }),
           });
@@ -164,7 +162,7 @@ export default function DateleMeleComponent() {
           if (!res.ok) {
             alert('Nu s-au putut salva datele.');
           } else {
-            // poti pune un toast aici
+            //
           }
         } catch (err) {
           console.error(err);
@@ -438,7 +436,7 @@ export default function DateleMeleComponent() {
                     <Err name="facultate" />
                   </div>
                   <div className={klass('specializare')}>
-                    <label htmlFor="specializare">Domeniul / Specializarea</label>
+                    <label htmlFor="specializare">Specializarea</label>
                     <Field id="specializare" name="specializare" type="text" placeholder="ex: Informatica" className="form-input" />
                     <Err name="specializare" />
                   </div>

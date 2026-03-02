@@ -22,6 +22,8 @@ type SendMailOptions = {
   subject: string;
   text?: string;
   html?: string;
+  cc?: string[];
+  bcc?: string[];
 };
 
 type StudentDocumentType =
@@ -46,7 +48,7 @@ function getStudentDocumentLabel(docType: StudentDocumentType): string {
 /**
  * Functia de baza – toate mailurile trec prin ea.
  */
-export async function sendMail({ to, subject, text, html }: SendMailOptions) {
+export async function sendMail({ to, subject, text, html, cc, bcc }: SendMailOptions) {
   const from = process.env.SMTP_FROM;
 
   if (!from) {
@@ -56,6 +58,8 @@ export async function sendMail({ to, subject, text, html }: SendMailOptions) {
   if (isDev) {
     console.log('=== DEV EMAIL ===');
     console.log('To:     ', to);
+    console.log('CC:     ', cc);
+    console.log('BCC:    ', bcc);
     console.log('Subject:', subject);
     console.log('Text:   ', text);
     console.log('HTML:   ', html);
@@ -66,10 +70,12 @@ export async function sendMail({ to, subject, text, html }: SendMailOptions) {
   if (!transporter) {
     throw new Error('Email transporter is not configured');
   }
- 
+
   await transporter.sendMail({
     from,
     to,
+    cc: cc && cc.length ? cc : undefined,
+    bcc: bcc && bcc.length ? bcc : undefined,
     subject,
     text,
     html,

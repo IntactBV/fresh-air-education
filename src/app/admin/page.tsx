@@ -24,12 +24,10 @@ export default async function Page() {
     redirect('/autentificare');
   }
 
-  // construim URL absolut pentru API
   const host = hdrs.get('host');
   const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
   const apiUrl = `${protocol}://${host}/api/admin/dashboard`;
 
-  // chemam API-ul si propagam cookie-ul, ca sa poata ruta sa citeasca sesiunea
   const res = await fetch(apiUrl, {
     cache: 'no-store',
     headers: {
@@ -57,7 +55,6 @@ export default async function Page() {
       </ul>
 
       <PanouPrincipalAdminComponent
-        // daca API-ul nu a reusit sa ia numele, il luam din session
         userName={data.currentUserName ?? session.user?.name ?? 'admin'}
         pendingRequestsCount={data.pendingRequestsCount ?? 0}
         enrolledStudentsCount={data.enrolledStudentsCount ?? 0}

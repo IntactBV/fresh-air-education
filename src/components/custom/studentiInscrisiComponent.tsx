@@ -15,6 +15,7 @@ import IconX from '@/components/icon/icon-x';
 import IconUsers from '@/components/icon/icon-users';
 import IconAward from '@/components/icon/icon-award';
 import IconDatabase from '@/components/icon/icon-database';
+import IconSend from '@faComponents/icon/icon-send';
 
 type StudentFromApi = {
   id: string;
@@ -97,6 +98,12 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
   const [search, setSearch] = useState('');
   const [serieFilter, setSerieFilter] = useState<string | 'all'>('all');
   const [tutorFilter, setTutorFilter] = useState<string | 'all'>('all'); // 'all' | '__none__' | tutorId
+
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailSubject, setMailSubject] = useState('');
+  const [mailBody, setMailBody] = useState('');
+  const [mailCc, setMailCc] = useState('');
+  const [mailSending, setMailSending] = useState(false);
 
   const PAGE_SIZES = [10, 20, 30, 50, 100];
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
@@ -225,20 +232,18 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
       );
     }
 
-    if (tab === 'enrolled') {
-      // filtre serie
-      if (serieFilter !== 'all') {
-        if (serieFilter === '__none__') rows = rows.filter((r) => r.serieId === null);
-        else rows = rows.filter((r) => r.serieId === serieFilter);
-      }
-
-      // filtre tutore
-      if (tutorFilter !== 'all') {
-        if (tutorFilter === '__none__') rows = rows.filter((r) => r.tutorUserId === null);
-        else rows = rows.filter((r) => r.tutorUserId === tutorFilter);
-      }
+    // filtre serie
+    if (serieFilter !== 'all') {
+      if (serieFilter === '__none__') rows = rows.filter((r) => r.serieId === null);
+      else rows = rows.filter((r) => r.serieId === serieFilter);
     }
 
+    // filtre tutore
+    if (tutorFilter !== 'all') {
+      if (tutorFilter === '__none__') rows = rows.filter((r) => r.tutorUserId === null);
+      else rows = rows.filter((r) => r.tutorUserId === tutorFilter);
+    }
+    
     return rows;
   }, [filteredByTab, search, tab, serieFilter, tutorFilter]);
 
@@ -257,19 +262,10 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
     setTab(next);
     setSelectedRecords([]);
 
-    if (next === 'graduates') {
-      setSerieFilter('all');
-      setTutorFilter('all');
-    }
-
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', next);
 
-    if (next === 'graduates') {
-      params.delete('serieId');
-      params.delete('tutorId');
-    }
-
+    // pastram filtrele in query, indiferent de tab
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -280,8 +276,6 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
     if (value === 'all') params.delete('serieId');
     else params.set('serieId', value);
 
-    // rămânem pe enrolled când filtrăm
-    params.set('tab', 'enrolled');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -292,7 +286,6 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
     if (value === 'all') params.delete('tutorId');
     else params.set('tutorId', value);
 
-    params.set('tab', 'enrolled');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -396,114 +389,70 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
     }
   };
 
-  const columns =
-    tab === 'enrolled'
-      ? [
-          {
-            accessor: 'studentNo',
-            title: '#Student',
-            sortable: true,
-            width: 110,
-            render: (row: Row) => row.studentNo ?? '—',
-          },
-          { accessor: 'fullName', title: 'Nume', sortable: true },
-          { accessor: 'email', title: 'E-mail', sortable: true },
-          {
-            accessor: 'serieName',
-            title: 'Serie',
-            sortable: true,
-            render: (row: Row) =>
-              row.serieName ? (
-                <span className="badge bg-primary/10 text-primary">{row.serieName}</span>
-              ) : (
-                <span className="text-xs text-gray-500">—</span>
-              ),
-          },
-          {
-            accessor: 'tutorName',
-            title: 'Tutore',
-            sortable: true,
-            render: (row: Row) =>
-              row.tutorName ? (
-                <span className="badge bg-success/10 text-success">{row.tutorName}</span>
-              ) : (
-                <span className="text-xs text-gray-500">—</span>
-              ),
-          },
-          {
-            accessor: 'status',
-            title: 'Status',
-            sortable: true,
-            render: (row: Row) => {
-              if (row.status === 'activ') return <span className="badge bg-success/10 text-success">Activ</span>;
-              if (row.status === 'inactiv') return <span className="badge bg-warning/10 text-warning">Inactiv</span>;
-              return <span className="badge bg-info/10 text-info">Absolvent</span>;
-            },
-          },
-          {
-            accessor: 'actions',
-            title: 'Actiuni',
-            titleClassName: '!text-right',
-            render: (row: Row) => (
-              <div className="flex justify-end">
-                <Tippy content="Vezi detalii">
-                  <Link
-                    href={`/${baseFolder}/studenti-inscrisi/${row.id}`}
-                    className="btn btn-sm btn-outline-primary flex items-center gap-2"
-                  >
-                    <span>Detalii</span>
-                    <span className="h-4 w-4">
-                      <IconArrowForward className="h-4 w-4" />
-                    </span>
-                  </Link>
-                </Tippy>
-              </div>
-            ),
-          },
-        ]
-      : [
-          {
-            accessor: 'studentNo',
-            title: '#Student',
-            sortable: true,
-            width: 110,
-            render: (row: Row) => row.studentNo ?? '—',
-          },
-          { accessor: 'fullName', title: 'Nume', sortable: true },
-          { accessor: 'email', title: 'E-mail', sortable: true },
-          {
-            accessor: 'approvedAt',
-            title: 'Data inscriere',
-            sortable: true,
-            render: (row: Row) => row.approvedAt || '—',
-          },
-          {
-            accessor: 'status',
-            title: 'Status',
-            sortable: true,
-            render: () => <span className="badge bg-info/10 text-info">Absolvent</span>,
-          },
-          {
-            accessor: 'actions',
-            title: 'Actiuni',
-            titleClassName: '!text-right',
-            render: (row: Row) => (
-              <div className="flex justify-end">
-                <Tippy content="Vezi detalii">
-                  <Link
-                    href={`/${baseFolder}/studenti-inscrisi/${row.id}`}
-                    className="btn btn-sm btn-outline-primary flex items-center gap-2"
-                  >
-                    <span>Detalii</span>
-                    <span className="h-4 w-4">
-                      <IconArrowForward className="h-4 w-4" />
-                    </span>
-                  </Link>
-                </Tippy>
-              </div>
-            ),
-          },
-        ];
+  const columns = [
+    {
+      accessor: 'studentNo',
+      title: '#',
+      sortable: true,
+      width: 72,
+      render: (row: Row) => row.studentNo ?? '—',
+    },
+    { accessor: 'fullName', title: 'Nume', sortable: true },
+    { accessor: 'email', title: 'E-mail', sortable: true },
+
+    {
+      accessor: 'serieName',
+      title: 'Serie',
+      sortable: true,
+      render: (row: Row) =>
+        row.serieName ? (
+          <span className="badge bg-primary/10 text-primary">{row.serieName}</span>
+        ) : (
+          <span className="text-xs text-gray-500">—</span>
+        ),
+    },
+    {
+      accessor: 'tutorName',
+      title: 'Tutore',
+      sortable: true,
+      render: (row: Row) =>
+        row.tutorName ? (
+          <span className="badge bg-success/10 text-success">{row.tutorName}</span>
+        ) : (
+          <span className="text-xs text-gray-500">—</span>
+        ),
+    },
+    {
+      accessor: 'status',
+      title: 'Status',
+      sortable: true,
+      render: (row: Row) => {
+        if (row.status === 'activ') return <span className="badge bg-success/10 text-success">Activ</span>;
+        if (row.status === 'inactiv') return <span className="badge bg-warning/10 text-warning">Inactiv</span>;
+        return <span className="badge bg-info/10 text-info">Absolvent</span>;
+      },
+    },
+    {
+      accessor: 'actions',
+      title: 'Actiuni',
+      titleClassName: '!text-right',
+      render: (row: Row) => (
+        <div className="flex justify-end">
+          <Tippy content="Vezi detalii">
+            <Link
+              href={`/${baseFolder}/studenti-inscrisi/${row.id}`}
+              className="btn btn-sm btn-outline-primary flex items-center gap-2"
+            >
+              <span>Detalii</span>
+              <span className="h-4 w-4">
+                <IconArrowForward className="h-4 w-4" />
+              </span>
+            </Link>
+          </Tippy>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="panel mt-6">
@@ -560,84 +509,117 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
         </div>
       )}
 
-      {tab === 'enrolled' && (
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="text-sm text-gray-500 dark:text-gray-400">Studentii activi sau inactivi.</div>
-          <div className="ltr:ml-auto rtl:mr-auto flex items-center gap-3">
-            <input
-              type="text"
-              className="form-input w-64"
-              placeholder="Cauta dupa nume, email"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+    <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
+      <div className="text-sm text-gray-500 dark:text-gray-400">
+        {tab === 'enrolled' ? 'Studentii activi sau inactivi.' : 'Studentii marcati ca absolvent.'}
+      </div>
 
-            <select
-              className="form-select w-64"
-              value={serieFilter}
-              onChange={(e) => handleSerieFilterChange(e.target.value)}
-              disabled={seriesLoading}
-            >
-              <option value="all">Toate seriile</option>
-              <option value="__none__">— fara serie —</option>
-              {series.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+      <div className="ltr:ml-auto rtl:mr-auto flex items-center gap-3">
+        <input
+          type="text"
+          className="form-input w-64"
+          placeholder="Cauta dupa nume, email"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-            <select
-              className="form-select w-64"
-              value={tutorFilter}
-              onChange={(e) => handleTutorFilterChange(e.target.value)}
-              disabled={tutorsLoading}
-            >
-              <option value="all">Toti tutorii</option>
-              <option value="__none__">— fara tutore —</option>
-              {tutors.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
+        <select
+          className="form-select w-64"
+          value={serieFilter}
+          onChange={(e) => handleSerieFilterChange(e.target.value)}
+          disabled={seriesLoading}
+        >
+          <option value="all">Toate seriile</option>
+          <option value="__none__">— fara serie —</option>
+          {series.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
 
-      {tab === 'graduates' && (
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="text-sm text-gray-500 dark:text-gray-400">Studentii marcati ca absolvent.</div>
-          <div className="ltr:ml-auto rtl:mr-auto flex items-center gap-3">
-            <input
-              type="text"
-              className="form-input w-64"
-              placeholder="Cauta dupa nume, email"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-      )}
+        <select
+          className="form-select w-64"
+          value={tutorFilter}
+          onChange={(e) => handleTutorFilterChange(e.target.value)}
+          disabled={tutorsLoading}
+        >
+          <option value="all">Toti tutorii</option>
+          <option value="__none__">— fara tutore —</option>
+          {tutors.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
 
-      {tab === 'enrolled' && selectedRecords.length > 0 && (
-        <div className="mb-3 flex items-center justify-between rounded-md border border-primary/20 p-3 dark:border-[#1b2e4b]">
-          <div className="text-sm">
-            <span className="font-medium">{selectedRecords.length}</span> selectati
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="btn btn-primary btn-sm" onClick={openAssign}>
-              Asigneaza la serie…
-            </button>
-            <button className="btn btn-success btn-sm" onClick={openAssignTutor} disabled={tutorsLoading}>
-              Asigneaza tutore…
-            </button>
-            <button className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedRecords([])}>
-              Goleste selectia
-            </button>
-          </div>
-        </div>
-      )}
+  <div className="mb-3 flex items-center justify-between rounded-md border border-primary/20 p-3 dark:border-[#1b2e4b]">
+    <div className="text-sm">
+      <span className="font-medium">{selectedRecords.length}</span> selectati
+    </div>
+
+    <div className="flex items-center gap-2">
+      {/* Serie */}
+      <button
+        className={`btn btn-sm transition-none ${
+          selectedRecords.length > 0
+            ? 'btn-primary'
+            : 'border border-gray-200 bg-transparent text-gray-400 shadow-none hover:shadow-none dark:border-gray-700 dark:text-gray-500'
+        }`}
+        onClick={openAssign}
+        disabled={!selectedRecords.length}
+      >
+        Asigneaza serie
+      </button>
+
+      {/* Tutore */}
+      <button
+        className={`btn btn-sm transition-none ${
+          selectedRecords.length > 0
+            ? 'btn-success'
+            : 'border border-gray-200 bg-transparent text-gray-400 shadow-none hover:shadow-none dark:border-gray-700 dark:text-gray-500'
+        }`}
+        onClick={openAssignTutor}
+        disabled={!selectedRecords.length || tutorsLoading}
+      >
+        Asigneaza tutore
+      </button>
+
+      {/* Email */}
+      <button
+        className={`btn btn-sm flex items-center gap-2 transition-none ${
+          selectedRecords.length > 0
+            ? 'btn-secondary'
+            : 'border border-gray-200 bg-transparent text-gray-400 shadow-none hover:shadow-none dark:border-gray-700 dark:text-gray-500'
+        }`}
+        onClick={() => {
+          setMailSubject('');
+          setMailBody('');
+          setMailCc('');
+          setMailOpen(true);
+        }}
+        disabled={!selectedRecords.length}
+      >
+        <IconSend className="h-4 w-4" />
+        Trimite e-mail
+      </button>
+
+      {/* Clear selection */}
+      <button
+        className={`btn btn-sm transition-none ${
+          selectedRecords.length > 0
+            ? 'btn-outline-secondary'
+            : 'border border-gray-200 bg-transparent text-gray-400 shadow-none hover:shadow-none dark:border-gray-700 dark:text-gray-500'
+        }`}
+        onClick={() => setSelectedRecords([])}
+        disabled={!selectedRecords.length}
+      >
+        Goleste selectia
+      </button>
+    </div>
+  </div>
 
       <div className="datatables">
         {isMounted && pageRecords.length > 0 ? (
@@ -655,8 +637,8 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
             onRecordsPerPageChange={setPageSize}
             sortStatus={sortStatus}
             onSortStatusChange={setSortStatus}
-            selectedRecords={tab === 'enrolled' ? selectedRecords : []}
-            onSelectedRecordsChange={tab === 'enrolled' ? setSelectedRecords : () => {}}
+            selectedRecords={selectedRecords}
+            onSelectedRecordsChange={setSelectedRecords}
             minHeight={200}
             paginationText={({ from, to, totalRecords }) => `Afisez ${from}-${to} din ${totalRecords} inregistrari`}
           />
@@ -749,6 +731,152 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
                       </button>
                       <button className="btn btn-success" onClick={saveAssignTutor} disabled={!selectedRecords.length || assignTutorId === ''}>
                         Salveaza
+                      </button>
+                    </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Modal: Trimite e-mail… */}
+      <Transition appear show={mailOpen} as={Fragment}>
+        <Dialog as="div" open={mailOpen} onClose={() => setMailOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-[black]/60 z-[999]" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-[999] overflow-y-auto">
+            <div className="flex min-h-screen items-center justify-center px-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="panel my-8 w-full max-w-2xl overflow-hidden rounded-lg border-0 bg-white p-0 text-black dark:bg-[#0e1726] dark:text-white-dark">
+                  <div className="flex items-center justify-between bg-[#fbfbfb] px-5 py-3 dark:bg-[#121c2c]">
+                    <h5 className="text-lg font-semibold">Trimite e-mail</h5>
+                    <button type="button" className="text-white-dark hover:text-dark" onClick={() => setMailOpen(false)}>
+                      <IconX />
+                    </button>
+                  </div>
+
+                  <div className="p-5 space-y-4">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Se va trimite catre <span className="font-medium">{selectedRecords.length}</span> studenti selectati.
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm">Subiect</label>
+                      <input
+                        className="form-input w-full"
+                        value={mailSubject}
+                        onChange={(e) => setMailSubject(e.target.value)}
+                        placeholder="Ex: Informatii importante"
+                        disabled={mailSending}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm">CC (optional)</label>
+                      <input
+                        className="form-input w-full"
+                        value={mailCc}
+                        onChange={(e) => setMailCc(e.target.value)}
+                        placeholder="ex: coordonator@site.ro, secretariat@site.ro"
+                        disabled={mailSending}
+                      />
+                      <div className="text-xs text-gray-400">
+                        Separate prin virgula. Se aplica tuturor e-mailurilor trimise.
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm">Mesaj</label>
+                      <textarea
+                        className="form-textarea min-h-[160px]"
+                        value={mailBody}
+                        onChange={(e) => setMailBody(e.target.value)}
+                        placeholder="Scrie mesajul aici…"
+                        disabled={mailSending}
+                      />
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-2">
+                      <button className="btn btn-outline-secondary" onClick={() => setMailOpen(false)} disabled={mailSending}>
+                        Anuleaza
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={async () => {
+                          if (!selectedRecords.length) {
+                            setMailOpen(false);
+                            return;
+                          }
+
+                          const subject = mailSubject.trim();
+                          const body = mailBody.trim();
+
+                          if (!subject || !body) {
+                            setErrorMsg('Completeaza subiectul si mesajul.');
+                            return;
+                          }
+
+                          setErrorMsg(null);
+                          setMailSending(true);
+
+                          try {
+                            const cc = mailCc
+                              .split(',')
+                              .map((x) => x.trim())
+                              .filter(Boolean);
+
+                            const res = await fetch('/api/admin/students/send-email', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                studentIds: selectedRecords.map((s) => s.id),
+                                subject,
+                                body,
+                                cc: cc.length ? cc : undefined,
+                              }),
+                            });
+
+                            if (!res.ok) {
+                              const err = await res.json().catch(() => null);
+                              setErrorMsg(err?.error?.message || err?.error || 'Nu am putut trimite e-mailurile.');
+                              return;
+                            }
+
+                            setMailOpen(false);
+                            setSelectedRecords([]);
+                            setMailSubject('');
+                            setMailBody('');
+                            setMailCc('');
+                          } catch (e) {
+                            console.error(e);
+                            setErrorMsg('Eroare la comunicarea cu serverul.');
+                          } finally {
+                            setMailSending(false);
+                          }
+                        }}
+                        disabled={mailSending || !selectedRecords.length || !mailSubject.trim() || !mailBody.trim()}
+                      >
+                        {mailSending ? 'Se trimite…' : 'Trimite'}
                       </button>
                     </div>
                   </div>
