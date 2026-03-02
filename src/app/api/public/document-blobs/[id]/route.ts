@@ -9,11 +9,12 @@ const ALLOWED_PUBLIC_TEMPLATE_TYPES = [
   'template_caiet_de_practica',
 ] as const;
 
+
 export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const blobId = params.id;
+  const { id } = await params;
 
   // Only allow download if this blob is referenced by an allowed public template type
   const result = await db.query(
@@ -28,7 +29,7 @@ export async function GET(
       AND t.document_type = ANY($2::text[])
     LIMIT 1
     `,
-    [blobId, ALLOWED_PUBLIC_TEMPLATE_TYPES]
+    [id, ALLOWED_PUBLIC_TEMPLATE_TYPES]
   );
 
   if (result.rowCount === 0) {
