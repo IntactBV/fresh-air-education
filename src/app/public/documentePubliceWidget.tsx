@@ -73,9 +73,9 @@ export default function DocumentePubliceWidget() {
 
     if (!items.length) {
       return (
-        <div className="flex items-center gap-2 py-4 text-sm text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-center w-full py-[110px] text-sm text-slate-300 dark:text-slate-500">
           <IconDatabase className="h-5 w-5" />
-          <span>Nu exista documente in aceasta sectiune.</span>
+          <span className="ml-2">Nu exista documente in aceasta sectiune.</span>
         </div>
       );
     }
@@ -104,9 +104,9 @@ export default function DocumentePubliceWidget() {
 
   return (
     <div className="mx-auto px-5 py-10 md:px-0">
-      <div className="mb-8 text-center">
+      {/* <div className="mb-8 text-center">
         <h2 className="text-xl font-semibold md:text-2xl">Resurse utile</h2>
-      </div>
+      </div> */}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Metodologii si documentatii */}

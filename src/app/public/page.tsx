@@ -6,6 +6,9 @@ import PublicPageRenderer from './PublicPageRenderer';
 import TestimonialeComponent from './testimonialeComponent';
 import Image from 'next/image';
 import AbsolventiCounter from './absolventiCounter';
+import DocumentePubliceWidget from './documentePubliceWidget';
+import IconFacebook from '@faComponents/icon/icon-facebook';
+import IconLinkedin from '@faComponents/icon/icon-linkedin';
 
 export const metadata: Metadata = {
   title: 'FRESH TECH - Tehnologii si educatie pentru studenti',
@@ -185,6 +188,8 @@ const Home = async () => {
         </div>
       </div>
 
+      <DocumentePubliceWidget />
+
       <div
         id="program-de-practica-section"
         className="scroll-mt-24 lg:scroll-mt-28 w-full rounded-md border border-slate-200/50 bg-white px-16 py-12 shadow-sm dark:border-slate-700/40 dark:bg-slate-900">
@@ -225,69 +230,84 @@ const Home = async () => {
       </div>
 
       <div className="mt-10 flex flex-col-reverse items-center justify-between gap-5 rounded-md bg-gradient-to-tl from-[rgba(234,241,255,0.44)] to-[rgba(234,241,255,0.96)] px-6 py-2.5 dark:from-[rgba(14,23,38,0.44)] dark:to-[#0E1726] md:flex-row lg:mt-20 xl:px-16">
-        {/* stânga: linkuri + susținut de */}
-        <div className="flex-1 py-3.5">
-          <h3 className="mb-4 text-xl font-bold dark:text-white md:text-2xl">Informatii utile</h3>
 
-          <div className="grid grid-cols-2 gap-4 text-sm text-slate-700 dark:text-slate-200">
-            {/* coloana 1 */}
-            <div className="flex flex-col gap-2">
-              <Link href="/public/termeni-si-conditii" className="hover:text-primary">
-                Termeni si conditii
-              </Link>
-              <Link href="/public/politica-de-confidentialitate" className="hover:text-primary">
-                Politica de confidentialitate
-              </Link>
-              <Link href="mailto:freshtech@freshair.ro" className="hover:text-primary">
-                freshtech@freshair.ro
-              </Link>
-              {/* <Link href="/public/intrebari-frecvente" className="hover:text-primary">
-                Intrebari frecvente
-              </Link> */}
+        <div className="flex flex-colitems-start">
+          {/* left column */}
+          <div className="flex-1 py-3.5">
+            <h3 className="mb-4 text-xl font-bold dark:text-white md:text-2xl">Informatii utile</h3>
+
+            <div className="grid grid-cols-2 gap-4 text-sm text-slate-700 dark:text-slate-200">
+              <div className="flex flex-col gap-2">
+                <Link href="/public/termeni-si-conditii" className="hover:text-primary">
+                  Termeni si conditii
+                </Link>
+                <Link href="/public/politica-de-confidentialitate" className="hover:text-primary">
+                  Politica de confidentialitate
+                </Link>
+              </div>
             </div>
 
-            {/* coloana 2 */}
-            {/* <div className="flex flex-col gap-2">
-              <Link href="/public/despre-program" className="hover:text-primary">
-                Despre program
-              </Link>
-              <Link href="/public/contact" className="hover:text-primary">
-                Contact
-              </Link>
-            </div> */}
-          </div>
+            <div className="mt-10 flex items-center gap-4">
+              <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Proiect sustinut de:
+              </span>
 
-          <div className="mt-10 flex items-center gap-4">
-            <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Proiect sustinut de:
+              <div className="flex items-center gap-2">
+                <Link href="https://freshair.ro/fresh-tech-2/" target="_blank" rel="noopener noreferrer">
+
+                  <div
+                    className="
+                      inline-flex items-center justify-center
+                      px-3 py-2 rounded-md
+                      dark:bg-white/70 dark:px-3 dark:py-2
+                      transition-all
+                    "
+                  >
+                    <Image
+                      src="/assets/images/logo-fresh-air.png"
+                      alt="Fresh Air"
+                      width={500}
+                      height={96}
+                      className="h-12 w-auto object-contain"
+                      priority
+                    />
+
+                  </div>
+
+                </Link>
+              </div>
+            </div>
+
+            <span className="mt-4 block text-xs text-slate-500 dark:text-slate-400">
+              Pentru informatii detaliate despre celelalte programe cofinantate de Uniunea Europeana, va invitam sa vizitati <Link href="https://mfe.gov.ro/" target="_blank" rel="noopener noreferrer" className="hover:text-primary">www.mfe.gov.ro</Link>.
             </span>
 
-            <div className="flex items-center gap-2">
-              <Link href="https://freshair.ro/" target="_blank" rel="noopener noreferrer">
-
-                <div
-                  className="
-                    inline-flex items-center justify-center
-                    px-3 py-2 rounded-md
-                    dark:bg-white/70 dark:px-3 dark:py-2
-                    transition-all
-                  "
-                >
-                  <Image
-                    src="/assets/images/logo-fresh-air.png"
-                    alt="Fresh Air"
-                    width={500}
-                    height={96}
-                    className="h-12 w-auto object-contain"
-                    priority
-                  />
-
-                </div>
-
-              </Link>
-            </div>
           </div>
 
+          {/* right column */}
+          <div className="flex-1 py-3.5">
+            <h3 className="mb-4 text-xl font-bold dark:text-white md:text-2xl">Date contact</h3>
+
+            <div className="grid grid-cols-2 gap-4 text-sm text-slate-700 dark:text-slate-200">
+              <div className="flex flex-col gap-2">
+                <span>
+                  Telefon: 0372 55 11 00
+                </span>
+                <Link href="mailto:freshtech@freshair.ro" className="hover:text-primary">
+                  freshtech@freshair.ro
+                </Link>
+                <div className="flex items-center gap-2">
+                  <Link href="https://www.facebook.com/profile.php?id=61581557640709" target="_blank" rel="noopener noreferrer" className="hover:text-primary">
+                    <IconFacebook />
+                  </Link>
+                  <Link href="https://www.linkedin.com/in/fresh-tech-985806387" target="_blank" rel="noopener noreferrer" className="hover:text-primary">
+                    <IconLinkedin />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
 
         <div className="w-52 max-w-xs hidden md:flex lg:w-full">
