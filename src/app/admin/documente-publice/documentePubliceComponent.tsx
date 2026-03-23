@@ -98,7 +98,6 @@ export default function DocumentePubliceComponent() {
     setIsMounted(true);
   }, []);
 
-  // 1) la mount: iau count-urile pt ambele sectiuni
   useEffect(() => {
     (async () => {
       try {
@@ -113,7 +112,6 @@ export default function DocumentePubliceComponent() {
         setMethodologyCount(Array.isArray(mData) ? mData.length : 0);
         setAnnouncementCount(Array.isArray(aData) ? aData.length : 0);
 
-        // cum tab-ul implicit e methodology, hai să setăm și lista de aici
         setDocs(
           (mData || []).map((r: any) => ({
             id: r.id,
@@ -128,13 +126,11 @@ export default function DocumentePubliceComponent() {
           }))
         );
       } catch (e) {
-        // dacă una pică, nu rupem pagina
         console.error(e);
       }
     })();
   }, []);
 
-  // 2) la schimbare de tab: încarc lista doar pentru tab-ul activ
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -243,7 +239,6 @@ export default function DocumentePubliceComponent() {
             : d
         )
       );
-      // count-ul rămâne același – nu e număr de publicate, e număr de documente pe secțiune
     } catch (e: any) {
       console.error(e);
       setErrorMsg(e?.message || 'Eroare la publicare/retragere.');
@@ -646,7 +641,7 @@ export default function DocumentePubliceComponent() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Descriere (optional)</label>
+                      <label className="text-sm font-medium">Descriere</label>
                       <textarea
                         className="form-textarea w-full"
                         rows={3}
