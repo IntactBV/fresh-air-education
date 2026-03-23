@@ -10,7 +10,7 @@ import { Pool } from 'pg';
 function getSslConfig(): PoolConfig["ssl"] {
   const ca = process.env.DB_SSL_CA;
 
-  // PRODUCTION: SSL obligatoriu (cu CA)
+  // PRODUCTION: SSL is mandatory
   if (process.env.NODE_ENV === "production") {
     if (!ca) {
       throw new Error(
@@ -24,16 +24,10 @@ function getSslConfig(): PoolConfig["ssl"] {
     };
   }
 
-  // LOCAL: fara SSL
+  // LOCAL: no SSL
   return false;
 }
 
-
-/**
- * Creează un nou Pool de conexiuni.
- * Atenție: NU apela direct asta în restul aplicației,
- * folosește getDbPool() ca să eviți multiple Pool-uri.
- */
 function createPool() {
   const config: PoolConfig = {
     user: process.env.DB_USER,
@@ -55,11 +49,6 @@ function createPool() {
   return pool;
 }
 
-/**
- * Truc pentru a reutiliza Pool-ul în Next (atât în dev, cât și pe serverless).
- * În serverless, fiecare instanță de funcție va avea propriul global, dar măcar
- * nu creezi mai multe Pool-uri în aceeași instanță.
- */
 const globalForDb = globalThis as unknown as {
   _pgPool?: Pool;
 };
@@ -71,5 +60,4 @@ export function getDbPool(): Pool {
   return globalForDb._pgPool;
 }
 
-// Shortcut convenabil, ca să nu modifici tot codul existent
 export const db = getDbPool();
