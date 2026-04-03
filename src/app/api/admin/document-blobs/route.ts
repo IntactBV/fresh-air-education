@@ -6,19 +6,15 @@ import { auth } from '@/utils/auth';
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: req.headers });
-  // if (!session?.user?.isAdmin) {
-  //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  // }
 
-  const client = await db.connect();
+  const formData = await req.formData();
+  const file = formData.get('file') as File | null;
+
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: 'Missing file' }, { status: 400 });
+  }
+
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File | null;
-
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: 'Missing file' }, { status: 400 });
-    }
-
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -28,7 +24,7 @@ export async function POST(req: NextRequest) {
       RETURNING id, filename, mime_type, byte_size, uploaded_at;
     `;
 
-    const res = await client.query(insertSql, [
+    const res = await db.query(insertSql, [
       file.name,
       file.type || 'application/octet-stream',
       buffer.byteLength,
@@ -49,8 +45,9 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     console.error('error inserting document blob:', err);
-    return NextResponse.json({ error: 'Eroare la urcarea documentului.' }, { status: 500 });
-  } finally {
-    client.release();
+    return NextResponse.json(
+      { error: 'Eroare la urcarea documentului.' },
+      { status: 500 }
+    );
   }
 }

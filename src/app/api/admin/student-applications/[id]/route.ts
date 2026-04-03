@@ -1,3 +1,4 @@
+// src/app/api/admin/student-applications/[id]/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/utils/db';
@@ -7,7 +8,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const client = await db.connect();
 
   try {
     const sql = `
@@ -66,13 +66,16 @@ export async function GET(
       LIMIT 1
     `;
 
-    const result = await client.query(sql, [id]);
+    const result = await db.query(sql, [id]);
 
     if (result.rowCount === 0) {
-      return NextResponse.json({ error: 'Aplicația nu a fost găsită.' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Aplicația nu a fost găsită.' },
+        { status: 404 }
+      );
     }
 
-    const docsRes = await client.query(
+    const docsRes = await db.query(
       `
       SELECT
         sad.id,
@@ -121,8 +124,9 @@ export async function GET(
     });
   } catch (err) {
     console.error('error fetching student application details:', err);
-    return NextResponse.json({ error: 'Eroare la preluarea aplicației.' }, { status: 500 });
-  } finally {
-    client.release();
+    return NextResponse.json(
+      { error: 'Eroare la preluarea aplicației.' },
+      { status: 500 }
+    );
   }
 }

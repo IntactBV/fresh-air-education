@@ -1,6 +1,7 @@
-// src/app/api/edu/teme/upload/route.ts
+// src/app/api/edu/my-homework/upload/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import type { PoolClient } from 'pg';
 import { db } from '@/utils/db';
 import { auth } from '@/utils/auth';
 
@@ -15,7 +16,7 @@ async function getStudentForUser(userId: string) {
     ORDER BY created_at DESC
     LIMIT 1
     `,
-    [userId],
+    [userId]
   );
   return res.rows[0] ?? null;
 }
@@ -32,7 +33,9 @@ export async function POST(req: NextRequest) {
   }
 
   const formData = await req.formData();
-  const file = (formData.get('file') as File | null) || (formData.get('document') as File | null);
+  const file =
+    (formData.get('file') as File | null) ||
+    (formData.get('document') as File | null);
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
@@ -45,9 +48,13 @@ export async function POST(req: NextRequest) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const client = await db.connect();
+  let client: PoolClient | null = null;
+
   try {
+    client = await db.connect();
     await client.query('BEGIN');
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    await client.query("SET LOCAL statement_timeout = '30s'");
 
     const blobRes = await client.query(
       `
@@ -60,7 +67,7 @@ export async function POST(req: NextRequest) {
         file.type && file.type.length > 0 ? file.type : 'application/octet-stream',
         buffer.byteLength,
         buffer,
-      ],
+      ]
     );
 
     const blob = blobRes.rows[0];
@@ -79,7 +86,7 @@ export async function POST(req: NextRequest) {
       VALUES ($1, $2, $3, $4, $5, 'student', $6)
       RETURNING id, uploaded_at
       `,
-      [student.id, blob.id, blob.filename, blob.mime_type, blob.byte_size, session.user.id],
+      [student.id, blob.id, blob.filename, blob.mime_type, blob.byte_size, session.user.id]
     );
 
     await client.query('COMMIT');
@@ -94,13 +101,21 @@ export async function POST(req: NextRequest) {
         uploadedAt: hwRes.rows[0].uploaded_at,
         url: `/api/edu/teme/${hwRes.rows[0].id}`,
       },
-      { status: 201 },
+      { status: 201 }
     );
   } catch (err) {
     console.error('homework upload err', err);
-    await client.query('ROLLBACK');
+
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // ignore rollback failure
+      }
+    }
+
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   } finally {
-    client.release();
+    client?.release();
   }
 }

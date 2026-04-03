@@ -1,6 +1,7 @@
 // src/app/api/edu/my-documents/upload/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import type { PoolClient } from 'pg';
 import { db } from '@/utils/db';
 import { auth } from '@/utils/auth';
 
@@ -15,7 +16,7 @@ async function getStudentForUser(userId: string): Promise<StudentRow | null> {
     ORDER BY created_at DESC
     LIMIT 1
     `,
-    [userId],
+    [userId]
   );
   return res.rows[0] ?? null;
 }
@@ -74,12 +75,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'File too large' }, { status: 400 });
   }
 
-  const client = await db.connect();
-  try {
-    await client.query('BEGIN');
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+  let client: PoolClient | null = null;
+
+  try {
+    client = await db.connect();
+    await client.query('BEGIN');
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    await client.query("SET LOCAL statement_timeout = '30s'");
 
     if (isAppDocType(docType)) {
       const oldDocs = await client.query(
@@ -89,15 +94,21 @@ export async function POST(req: NextRequest) {
         WHERE student_application_id = $1
           AND document_type = $2
         `,
-        [student.application_id, docType],
+        [student.application_id, docType]
       );
 
       if (oldDocs.rows.length > 0) {
         const oldDocIds = oldDocs.rows.map((r: any) => r.id);
         const oldBlobIds = oldDocs.rows.map((r: any) => r.blob_id);
 
-        await client.query(`DELETE FROM student_application_documents WHERE id = ANY($1::uuid[])`, [oldDocIds]);
-        await client.query(`DELETE FROM document_blobs WHERE id = ANY($1::uuid[])`, [oldBlobIds]);
+        await client.query(
+          `DELETE FROM student_application_documents WHERE id = ANY($1::uuid[])`,
+          [oldDocIds]
+        );
+        await client.query(
+          `DELETE FROM document_blobs WHERE id = ANY($1::uuid[])`,
+          [oldBlobIds]
+        );
       }
 
       const blobRes = await client.query(
@@ -106,7 +117,7 @@ export async function POST(req: NextRequest) {
         VALUES ($1, $2, $3, $4)
         RETURNING id, filename, mime_type, byte_size, uploaded_at
         `,
-        [file.name, file.type || 'application/octet-stream', buffer.byteLength, buffer],
+        [file.name, file.type || 'application/octet-stream', buffer.byteLength, buffer]
       );
 
       const blob = blobRes.rows[0];
@@ -125,7 +136,7 @@ export async function POST(req: NextRequest) {
         VALUES ($1, $2, $3, 'student', $4, true, 'uploaded')
         RETURNING id, created_at, uploaded_by_role, status
         `,
-        [student.application_id, docType, blob.id, session.user.id],
+        [student.application_id, docType, blob.id, session.user.id]
       );
 
       await client.query('COMMIT');
@@ -143,7 +154,7 @@ export async function POST(req: NextRequest) {
           uploadedByRole: docRes.rows[0].uploaded_by_role,
           url: `/api/edu/my-documents/${docRes.rows[0].id}`,
         },
-        { status: 201 },
+        { status: 201 }
       );
     }
 
@@ -154,15 +165,21 @@ export async function POST(req: NextRequest) {
       WHERE student_id = $1
         AND document_type = $2
       `,
-      [student.id, docType],
+      [student.id, docType]
     );
 
     if (oldDocs.rows.length > 0) {
       const oldDocIds = oldDocs.rows.map((r: any) => r.id);
       const oldBlobIds = oldDocs.rows.map((r: any) => r.blob_id);
 
-      await client.query(`DELETE FROM student_documents WHERE id = ANY($1::uuid[])`, [oldDocIds]);
-      await client.query(`DELETE FROM document_blobs WHERE id = ANY($1::uuid[])`, [oldBlobIds]);
+      await client.query(
+        `DELETE FROM student_documents WHERE id = ANY($1::uuid[])`,
+        [oldDocIds]
+      );
+      await client.query(
+        `DELETE FROM document_blobs WHERE id = ANY($1::uuid[])`,
+        [oldBlobIds]
+      );
     }
 
     const blobRes = await client.query(
@@ -171,7 +188,7 @@ export async function POST(req: NextRequest) {
       VALUES ($1, $2, $3, $4)
       RETURNING id, filename, mime_type, byte_size, uploaded_at
       `,
-      [file.name, file.type || 'application/octet-stream', buffer.byteLength, buffer],
+      [file.name, file.type || 'application/octet-stream', buffer.byteLength, buffer]
     );
 
     const blob = blobRes.rows[0];
@@ -190,7 +207,7 @@ export async function POST(req: NextRequest) {
       VALUES ($1, $2, $3, 'student', $4, true, 'uploaded')
       RETURNING id, created_at, uploaded_by_role, status
       `,
-      [student.id, docType, blob.id, session.user.id],
+      [student.id, docType, blob.id, session.user.id]
     );
 
     await client.query('COMMIT');
@@ -208,13 +225,21 @@ export async function POST(req: NextRequest) {
         uploadedByRole: docRes.rows[0].uploaded_by_role,
         url: `/api/edu/my-documents/${docRes.rows[0].id}`,
       },
-      { status: 201 },
+      { status: 201 }
     );
   } catch (err) {
     console.error('upload doc err', err);
-    await client.query('ROLLBACK');
+
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // ignore rollback failure
+      }
+    }
+
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   } finally {
-    client.release();
+    client?.release();
   }
 }

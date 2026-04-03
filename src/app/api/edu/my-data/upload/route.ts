@@ -5,13 +5,10 @@ import { db } from '@/utils/db';
 import { auth } from '@/utils/auth';
 
 export async function POST(req: NextRequest) {
-
   const session = await auth.api.getSession({ headers: req.headers });
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-
-  const client = await db.connect();
 
   try {
     const formData = await req.formData();
@@ -33,7 +30,7 @@ export async function POST(req: NextRequest) {
       RETURNING id, filename, mime_type, byte_size, uploaded_at
     `;
 
-    const res = await client.query(insertSql, [
+    const res = await db.query(insertSql, [
       file.name,
       file.type || 'application/octet-stream',
       buffer.byteLength,
@@ -51,12 +48,10 @@ export async function POST(req: NextRequest) {
         byteSize: row.byte_size,
         uploadedAt: row.uploaded_at,
       },
-      { status: 201 },
+      { status: 201 }
     );
   } catch (err) {
     console.error('Upload error:', err);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
-  } finally {
-    client.release();
   }
 }
