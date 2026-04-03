@@ -1,7 +1,7 @@
-// src/app/api/admin/student-applications/[id]/approve/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import type { PoolClient } from 'pg';
 import { db } from '@/utils/db';
 import { auth } from '@/utils/auth';
 import { generateStudentUser } from '@/utils/auth-helpers';
@@ -31,15 +31,16 @@ export async function POST(
 
   try {
     const json = await req.json().catch(() => undefined);
-    const parsed = approveBodySchema?.safeParse(json);
-    if (parsed && parsed.success) {
+    const parsed = approveBodySchema.safeParse(json);
+
+    if (parsed.success) {
       serieId = parsed.data?.serieId ?? null;
       tutorUserId = parsed.data?.tutorUserId ?? null;
-    } else if (parsed && !parsed.success) {
+    } else {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
   } catch {
-    //
+    return NextResponse.json({ error: 'Body invalid.' }, { status: 400 });
   }
 
   const appRes = await db.query(
@@ -50,7 +51,8 @@ export async function POST(
         telefon,
         nume,
         prenume,
-        cnp
+        cnp,
+        status
       FROM student_applications
       WHERE id = $1
     `,
@@ -68,20 +70,40 @@ export async function POST(
     nume: string | null;
     prenume: string | null;
     cnp: string | null;
+    status: string;
   };
 
-  // cream (sau luam) userul de student in better-auth
-  // aici se trimite si mail-ul de reset (pentru user nou)
   const studentAuthUser = await generateStudentUser({
     email: app.email,
     name: [app.nume, app.prenume].filter(Boolean).join(' '),
     headers: req.headers,
   });
 
-  const client = await db.connect();
+  let client: PoolClient | null = null;
+  let studentId: string;
 
   try {
+    client = await db.connect();
     await client.query('BEGIN');
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    await client.query("SET LOCAL statement_timeout = '30s'");
+
+    const lockedAppRes = await client.query(
+      `
+        SELECT id, status
+        FROM student_applications
+        WHERE id = $1
+        FOR UPDATE
+      `,
+      [id]
+    );
+
+    if ((lockedAppRes.rowCount ?? 0) === 0) {
+      await client.query('ROLLBACK');
+      return NextResponse.json({ error: 'Cererea nu a fost gasita.' }, { status: 404 });
+    }
+
+    const lockedApp = lockedAppRes.rows[0] as { id: string; status: string };
 
     await client.query(
       `
@@ -103,8 +125,6 @@ export async function POST(
       `,
       [id]
     );
-
-    let studentId: string;
 
     if ((existingStudent.rowCount ?? 0) > 0) {
       const row = existingStudent.rows[0] as { id: string };
@@ -150,12 +170,8 @@ export async function POST(
       studentId = studentRes.rows[0].id;
     }
 
-    // =========================
-    // Asignari (dupa ce exista studentId)
-    // =========================
-
-    // Serie: 1 serie / student (pe modelul assign-series)
     await client.query(`DELETE FROM student_series WHERE student_id = $1`, [studentId]);
+
     if (serieId) {
       await client.query(
         `
@@ -167,8 +183,8 @@ export async function POST(
       );
     }
 
-    // Tutore: 1 tutore / student (pe modelul assign-tutor)
     await client.query(`DELETE FROM student_tutors WHERE student_id = $1`, [studentId]);
+
     if (tutorUserId) {
       await client.query(
         `
@@ -184,9 +200,9 @@ export async function POST(
     }
 
     await client.query('COMMIT');
+    client.release();
+    client = null;
 
-    // trimitem mailul de "aplicatia a fost aprobata"
-    // dupa ce tranzactia a reusit
     try {
       await sendApplicationStatusEmail({
         email: app.email,
@@ -207,9 +223,17 @@ export async function POST(
     );
   } catch (err) {
     console.error('error approving application:', err);
-    await client.query('ROLLBACK');
+
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // ignore rollback failure
+      }
+    }
+
     return NextResponse.json({ error: 'Eroare la aprobarea cererii.' }, { status: 500 });
   } finally {
-    client.release();
+    client?.release();
   }
 }

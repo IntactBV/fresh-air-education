@@ -37,7 +37,7 @@ function createPool() {
     database: process.env.DB_NAME,
     ssl: getSslConfig(),
     max: Number(process.env.DB_POOL_MAX ?? 2),
-    idleTimeoutMillis: 30_000,                // 30s idle timeout
+    idleTimeoutMillis: 30_000,  // 30s idle timeout
   };
 
   const pool = new Pool(config);

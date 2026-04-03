@@ -1,9 +1,12 @@
-// src/app/api/student-applications/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import type { PoolClient } from 'pg';
 import { db } from '@/utils/db';
 
-type UploadedDocType = 'adeverinta_student' | 'conventie_semnata' | 'extras_cont';
+type UploadedDocType =
+  | 'adeverinta_student'
+  | 'conventie_semnata'
+  | 'extras_cont';
 
 const ALLOWED_MIME = new Set([
   'application/pdf',
@@ -16,7 +19,7 @@ function isValidUpload(file: File) {
   return ALLOWED_MIME.has(mime);
 }
 
-async function insertBlob(client: any, file: File) {
+async function insertBlob(client: PoolClient, file: File) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
@@ -47,7 +50,7 @@ async function insertBlob(client: any, file: File) {
 }
 
 async function upsertApplicationDocument(
-  client: any,
+  client: PoolClient,
   studentApplicationId: string,
   documentType: UploadedDocType,
   blobId: string
@@ -71,22 +74,47 @@ async function upsertApplicationDocument(
           updated_at = now()
     RETURNING id;
   `;
+
   await client.query(sql, [studentApplicationId, documentType, blobId]);
 }
 
 export async function POST(req: NextRequest) {
-  const client = await db.connect();
+  let client: PoolClient | null = null;
 
   try {
     const formData = await req.formData();
 
-    // existing required file
     const copieBuletin = formData.get('copie_buletin') as File | null;
-
-    // new optional files (may not be sent yet by FE)
     const adeverintaStudent = formData.get('adeverinta_student') as File | null;
     const conventieSemnata = formData.get('conventie_semnata') as File | null;
     const extrasCont = formData.get('extras_cont') as File | null;
+
+    const optionalUploads: Array<{
+      key: string;
+      type: UploadedDocType;
+      file: File | null;
+    }> = [
+      { key: 'adeverinta_student', type: 'adeverinta_student', file: adeverintaStudent },
+      { key: 'conventie_semnata', type: 'conventie_semnata', file: conventieSemnata },
+      { key: 'extras_cont', type: 'extras_cont', file: extrasCont },
+    ];
+
+    // Validate before opening transaction
+    if (copieBuletin instanceof File && !isValidUpload(copieBuletin)) {
+      return NextResponse.json(
+        { error: 'Copie buletin: format invalid. Acceptat: PDF/JPG/PNG.' },
+        { status: 400 }
+      );
+    }
+
+    for (const u of optionalUploads) {
+      if (u.file instanceof File && !isValidUpload(u.file)) {
+        return NextResponse.json(
+          { error: `${u.key}: format invalid. Acceptat: PDF/JPG/PNG.` },
+          { status: 400 }
+        );
+      }
+    }
 
     const email = (formData.get('email') as string) ?? '';
     const telefon = (formData.get('telefon') as string) ?? '';
@@ -120,26 +148,18 @@ export async function POST(req: NextRequest) {
         ? new Date(data_eliberarii_raw)
         : null;
 
+    client = await db.connect();
     await client.query('BEGIN');
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    await client.query("SET LOCAL statement_timeout = '30s'");
 
-    // 1) copie buletin blob (existing behavior)
     let copieBuletinBlobId: string | null = null;
 
     if (copieBuletin instanceof File) {
-      // keep existing behavior: accept PDF/JPG/PNG (same as FE)
-      if (!isValidUpload(copieBuletin)) {
-        await client.query('ROLLBACK');
-        return NextResponse.json(
-          { error: 'Copie buletin: format invalid. Acceptat: PDF/JPG/PNG.' },
-          { status: 400 }
-        );
-      }
-
       const blob = await insertBlob(client, copieBuletin);
       copieBuletinBlobId = blob.id;
     }
 
-    // 2) insert student_application
     const insertApplicationSql = `
       INSERT INTO student_applications (
         email,
@@ -201,23 +221,8 @@ export async function POST(req: NextRequest) {
 
     const applicationId: string = appRes.rows[0].id;
 
-    // 3) optional documents -> document_blobs + student_application_documents
-    const optionalUploads: Array<{ key: string; type: UploadedDocType; file: File | null }> = [
-      { key: 'adeverinta_student', type: 'adeverinta_student', file: adeverintaStudent },
-      { key: 'conventie_semnata', type: 'conventie_semnata', file: conventieSemnata },
-      { key: 'extras_cont', type: 'extras_cont', file: extrasCont },
-    ];
-
     for (const u of optionalUploads) {
       if (!(u.file instanceof File)) continue;
-
-      if (!isValidUpload(u.file)) {
-        await client.query('ROLLBACK');
-        return NextResponse.json(
-          { error: `${u.key}: format invalid. Acceptat: PDF/JPG/PNG.` },
-          { status: 400 }
-        );
-      }
 
       const blob = await insertBlob(client, u.file);
       await upsertApplicationDocument(client, applicationId, u.type, blob.id);
@@ -235,16 +240,20 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error('Eroare la crearea aplicatiei de student:', error);
-    try {
-      await client.query('ROLLBACK');
-    } catch {
-      // ignore
+
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // ignore rollback failure
+      }
     }
+
     return NextResponse.json(
       { error: 'Eroare la salvarea aplicatiei.' },
       { status: 500 }
     );
   } finally {
-    client.release();
+    client?.release();
   }
 }

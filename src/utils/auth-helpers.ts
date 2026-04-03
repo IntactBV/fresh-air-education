@@ -14,12 +14,12 @@ type GenerateStudentUserParams = {
  * If the user already exists in better-auth's "user" table, it returns it.
  * Otherwise, it creates the account with role "student" and triggers a password-reset email.
  */
+
 export async function generateStudentUser({
   email,
   name,
   headers,
 }: GenerateStudentUserParams) {
-  // 1) check if user already exists
   const existing = await db.query(
     `SELECT id, email, name, "role" FROM "user" WHERE email = $1 LIMIT 1`,
     [email]
@@ -35,30 +35,48 @@ export async function generateStudentUser({
     };
   }
 
-  // 2) create new user in better-auth
   const randomPassword =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
       : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 
-  const created = await auth.api.createUser({
-    headers,
-    body: {
-      email,
-      name: name ?? "",
-      password: randomPassword,
-      role: "student" as any,
-    },
-  });
+  try {
+    const created = await auth.api.createUser({
+      headers,
+      body: {
+        email,
+        name: name ?? '',
+        password: randomPassword,
+        role: 'student' as any,
+      },
+    });
 
-  // 3) send password setup link
-  await auth.api.requestPasswordReset({
-    headers,
-    body: {
-      email,
-      redirectTo: `${APP_URL}/resetare-parola`,
-    },
-  });
+    await auth.api.requestPasswordReset({
+      headers,
+      body: {
+        email,
+        redirectTo: `${APP_URL}/resetare-parola`,
+      },
+    });
 
-  return created.user;
+    return created.user;
+  } catch (error) {
+    // Another concurrent request may have created the user already.
+    const existingAfterCreate = await db.query(
+      `SELECT id, email, name, "role" FROM "user" WHERE email = $1 LIMIT 1`,
+      [email]
+    );
+
+    if ((existingAfterCreate.rowCount ?? 0) > 0) {
+      const u = existingAfterCreate.rows[0];
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+      };
+    }
+
+    throw error;
+  }
 }

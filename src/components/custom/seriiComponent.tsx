@@ -31,13 +31,14 @@ function formatRoDateTime(iso: string) {
   return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
 }
 
-export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 'tutore' } ) {
+export default function SeriiComponent({ baseFolder }: { baseFolder: 'admin' | 'tutore' }) {
   const [isMounted, setIsMounted] = useState(false);
   const [rows, setRows] = useState<Serie[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // create modal state
+  // create/edit modal state
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingSerie, setEditingSerie] = useState<Serie | null>(null);
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -48,7 +49,10 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
   const PAGE_SIZES = [10, 20, 30, 50, 100];
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [page, setPage] = useState(1);
-  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({ columnAccessor: 'name', direction: 'asc' });
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: 'name',
+    direction: 'asc',
+  });
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [serieToDelete, setSerieToDelete] = useState<Serie | null>(null);
@@ -56,7 +60,7 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
 
   useEffect(() => {
     setIsMounted(true);
-    // fetch initial
+
     (async () => {
       try {
         const res = await fetch('/api/admin/series', { cache: 'no-store' });
@@ -83,6 +87,7 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return base;
+
     return base.filter((r) =>
       [r.name, r.description ?? '', r.createdAtDisplay, r.createdByName ?? ''].some((v) =>
         v.toLowerCase().includes(q)
@@ -96,46 +101,90 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
   }, [filtered, sortStatus]);
 
   useEffect(() => setPage(1), [pageSize, search, sortStatus]);
+
   const from = (page - 1) * pageSize;
   const to = from + pageSize;
   const pageRecords = sorted.slice(from, to);
 
-  const handleCreate = async () => {
+  const resetForm = () => {
+    setFormName('');
+    setFormDescription('');
     setFormError(null);
+    setEditingSerie(null);
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setCreateOpen(true);
+  };
+
+  const openEditModal = (serie: Serie) => {
+    setEditingSerie(serie);
+    setFormName(serie.name ?? '');
+    setFormDescription(serie.description ?? '');
+    setFormError(null);
+    setCreateOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    if (creating) return;
+    setCreateOpen(false);
+    resetForm();
+  };
+
+  const handleSaveSerie = async () => {
+    setFormError(null);
+
     const name = formName.trim();
     const description = formDescription.trim();
+    const isEdit = Boolean(editingSerie);
 
     if (!name) {
       setFormError('Numele este obligatoriu.');
       return;
     }
-    // verificare simpla pe client
-    if (rows.some((r) => r.name.toLowerCase() === name.toLowerCase())) {
+
+    const duplicateExists = rows.some((r) => {
+      if (isEdit && r.id === editingSerie?.id) return false;
+      return r.name.toLowerCase() === name.toLowerCase();
+    });
+
+    if (duplicateExists) {
       setFormError('Exista deja o serie cu acest nume.');
       return;
     }
 
     setCreating(true);
+
     try {
-      const res = await fetch('/api/admin/series', {
-        method: 'POST',
+      const url = isEdit ? `/api/admin/series/${editingSerie!.id}` : '/api/admin/series';
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           description: description || undefined,
         }),
       });
+
       if (!res.ok) {
         const err = await res.json().catch(() => null);
-        setFormError(err?.error ?? 'Eroare la creare serie.');
+        setFormError(err?.error ?? (isEdit ? 'Eroare la editare serie.' : 'Eroare la creare serie.'));
         return;
       }
-      const created: Serie = await res.json();
-      // adaugam in lista
-      setRows((prev) => [created, ...prev]);
+
+      const saved: Serie = await res.json();
+
+      if (isEdit) {
+        setRows((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
+      } else {
+        setRows((prev) => [saved, ...prev]);
+      }
+
       setCreateOpen(false);
-      setFormName('');
-      setFormDescription('');
+      resetForm();
     } catch (e) {
       console.error(e);
       setFormError('Eroare la comunicarea cu serverul.');
@@ -146,15 +195,18 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
 
   const handleDelete = async () => {
     if (!serieToDelete) return;
+
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/series/${serieToDelete.id}`, {
         method: 'DELETE',
       });
+
       if (!res.ok) {
         alert('Nu am putut sterge seria.');
         return;
       }
+
       setRows((prev) => prev.filter((r) => r.id !== serieToDelete.id));
       setDeleteOpen(false);
       setSerieToDelete(null);
@@ -168,12 +220,14 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
 
   return (
     <div className="panel mt-6">
-      {/* header */}
       <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center">
         <div>
           <h2 className="text-xl font-semibold">Serii studenti</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Administreaza seriile de studenti.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Administreaza seriile de studenti.
+          </p>
         </div>
+
         <div className="ltr:ml-auto rtl:mr-auto flex items-center gap-3">
           <input
             type="text"
@@ -182,13 +236,12 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={() => setCreateOpen(true)}>
+          <button className="btn btn-primary" onClick={openCreateModal}>
             Creeaza serie
           </button>
         </div>
       </div>
 
-      {/* table */}
       <div className="datatables">
         {isMounted && pageRecords.length > 0 ? (
           <DataTable
@@ -210,7 +263,7 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
                       <span className="badge bg-primary/10 text-primary">{row.name}</span>
                     </Link>
                   </Tippy>
-                )
+                ),
               },
               {
                 accessor: 'description',
@@ -252,35 +305,57 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
                 accessor: 'actions',
                 title: '',
                 textAlignment: 'right',
-                width: 60,
+                width: 110,
                 render: (row) => (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSerieToDelete(row);
-                      setDeleteOpen(true);
-                    }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300"
-                    title="Sterge seria"
-                  >
-                    {/* trash icon */}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(row)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300"
+                      title="Editeaza seria"
                     >
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                      <path d="M10 11v6" />
-                      <path d="M14 11v6" />
-                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                    </svg>
-                  </button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSerieToDelete(row);
+                        setDeleteOpen(true);
+                      }}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300"
+                      title="Sterge seria"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  </div>
                 ),
               },
             ]}
@@ -307,12 +382,14 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
         )}
       </div>
 
-      {/* create modal */}
+      {/* create/edit modal */}
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setCreateOpen(false)} />
+          <div className="absolute inset-0 bg-black/40" onClick={closeCreateModal} />
           <div className="relative z-10 w-full max-w-lg rounded-lg bg-white p-5 shadow-xl dark:bg-[#0e1726]">
-            <h3 className="mb-4 text-lg font-semibold">Creeaza serie</h3>
+            <h3 className="mb-4 text-lg font-semibold">
+              {editingSerie ? 'Editeaza serie' : 'Creeaza serie'}
+            </h3>
 
             <div className="space-y-3">
               <div>
@@ -325,6 +402,7 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
                   disabled={creating}
                 />
               </div>
+
               <div>
                 <label className="mb-1 block text-sm">Descriere (optional)</label>
                 <textarea
@@ -344,11 +422,21 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
               )}
 
               <div className="mt-4 flex justify-end gap-2">
-                <button className="btn btn-outline-secondary" onClick={() => setCreateOpen(false)} disabled={creating}>
+                <button
+                  className="btn btn-outline-secondary"
+                  onClick={closeCreateModal}
+                  disabled={creating}
+                >
                   Anuleaza
                 </button>
-                <button className="btn btn-primary" onClick={handleCreate} disabled={creating}>
-                  {creating ? 'Se salveaza...' : 'Salveaza'}
+                <button className="btn btn-primary" onClick={handleSaveSerie} disabled={creating}>
+                  {creating
+                    ? editingSerie
+                      ? 'Se salveaza...'
+                      : 'Se creeaza...'
+                    : editingSerie
+                    ? 'Salveaza modificarile'
+                    : 'Salveaza'}
                 </button>
               </div>
             </div>
@@ -386,7 +474,6 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
                   as="div"
                   className="panel my-10 w-full max-w-xl overflow-hidden rounded-lg border-0 p-0 text-black dark:text-white-dark shadow-xl"
                 >
-                  {/* header */}
                   <div className="flex items-center justify-between bg-[#fbfbfb] px-6 py-4 dark:bg-[#121c2c]">
                     <h5 className="text-xl font-semibold">Confirma stergerea</h5>
                     <button
@@ -398,16 +485,19 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
                     </button>
                   </div>
 
-                  {/* body */}
                   <div className="px-6 py-6 space-y-4">
                     <p className="text-base leading-relaxed">
-                      Stergand seria, toti studentii vor fi dezasignati de la aceasta serie. Orice drepturi viitoare legate de
-                      aceasta serie (ex. materiale asignate pe serie) nu vor mai fi valabile. Esti sigur ca vrei sa continui?
+                      Stergand seria, toti studentii vor fi dezasignati de la aceasta serie. Orice drepturi
+                      viitoare legate de aceasta serie (ex. materiale asignate pe serie) nu vor mai fi
+                      valabile. Esti sigur ca vrei sa continui?
                     </p>
 
                     {serieToDelete && (
                       <p className="text-base text-gray-600 dark:text-gray-400">
-                        Serie: <span className="font-semibold text-gray-900 dark:text-gray-100">{serieToDelete.name}</span>
+                        Serie:{' '}
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                          {serieToDelete.name}
+                        </span>
                       </p>
                     )}
 
@@ -431,14 +521,11 @@ export default function SeriiComponent( { baseFolder }: { baseFolder: 'admin' | 
                     </div>
                   </div>
                 </Dialog.Panel>
-
               </Transition.Child>
             </div>
           </div>
         </Dialog>
       </Transition>
-
-
     </div>
   );
 }
