@@ -11,7 +11,6 @@ const FormularInscriereStudenti = () => {
     // validari de baza
     const phoneRegex = /^(\+4)?0?\s?7\d{2}\s?\d{3}\s?\d{3}$/;
     const cnpRegex = /^\d{13}$/;
-    const serieRegex = /^[A-Z]{2}$/; // ex: 'PX'
 
     const Schema = Yup.object().shape({
         // 1) Contact & Identificare
@@ -29,7 +28,7 @@ const FormularInscriereStudenti = () => {
         strada: Yup.string().required('Strada este obligatorie'),
 
         // 3) Act de identitate (CI)
-        serieCI: Yup.string().matches(serieRegex, 'Serie CI invalida (ex: PX)').required('Seria CI este obligatorie'),
+        serieCI: Yup.string().required('Seria CI este obligatorie'),
         numarCI: Yup.string().required('Numarul CI este obligatoriu'),
         eliberatDe: Yup.string().required('Câmp obligatoriu'),
         dataEliberarii: Yup.date().max(new Date(), 'Data nu poate fi in viitor').required('Data eliberarii este obligatorie'),
