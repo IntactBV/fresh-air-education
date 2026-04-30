@@ -199,24 +199,10 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
     }));
   }, [students]);
 
-  const counts = useMemo(() => {
-    let enrolled = 0;
-    let graduates = 0;
-    for (const s of base) {
-      if (s.status === 'absolvent') graduates++;
-      else enrolled++;
-    }
-    return { enrolled, graduates };
-  }, [base]);
-
-  const filteredByTab: Row[] = useMemo(() => {
-    if (tab === 'enrolled') return base.filter((r) => r.status !== 'absolvent');
-    return base.filter((r) => r.status === 'absolvent');
-  }, [base, tab]);
-
-  const filtered: Row[] = useMemo(() => {
+  // All non-tab filters applied — used for counts and as the base for each tab
+  const filteredBase: Row[] = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let rows = filteredByTab;
+    let rows = base;
 
     if (q) {
       rows = rows.filter((r) =>
@@ -232,20 +218,33 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
       );
     }
 
-    // filtre serie
     if (serieFilter !== 'all') {
       if (serieFilter === '__none__') rows = rows.filter((r) => r.serieId === null);
       else rows = rows.filter((r) => r.serieId === serieFilter);
     }
 
-    // filtre tutore
     if (tutorFilter !== 'all') {
       if (tutorFilter === '__none__') rows = rows.filter((r) => r.tutorUserId === null);
       else rows = rows.filter((r) => r.tutorUserId === tutorFilter);
     }
-    
+
     return rows;
-  }, [filteredByTab, search, tab, serieFilter, tutorFilter]);
+  }, [base, search, serieFilter, tutorFilter]);
+
+  const counts = useMemo(() => {
+    let enrolled = 0;
+    let graduates = 0;
+    for (const s of filteredBase) {
+      if (s.status === 'absolvent') graduates++;
+      else enrolled++;
+    }
+    return { enrolled, graduates };
+  }, [filteredBase]);
+
+  const filtered: Row[] = useMemo(() => {
+    if (tab === 'enrolled') return filteredBase.filter((r) => r.status !== 'absolvent');
+    return filteredBase.filter((r) => r.status === 'absolvent');
+  }, [filteredBase, tab]);
 
   const sorted: Row[] = useMemo(() => {
     const data = sortBy(filtered, sortStatus.columnAccessor as keyof Row);
@@ -253,6 +252,19 @@ export default function StudentiInscrisiComponent({ baseFolder }: { baseFolder: 
   }, [filtered, sortStatus]);
 
   useEffect(() => setPage(1), [pageSize, search, sortStatus, tab, serieFilter, tutorFilter]);
+
+  // Auto-switch to graduates when the tab was not explicitly set and enrolled is empty
+  useEffect(() => {
+    if (studentsLoading) return;
+    const tabParam = searchParams.get('tab');
+    if (tabParam) return; // user or URL explicitly chose a tab — respect it
+    if (tab === 'enrolled' && counts.enrolled === 0 && counts.graduates > 0) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', 'graduates');
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentsLoading, counts.enrolled, counts.graduates]);
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize;
