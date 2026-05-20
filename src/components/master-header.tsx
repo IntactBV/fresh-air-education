@@ -53,13 +53,13 @@ export const MasterHeader = () => {
 
           {/* Right */}
           <div className="flex items-center justify-between gap-3 md:justify-end md:gap-4">
-            <h3 className="text-xs leading-tight sm:text-sm md:text-base md:text-right">
+            {/* <h3 className="text-xs leading-tight sm:text-sm md:text-base md:text-right">
               <strong>FRESH TECH - Tehnologii și educație pentru studenți</strong>
               <br />
               Cod SMIS: <b>317582</b>
               <br />
               Denumirea beneficiarului: <b>Fresh Air SRL</b>
-            </h3>
+            </h3> */}
 
             <Image
               src="/assets/images/guvern-ro.svg"
