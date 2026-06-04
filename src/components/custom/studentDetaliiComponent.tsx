@@ -907,7 +907,8 @@ export default function StudentDetaliiComponent({ baseFolder }: { baseFolder: 'a
               type="button"
               className="btn btn-success w-full gap-2"
               onClick={handleMarkGraduate}
-              disabled={!canGraduate || loading || !student}
+              disabled={loading || !student}
+              // disabled={!canGraduate || loading || !student}              
               title={
                 !canGraduate
                   ? 'Studentul trebuie sa fie activ, sa aiba cont si sa aiba toate documentele.'

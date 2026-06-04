@@ -4,20 +4,20 @@ import type { NextRequest } from 'next/server';
 import { db } from '@/utils/db';
 import { auth } from '@/utils/auth';
 
-const REQUIRED_APP_DOC_TYPES = [
-  'adeverinta_student',
-  'conventie_semnata',
-  'extras_cont',
-] as const;
+// const REQUIRED_APP_DOC_TYPES = [
+//   'adeverinta_student',
+//   'conventie_semnata',
+//   'extras_cont',
+// ] as const;
 
-const REQUIRED_STUDENT_DOC_TYPES = [
-  'declaratie_evitare_dubla_finantare_semnata',
-  'declaratie_eligibilitate_membru_semnata',
-  'adeverinta_finalizare_stagiu',
-] as const;
+// const REQUIRED_STUDENT_DOC_TYPES = [
+//   'declaratie_evitare_dubla_finantare_semnata',
+//   'declaratie_eligibilitate_membru_semnata',
+//   'adeverinta_finalizare_stagiu',
+// ] as const;
 
-type RequiredAppDocType = (typeof REQUIRED_APP_DOC_TYPES)[number];
-type RequiredStudentDocType = (typeof REQUIRED_STUDENT_DOC_TYPES)[number];
+// type RequiredAppDocType = (typeof REQUIRED_APP_DOC_TYPES)[number];
+// type RequiredStudentDocType = (typeof REQUIRED_STUDENT_DOC_TYPES)[number];
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: req.headers });
@@ -62,64 +62,64 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   // 1) required docs from application (single source of truth)
-  const appDocsRes = await db.query<{
-    document_type: string;
-    status: string;
-  }>(
-    `
-    SELECT document_type, status
-    FROM student_application_documents
-    WHERE student_application_id = $1
-      AND document_type = ANY($2::text[])
-    `,
-    [student.application_id, REQUIRED_APP_DOC_TYPES],
-  );
+  // const appDocsRes = await db.query<{
+  //   document_type: string;
+  //   status: string;
+  // }>(
+  //   `
+  //   SELECT document_type, status
+  //   FROM student_application_documents
+  //   WHERE student_application_id = $1
+  //     AND document_type = ANY($2::text[])
+  //   `,
+  //   [student.application_id, REQUIRED_APP_DOC_TYPES],
+  // );
 
-  const presentApp = new Set(
-    appDocsRes.rows.filter((d) => d.status !== 'rejected').map((d) => d.document_type),
-  );
+  // const presentApp = new Set(
+  //   appDocsRes.rows.filter((d) => d.status !== 'rejected').map((d) => d.document_type),
+  // );
 
-  for (const required of REQUIRED_APP_DOC_TYPES) {
-    if (!presentApp.has(required)) {
-      return NextResponse.json(
-        {
-          error: `Studentului ii lipseste documentul obligatoriu: ${required}.`,
-          missing: required as RequiredAppDocType,
-        },
-        { status: 400 },
-      );
-    }
-  }
+  // for (const required of REQUIRED_APP_DOC_TYPES) {
+  //   if (!presentApp.has(required)) {
+  //     return NextResponse.json(
+  //       {
+  //         error: `Studentului ii lipseste documentul obligatoriu: ${required}.`,
+  //         missing: required as RequiredAppDocType,
+  //       },
+  //       { status: 400 },
+  //     );
+  //   }
+  // }
 
-  // 2) required docs from student_documents
-  const studentDocsRes = await db.query<{
-    document_type: string;
-    status: string;
-  }>(
-    `
-    SELECT document_type, status
-    FROM student_documents
-    WHERE student_id = $1
-      AND document_type = ANY($2::text[])
-    `,
-    [id, REQUIRED_STUDENT_DOC_TYPES],
-  );
+  // // 2) required docs from student_documents
+  // const studentDocsRes = await db.query<{
+  //   document_type: string;
+  //   status: string;
+  // }>(
+  //   `
+  //   SELECT document_type, status
+  //   FROM student_documents
+  //   WHERE student_id = $1
+  //     AND document_type = ANY($2::text[])
+  //   `,
+  //   [id, REQUIRED_STUDENT_DOC_TYPES],
+  // );
 
-  const presentStudent = new Set(
-    studentDocsRes.rows.filter((d) => d.status !== 'rejected').map((d) => d.document_type),
-  );
+  // const presentStudent = new Set(
+  //   studentDocsRes.rows.filter((d) => d.status !== 'rejected').map((d) => d.document_type),
+  // );
 
-  for (const required of REQUIRED_STUDENT_DOC_TYPES) {
-    if (!presentStudent.has(required)) {
-      return NextResponse.json(
-        {
-          error: `Studentului ii lipseste documentul obligatoriu: ${required}.`,
-          missing: required as RequiredStudentDocType,
-        },
-        { status: 400 },
-      );
-    }
-  }
+  // for (const required of REQUIRED_STUDENT_DOC_TYPES) {
+  //   if (!presentStudent.has(required)) {
+  //     return NextResponse.json(
+  //       {
+  //         error: `Studentului ii lipseste documentul obligatoriu: ${required}.`,
+  //         missing: required as RequiredStudentDocType,
+  //       },
+  //       { status: 400 },
+  //     );
+  //   }
+  // }
 
   await db.query(`UPDATE students SET status = 'graduate', updated_at = NOW() WHERE id = $1`, [id]);
 
