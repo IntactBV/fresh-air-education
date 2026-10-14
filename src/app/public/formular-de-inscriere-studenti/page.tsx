@@ -5,87 +5,9 @@ import { Formik, Form, Field } from 'formik';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import * as Yup from 'yup';
+import { studentApplicationSchema, submissionErrorMessage } from '@/utils/student-application-validation';
 
 const FormularInscriereStudenti = () => {
-    // validari de baza
-    const phoneRegex = /^(\+4)?0?\s?7\d{2}\s?\d{3}\s?\d{3}$/;
-    const cnpRegex = /^\d{13}$/;
-
-    const Schema = Yup.object().shape({
-        // 1) Contact & Identificare
-        email: Yup.string().email('Email invalid').required('Emailul este obligatoriu'),
-        telefon: Yup.string().matches(phoneRegex, 'Telefon invalid').required('Telefonul este obligatoriu'),
-        nume: Yup.string().required('Numele este obligatoriu'),
-        prenume: Yup.string().required('Prenumele este obligatoriu'),
-        gen: Yup.string().oneOf(['Masculin', 'Feminin', 'Neutru'], 'Selecteaza o optiune').required('Genul este obligatoriu'),
-        mediuResedinta: Yup.string().oneOf(['Urban', 'Rural'], 'Selecteaza o optiune').required('Mediul de rezidenta este obligatoriu'),
-
-        // 2) Date personale & adresa
-        cnp: Yup.string().matches(cnpRegex, 'CNP invalid (13 cifre)').required('CNP-ul este obligatoriu'),
-        judet: Yup.string().required('Judetul este obligatoriu'),
-        localitate: Yup.string().required('Localitatea este obligatorie'),
-        strada: Yup.string().required('Strada este obligatorie'),
-
-        // 3) Act de identitate (CI)
-        serieCI: Yup.string().required('Seria CI este obligatorie'),
-        numarCI: Yup.string().required('Numarul CI este obligatoriu'),
-        eliberatDe: Yup.string().required('Câmp obligatoriu'),
-        dataEliberarii: Yup.date().max(new Date(), 'Data nu poate fi in viitor').required('Data eliberarii este obligatorie'),
-        copieBuletin: Yup.mixed()
-            .required('Incarcarea copiei este obligatorie')
-            .test('fileType', 'Format acceptat: PDF/JPG/PNG', (value: any) => {
-                if (!value) return false;
-                const file = Array.isArray(value) ? value[0] : value;
-                const types = ['application/pdf', 'image/jpeg', 'image/png'];
-                return file && types.includes(file.type);
-            }),
-
-        // 4) Studiile
-        institutie: Yup.string().required('Institutia este obligatorie'),
-        facultate: Yup.string().required('Facultatea este obligatorie'),
-        specializare: Yup.string().required('Specializarea este obligatorie'),
-        ciclu: Yup.string().oneOf([
-            'Licenta',
-            'Licenta2',
-            'Licenta3',
-            'Masterat',
-            'Masterat2',
-            'Doctorat'
-        ], 'Selecteaza o optiune').required('Ciclul este obligatoriu'),
-
-        adeverintaStudent: Yup.mixed()
-            .nullable()
-            .test('fileType', 'Format acceptat: PDF/JPG/PNG', (value: any) => {
-                if (!value) return true; // optional
-                const file = Array.isArray(value) ? value[0] : value;
-                const types = ['application/pdf', 'image/jpeg', 'image/png'];
-                return file && types.includes(file.type);
-            }),
-
-        conventieSemnata: Yup.mixed()
-            .nullable()
-            .test('fileType', 'Format acceptat: PDF/JPG/PNG', (value: any) => {
-                if (!value) return true; // optional
-                const file = Array.isArray(value) ? value[0] : value;
-                const types = ['application/pdf', 'image/jpeg', 'image/png'];
-                return file && types.includes(file.type);
-            }),
-
-        extrasCont: Yup.mixed()
-            .nullable()
-            .test('fileType', 'Format acceptat: PDF/JPG/PNG', (value: any) => {
-                if (!value) return true; // optional
-                const file = Array.isArray(value) ? value[0] : value;
-                const types = ['application/pdf', 'image/jpeg', 'image/png'];
-                return file && types.includes(file.type);
-            }),
-
-        // 5) Consimtaminte
-        agree: Yup.bool().oneOf([true], 'Trebuie sa fii de acord inainte de trimitere.'),
-        terms: Yup.bool().oneOf([true], 'Trebuie sa accepti Termenii si Conditiile.'),
-    });
-
     const [conventieTemplate, setConventieTemplate] = useState<{ blobId?: string; filename?: string } | null>(null);
 
     useEffect(() => {
@@ -176,14 +98,14 @@ const FormularInscriereStudenti = () => {
                         agree: false,
                         terms: false,
                     }}
-                    validationSchema={Schema}
+                    validationSchema={studentApplicationSchema}
                     validateOnBlur={true}
                     validateOnChange={true}
-                    onSubmit={async (values, { setSubmitting, resetForm }) => {
+                    onSubmit={async (values, { setSubmitting, resetForm, setErrors }) => {
                         try {
                             const formData = new FormData();
 
-                            formData.append('email', values.email);
+                            formData.append('email', values.email.trim());
                             formData.append('telefon', values.telefon);
                             formData.append('nume', values.nume);
                             formData.append('prenume', values.prenume);
@@ -223,13 +145,13 @@ const FormularInscriereStudenti = () => {
 
                             if (!res.ok) {
                                 const data = await res.json().catch(() => ({}));
+                                if (data?.fieldErrors) setErrors(data.fieldErrors);
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Eroare',
-                                    text: data?.error || 'A aparut o eroare la trimitere.',
+                                    text: (typeof data?.error === 'string' && data.error) || submissionErrorMessage(res.status),
                                 });
                             } else {
-                                const data = await res.json();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Cererea a fost trimisa!',
@@ -243,7 +165,7 @@ const FormularInscriereStudenti = () => {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Eroare',
-                                text: 'A aparut o eroare la trimitere.',
+                                text: 'Conexiunea cu serverul a fost intrerupta. Datele completate au fost pastrate. Verifica internetul; daca trimiterea incepuse deja, contacteaza echipa proiectului pentru a verifica inregistrarea cererii.',
                             });
                         } finally {
                             setSubmitting(false);
@@ -316,7 +238,8 @@ const FormularInscriereStudenti = () => {
                         };
 
                         return (
-                            <Form className="space-y-8">
+                            <Form className="space-y-8" noValidate>
+                                <p className="text-sm">Documente acceptate: PDF, JPG sau PNG, maximum 10 MB per document. Copia actului de identitate este obligatorie; celelalte documente sunt optionale.</p>
                                 {/* 1) Contact & Identificare */}
                                 <div className="rounded-xl border border-white/10 panel p-10 shadow-sm ring-1 ring-black/5 dark:border-[#1b2e4b]">
                                     <div className="mb-2 text-base font-semibold">Contact & Identificare</div>
@@ -612,6 +535,23 @@ const FormularInscriereStudenti = () => {
                                             <Err name="terms" />
                                         </div>
                                     </div>
+
+                                    {submitCount > 0 && Object.keys(errors).length > 0 && (
+                                        <div role="alert" className="mt-6 rounded border border-danger p-4 text-danger">
+                                            <p className="font-semibold">Cererea nu a fost trimisa. Corecteaza urmatoarele campuri:</p>
+                                            <ul className="mt-2 list-inside list-disc">
+                                                {Object.entries(errors).map(([name, message]) => (
+                                                    <li key={name}>
+                                                        <button type="button" className="text-left underline" onClick={() => {
+                                                            const field = document.getElementById(name);
+                                                            field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                            field?.focus({ preventScroll: true });
+                                                        }}>{String(message)}</button>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
 
                                     <button
                                         type="submit"

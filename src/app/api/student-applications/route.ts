@@ -2,22 +2,13 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import type { PoolClient } from 'pg';
 import { db } from '@/utils/db';
+import { ValidationError } from 'yup';
+import { applicationFieldNames, studentApplicationSchema } from '@/utils/student-application-validation';
 
 type UploadedDocType =
   | 'adeverinta_student'
   | 'conventie_semnata'
   | 'extras_cont';
-
-const ALLOWED_MIME = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-]);
-
-function isValidUpload(file: File) {
-  const mime = (file.type || '').toLowerCase();
-  return ALLOWED_MIME.has(mime);
-}
 
 async function insertBlob(client: PoolClient, file: File) {
   const arrayBuffer = await file.arrayBuffer();
@@ -82,7 +73,36 @@ export async function POST(req: NextRequest) {
   let client: PoolClient | null = null;
 
   try {
-    const formData = await req.formData();
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch {
+      return NextResponse.json({ error: 'Documentele sau formularul nu au putut fi citite. Selecteaza din nou fisierele si retrimite cererea.' }, { status: 400 });
+    }
+
+    const values: Record<string, unknown> = {};
+    for (const name of Object.keys(studentApplicationSchema.fields)) {
+      const raw = formData.get(applicationFieldNames[name] || name);
+      const isDocument = ['copieBuletin', 'adeverintaStudent', 'conventieSemnata', 'extrasCont'].includes(name);
+      const value = raw ?? (isDocument ? null : '');
+      values[name] = name === 'agree' || name === 'terms'
+        ? value === 'true' || value === '1'
+        : typeof value === 'string' ? value.trim() : value;
+    }
+    try {
+      await studentApplicationSchema.validate(values, { abortEarly: false });
+    } catch (error) {
+      if (!(error instanceof ValidationError)) throw error;
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of error.inner) {
+        if (issue.path && !fieldErrors[issue.path]) fieldErrors[issue.path] = issue.message;
+      }
+      return NextResponse.json({ error: Object.values(fieldErrors).join('\n'), fieldErrors }, { status: 400 });
+    }
+    // Persist the same trimmed text that was validated.
+    for (const [name, value] of Object.entries(values)) {
+      if (typeof value === 'string') formData.set(applicationFieldNames[name] || name, value);
+    }
 
     const copieBuletin = formData.get('copie_buletin') as File | null;
     const adeverintaStudent = formData.get('adeverinta_student') as File | null;
@@ -98,23 +118,6 @@ export async function POST(req: NextRequest) {
       { key: 'conventie_semnata', type: 'conventie_semnata', file: conventieSemnata },
       { key: 'extras_cont', type: 'extras_cont', file: extrasCont },
     ];
-
-    // Validate before opening transaction
-    if (copieBuletin instanceof File && !isValidUpload(copieBuletin)) {
-      return NextResponse.json(
-        { error: 'Copie buletin: format invalid. Acceptat: PDF/JPG/PNG.' },
-        { status: 400 }
-      );
-    }
-
-    for (const u of optionalUploads) {
-      if (u.file instanceof File && !isValidUpload(u.file)) {
-        return NextResponse.json(
-          { error: `${u.key}: format invalid. Acceptat: PDF/JPG/PNG.` },
-          { status: 400 }
-        );
-      }
-    }
 
     const email = (formData.get('email') as string) ?? '';
     const telefon = (formData.get('telefon') as string) ?? '';
@@ -250,7 +253,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Eroare la salvarea aplicatiei.' },
+      { error: 'Cererea nu a putut fi salvata din cauza unei probleme a serverului. Datele completate au fost pastrate. Incearca din nou mai tarziu; daca problema persista, contacteaza echipa proiectului.' },
       { status: 500 }
     );
   } finally {
